@@ -1,0 +1,131 @@
+import 'package:flutter/material.dart';
+import '../models/portfolio.dart';
+import '../theme/app_theme.dart';
+
+class AddEditPortfolioDialog extends StatefulWidget {
+  final Portfolio? portfolio;
+  final Function(String name, String description) onSave;
+
+  const AddEditPortfolioDialog({
+    super.key,
+    this.portfolio,
+    required this.onSave,
+  });
+
+  @override
+  State<AddEditPortfolioDialog> createState() => _AddEditPortfolioDialogState();
+}
+
+class _AddEditPortfolioDialogState extends State<AddEditPortfolioDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _descController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.portfolio?.name ?? '');
+    _descController =
+        TextEditingController(text: widget.portfolio?.description ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState?.validate() ?? false) {
+      widget.onSave(_nameController.text.trim(), _descController.text.trim());
+      Navigator.of(context).pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEditing = widget.portfolio != null;
+
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEditing ? 'Portföyü Düzenle' : 'Yeni Portföy Oluştur',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => Navigator.of(context).pop(),
+                      color: AppTheme.textMuted,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _nameController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Portföy İsmi *',
+                    hintText: 'Örn: Teknoloji & Büyüme Fonları',
+                    prefixIcon: Icon(Icons.folder_outlined),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Lütfen bir portföy ismi girin';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _descController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Açıklama (Opsiyonel)',
+                    hintText: 'Örn: BIST ve TEFAS teknoloji ağırlıklı yatırımlar',
+                    prefixIcon: Icon(Icons.notes_rounded),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('İptal'),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: _submit,
+                      icon: Icon(isEditing ? Icons.check : Icons.add),
+                      label: Text(isEditing ? 'Kaydet' : 'Portföyü Oluştur'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      ),
+    );
+  }
+}

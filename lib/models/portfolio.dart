@@ -1,0 +1,284 @@
+import 'asset_category.dart';
+import 'portfolio_asset.dart';
+import 'portfolio_transaction.dart';
+
+class Portfolio {
+  final String id;
+  final String name;
+  final String description;
+  final DateTime createdAt;
+  final List<PortfolioAsset> assets;
+  final List<PortfolioTransaction> transactions;
+  final bool isVisible;
+
+  Portfolio({
+    required this.id,
+    required this.name,
+    this.description = '',
+    required this.createdAt,
+    required this.assets,
+    this.transactions = const [],
+    this.isVisible = true,
+  });
+
+  int get assetCount => assets.length;
+
+  int get fundCount =>
+      assets.where((a) => a.category == AssetCategory.fon).length;
+
+  double get totalCost =>
+      assets.fold(0.0, (sum, asset) => sum + asset.totalCost);
+
+  double get totalValue =>
+      assets.fold(0.0, (sum, asset) => sum + asset.currentValue);
+
+  double get totalProfit => totalValue - totalCost;
+
+  double get totalProfitPercent =>
+      totalCost > 0 ? (totalProfit / totalCost) * 100 : 0.0;
+
+  double get totalWithholdingTax =>
+      assets.fold(0.0, (sum, asset) => sum + asset.withholdingTaxAmount);
+
+  double get netTotalProfit => totalProfit - totalWithholdingTax;
+
+  double get netTotalProfitPercent =>
+      totalCost > 0 ? (netTotalProfit / totalCost) * 100 : 0.0;
+
+  double get netTotalValue => totalValue - totalWithholdingTax;
+
+  double get allTimeProfitPercent => totalProfitPercent;
+
+  double get realizedProfit => transactions
+      .where((t) => t.type == TransactionType.satis)
+      .fold(0.0, (sum, t) => sum + t.realizedProfit);
+
+  double get realizedWithholdingTax => transactions
+      .where((t) => t.type == TransactionType.satis)
+      .fold(0.0, (sum, t) => sum + t.withholdingTax);
+
+  double get netRealizedProfit => transactions
+      .where((t) => t.type == TransactionType.satis)
+      .fold(0.0, (sum, t) => sum + t.netRealizedProfit);
+
+  DateTime get earliestPurchaseDate {
+    DateTime? minDate;
+    for (final asset in assets) {
+      if (minDate == null || asset.purchaseDate.isBefore(minDate)) {
+        minDate = asset.purchaseDate;
+      }
+    }
+    for (final tx in transactions) {
+      if (minDate == null || tx.date.isBefore(minDate)) {
+        minDate = tx.date;
+      }
+    }
+    return minDate ?? createdAt;
+  }
+
+  int get holdingDays {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final earliest = DateTime(
+      earliestPurchaseDate.year,
+      earliestPurchaseDate.month,
+      earliestPurchaseDate.day,
+    );
+    final diff = today.difference(earliest).inDays;
+    return diff < 0 ? 0 : diff;
+  }
+
+  bool get hasDailyData => true;
+  bool get hasWeeklyData => holdingDays >= 7;
+  bool get hasMonthlyData => holdingDays >= 30;
+  bool get hasThreeMonthlyData => holdingDays >= 90;
+  bool get hasSixMonthlyData => holdingDays >= 180;
+  bool get hasYearlyData => holdingDays >= 365;
+
+  // Dönemsel toplam kâr ve yüzdeler
+  double get dailyProfit =>
+      assets.fold(0.0, (sum, asset) => sum + asset.dailyProfit);
+
+  double get dailyChangePercent {
+    if (totalValue <= 0) return 0.0;
+    final prevValue = totalValue - dailyProfit;
+    return prevValue > 0 ? (dailyProfit / prevValue) * 100 : 0.0;
+  }
+
+  double get weeklyProfit =>
+      assets.fold(0.0, (sum, asset) => sum + asset.weeklyProfit);
+
+  double get weeklyChangePercent {
+    if (totalValue <= 0) return 0.0;
+    final prevValue = totalValue - weeklyProfit;
+    return prevValue > 0 ? (weeklyProfit / prevValue) * 100 : 0.0;
+  }
+
+  double get monthlyProfit =>
+      assets.fold(0.0, (sum, asset) => sum + asset.monthlyProfit);
+
+  double get monthlyChangePercent {
+    if (totalValue <= 0) return 0.0;
+    final prevValue = totalValue - monthlyProfit;
+    return prevValue > 0 ? (monthlyProfit / prevValue) * 100 : 0.0;
+  }
+
+  double get threeMonthlyProfit =>
+      assets.fold(0.0, (sum, asset) => sum + asset.threeMonthlyProfit);
+
+  double get threeMonthlyChangePercent {
+    if (totalValue <= 0) return 0.0;
+    final prevValue = totalValue - threeMonthlyProfit;
+    return prevValue > 0 ? (threeMonthlyProfit / prevValue) * 100 : 0.0;
+  }
+
+  double get sixMonthlyProfit =>
+      assets.fold(0.0, (sum, asset) => sum + asset.sixMonthlyProfit);
+
+  double get sixMonthlyChangePercent {
+    if (totalValue <= 0) return 0.0;
+    final prevValue = totalValue - sixMonthlyProfit;
+    return prevValue > 0 ? (sixMonthlyProfit / prevValue) * 100 : 0.0;
+  }
+
+  double get yearlyProfit =>
+      assets.fold(0.0, (sum, asset) => sum + asset.yearlyProfit);
+
+  double get yearlyChangePercent {
+    if (totalValue <= 0) return 0.0;
+    final prevValue = totalValue - yearlyProfit;
+    return prevValue > 0 ? (yearlyProfit / prevValue) * 100 : 0.0;
+  }
+
+  // Varlık bazlı dağılım (yüzde cinsinden, büyükten küçüğe sıralı)
+  List<AssetAllocationItem> get assetAllocations {
+    if (totalValue <= 0 || assets.isEmpty) return [];
+
+    final Map<String, AssetAllocationItem> map = {};
+    for (final asset in assets) {
+      final key = asset.symbol.trim().isNotEmpty
+          ? asset.symbol.trim()
+          : asset.name.trim();
+      final val = asset.currentValue;
+      if (val <= 0) continue;
+
+      if (map.containsKey(key)) {
+        final existing = map[key]!;
+        final newVal = existing.value + val;
+        map[key] = AssetAllocationItem(
+          symbol: existing.symbol,
+          name: existing.name,
+          category: existing.category,
+          value: newVal,
+          percentage: (newVal / totalValue) * 100,
+        );
+      } else {
+        map[key] = AssetAllocationItem(
+          symbol: key,
+          name: asset.name,
+          category: asset.category,
+          value: val,
+          percentage: (val / totalValue) * 100,
+        );
+      }
+    }
+
+    final list = map.values.toList();
+    list.sort((a, b) => b.value.compareTo(a.value));
+    return list;
+  }
+
+  // Kategori bazlı dağılım (yüzde cinsinden)
+  Map<AssetCategory, double> get categoryPercentages {
+    if (totalValue <= 0) return {};
+    final Map<AssetCategory, double> result = {};
+    for (final cat in AssetCategory.values) {
+      final catValue = assets
+          .where((a) => a.category == cat)
+          .fold(0.0, (sum, a) => sum + a.currentValue);
+      if (catValue > 0) {
+        result[cat] = (catValue / totalValue) * 100;
+      }
+    }
+    return result;
+  }
+
+  Map<AssetCategory, double> get categoryValues {
+    final Map<AssetCategory, double> result = {};
+    for (final cat in AssetCategory.values) {
+      final catValue = assets
+          .where((a) => a.category == cat)
+          .fold(0.0, (sum, a) => sum + a.currentValue);
+      if (catValue > 0) {
+        result[cat] = catValue;
+      }
+    }
+    return result;
+  }
+
+  Portfolio copyWith({
+    String? id,
+    String? name,
+    String? description,
+    DateTime? createdAt,
+    List<PortfolioAsset>? assets,
+    List<PortfolioTransaction>? transactions,
+    bool? isVisible,
+  }) {
+    return Portfolio(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      createdAt: createdAt ?? this.createdAt,
+      assets: assets ?? this.assets,
+      transactions: transactions ?? this.transactions,
+      isVisible: isVisible ?? this.isVisible,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'createdAt': createdAt.toIso8601String(),
+      'assets': assets.map((a) => a.toJson()).toList(),
+      'transactions': transactions.map((t) => t.toJson()).toList(),
+      'isVisible': isVisible,
+    };
+  }
+
+  factory Portfolio.fromJson(Map<String, dynamic> json) {
+    return Portfolio(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String? ?? '',
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+      assets: (json['assets'] as List<dynamic>?)
+              ?.map((a) => PortfolioAsset.fromJson(a as Map<String, dynamic>))
+              .toList() ??
+          [],
+      transactions: (json['transactions'] as List<dynamic>?)
+              ?.map((t) => PortfolioTransaction.fromJson(t as Map<String, dynamic>))
+              .toList() ??
+          [],
+      isVisible: json['isVisible'] as bool? ?? true,
+    );
+  }
+}
+
+class AssetAllocationItem {
+  final String symbol;
+  final String name;
+  final AssetCategory category;
+  final double value;
+  final double percentage;
+
+  const AssetAllocationItem({
+    required this.symbol,
+    required this.name,
+    required this.category,
+    required this.value,
+    required this.percentage,
+  });
+}
