@@ -224,18 +224,6 @@ class AssetItemTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          'Net Fiyat: ${Formatters.formatPrice(asset.netCurrentPrice)} ₺',
-                          style: const TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
                     ],
                   ],
                 ),

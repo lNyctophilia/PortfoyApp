@@ -103,36 +103,14 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                portfolio.name,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.textPrimary,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            // SİLİK FON ADEDİ
-                            Opacity(
-                              opacity: 0.5,
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  '(${portfolio.fundCount} Fon • ${portfolio.assetCount} Varlık)',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: AppTheme.textSecondary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          portfolio.name,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                         if (portfolio.description.isNotEmpty) ...[
                           const SizedBox(height: 2),
