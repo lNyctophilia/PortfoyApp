@@ -202,6 +202,17 @@ void main() {
       expect(portfolio.totalProfit, 1500.0);
       expect(portfolio.totalWithholdingTax, 175.0);
       expect(portfolio.netTotalProfit, 1325.0);
+      expect(portfolio.totalValue, 4500.0);
+      expect(portfolio.netTotalValue, 4325.0);
+
+      // Varlık dağılımında stopaj kesilmiş net değerler kullanılmalı
+      final allocations = portfolio.assetAllocations;
+      expect(allocations.length, 2);
+      expect(allocations[0].symbol, 'THYAO');
+      expect(allocations[0].value, 2500.0);
+      expect(allocations[1].symbol, 'TCD');
+      expect(allocations[1].value, 1825.0); // 2000 brüt yerine 1825 net
+      expect(allocations[0].value + allocations[1].value, portfolio.netTotalValue);
 
       expect(portfolio.realizedProfit, 500.0);
       expect(portfolio.realizedWithholdingTax, 87.5);

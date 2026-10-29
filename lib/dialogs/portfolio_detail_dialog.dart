@@ -231,7 +231,11 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                         fit: BoxFit.scaleDown,
                                         alignment: Alignment.centerLeft,
                                         child: Text(
-                                          Formatters.currency(portfolio.totalValue),
+                                          Formatters.currency(
+                                            portfolio.totalWithholdingTax > 0
+                                                ? portfolio.netTotalValue
+                                                : portfolio.totalValue,
+                                          ),
                                           style: const TextStyle(
                                             color: AppTheme.textPrimary,
                                             fontSize: 22,
@@ -247,6 +251,15 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                           fontSize: 11,
                                         ),
                                       ),
+                                      if (portfolio.totalWithholdingTax > 0)
+                                        Text(
+                                          'Brüt: ${Formatters.currency(portfolio.totalValue)}',
+                                          style: const TextStyle(
+                                            color: AppTheme.textMuted,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ),

@@ -177,7 +177,9 @@ class AssetItemTile extends StatelessWidget {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerRight,
                       child: Text(
-                        Formatters.currency(asset.currentValue),
+                        Formatters.currency(
+                          hasStopaj ? asset.netCurrentValue : asset.currentValue,
+                        ),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -214,7 +216,7 @@ class AssetItemTile extends StatelessWidget {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerRight,
                         child: Text(
-                          'Brüt: ${Formatters.currency(asset.totalProfit)}',
+                          'Brüt: ${Formatters.currency(asset.currentValue)} • Kâr: ${Formatters.currency(asset.totalProfit)}',
                           style: const TextStyle(
                             color: AppTheme.textMuted,
                             fontSize: 10,

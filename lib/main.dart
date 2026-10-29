@@ -197,9 +197,14 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                 final summaryCards = [
                   _buildHeaderSummaryCard(
                     title: 'Toplam Portföy Değeri',
-                    value: Formatters.currency(provider.grandTotalValue),
-                    subtitle:
-                        'Toplam Maliyet: ${Formatters.currency(provider.grandTotalCost)}',
+                    value: Formatters.currency(
+                      provider.grandTotalWithholdingTax > 0
+                          ? provider.grandTotalNetValue
+                          : provider.grandTotalValue,
+                    ),
+                    subtitle: provider.grandTotalWithholdingTax > 0
+                        ? 'Maliyet: ${Formatters.currency(provider.grandTotalCost)} • Brüt: ${Formatters.currency(provider.grandTotalValue)}'
+                        : 'Toplam Maliyet: ${Formatters.currency(provider.grandTotalCost)}',
                     icon: Icons.account_balance_rounded,
                     iconColor: AppTheme.primaryLight,
                   ),
@@ -211,7 +216,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                           : provider.grandTotalProfit,
                     ),
                     subtitle: provider.grandTotalWithholdingTax > 0
-                        ? '${Formatters.percent(provider.grandTotalCost > 0 ? (provider.grandTotalNetProfit / provider.grandTotalCost) * 100 : 0.0)} • Brüt: ${Formatters.currency(provider.grandTotalProfit)}'
+                        ? '${Formatters.percent(provider.grandTotalNetProfitPercent)} • Brüt: ${Formatters.currency(provider.grandTotalProfit)}'
                         : Formatters.percent(provider.grandTotalProfitPercent),
                     icon: isProfit
                         ? Icons.trending_up_rounded

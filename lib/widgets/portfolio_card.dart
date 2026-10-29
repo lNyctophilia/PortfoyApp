@@ -248,7 +248,11 @@ class _PortfolioCardState extends State<PortfolioCard> {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            Formatters.currency(p.totalValue),
+                            Formatters.currency(
+                              p.totalWithholdingTax > 0
+                                  ? p.netTotalValue
+                                  : p.totalValue,
+                            ),
                             style: const TextStyle(
                               color: AppTheme.textPrimary,
                               fontSize: 21,
@@ -257,6 +261,22 @@ class _PortfolioCardState extends State<PortfolioCard> {
                             ),
                           ),
                         ),
+                        if (p.totalWithholdingTax > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Brüt: ${Formatters.currency(p.totalValue)}',
+                                style: const TextStyle(
+                                  color: AppTheme.textMuted,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),

@@ -152,14 +152,17 @@ class Portfolio {
 
   // Varlık bazlı dağılım (yüzde cinsinden, büyükten küçüğe sıralı)
   List<AssetAllocationItem> get assetAllocations {
-    if (totalValue <= 0 || assets.isEmpty) return [];
+    final effectiveTotal = totalWithholdingTax > 0 ? netTotalValue : totalValue;
+    if (effectiveTotal <= 0 || assets.isEmpty) return [];
 
     final Map<String, AssetAllocationItem> map = {};
     for (final asset in assets) {
       final key = asset.symbol.trim().isNotEmpty
           ? asset.symbol.trim()
           : asset.name.trim();
-      final val = asset.currentValue;
+      final val = (asset.category == AssetCategory.fon && asset.withholdingTaxAmount > 0)
+          ? asset.netCurrentValue
+          : asset.currentValue;
       if (val <= 0) continue;
 
       if (map.containsKey(key)) {
@@ -170,7 +173,7 @@ class Portfolio {
           name: existing.name,
           category: existing.category,
           value: newVal,
-          percentage: (newVal / totalValue) * 100,
+          percentage: (newVal / effectiveTotal) * 100,
         );
       } else {
         map[key] = AssetAllocationItem(
@@ -178,7 +181,7 @@ class Portfolio {
           name: asset.name,
           category: asset.category,
           value: val,
-          percentage: (val / totalValue) * 100,
+          percentage: (val / effectiveTotal) * 100,
         );
       }
     }
@@ -190,14 +193,22 @@ class Portfolio {
 
   // Kategori bazlı dağılım (yüzde cinsinden)
   Map<AssetCategory, double> get categoryPercentages {
-    if (totalValue <= 0) return {};
+    final effectiveTotal = totalWithholdingTax > 0 ? netTotalValue : totalValue;
+    if (effectiveTotal <= 0) return {};
     final Map<AssetCategory, double> result = {};
     for (final cat in AssetCategory.values) {
       final catValue = assets
           .where((a) => a.category == cat)
-          .fold(0.0, (sum, a) => sum + a.currentValue);
+          .fold(
+            0.0,
+            (sum, a) =>
+                sum +
+                ((a.category == AssetCategory.fon && a.withholdingTaxAmount > 0)
+                    ? a.netCurrentValue
+                    : a.currentValue),
+          );
       if (catValue > 0) {
-        result[cat] = (catValue / totalValue) * 100;
+        result[cat] = (catValue / effectiveTotal) * 100;
       }
     }
     return result;
@@ -208,7 +219,14 @@ class Portfolio {
     for (final cat in AssetCategory.values) {
       final catValue = assets
           .where((a) => a.category == cat)
-          .fold(0.0, (sum, a) => sum + a.currentValue);
+          .fold(
+            0.0,
+            (sum, a) =>
+                sum +
+                ((a.category == AssetCategory.fon && a.withholdingTaxAmount > 0)
+                    ? a.netCurrentValue
+                    : a.currentValue),
+          );
       if (catValue > 0) {
         result[cat] = catValue;
       }

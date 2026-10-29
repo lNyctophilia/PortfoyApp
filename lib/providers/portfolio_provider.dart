@@ -60,6 +60,12 @@ class PortfolioProvider extends ChangeNotifier {
   double get grandTotalProfitPercent =>
       grandTotalCost > 0 ? (grandTotalProfit / grandTotalCost) * 100 : 0.0;
 
+  double get grandTotalNetProfitPercent =>
+      grandTotalCost > 0 ? (grandTotalNetProfit / grandTotalCost) * 100 : 0.0;
+
+  double get grandTotalNetValue =>
+      grandTotalValue - grandTotalWithholdingTax;
+
   int get grandTotalAssetCount =>
       visiblePortfolios.fold(0, (sum, p) => sum + p.assetCount);
 
