@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/portfolio.dart';
+import '../providers/portfolio_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 import 'category_distribution_bar.dart';
+import 'net_gross_badge.dart';
 import 'period_performance_badge.dart';
 
 class PortfolioCard extends StatefulWidget {
@@ -31,7 +34,14 @@ class _PortfolioCardState extends State<PortfolioCard> {
   @override
   Widget build(BuildContext context) {
     final p = widget.portfolio;
-    final isProfit = p.netTotalProfit >= 0;
+    final showNetValues = context.watch<PortfolioProvider>().showNetValues;
+    final hasStopaj = p.totalWithholdingTax > 0;
+    final displayProfit =
+        (hasStopaj && showNetValues) ? p.netTotalProfit : p.totalProfit;
+    final displayProfitPercent = (hasStopaj && showNetValues)
+        ? p.netTotalProfitPercent
+        : p.totalProfitPercent;
+    final isProfit = displayProfit >= 0;
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
     return MouseRegion(
@@ -235,13 +245,21 @@ class _PortfolioCardState extends State<PortfolioCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Portföy Değeri',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        Row(
+                          children: [
+                            const Text(
+                              'Portföy Değeri',
+                              style: TextStyle(
+                                color: AppTheme.textMuted,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (hasStopaj) ...[
+                              const SizedBox(width: 6),
+                              NetGrossBadge(isNet: showNetValues),
+                            ],
+                          ],
                         ),
                         const SizedBox(height: 2),
                         FittedBox(
@@ -249,7 +267,7 @@ class _PortfolioCardState extends State<PortfolioCard> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             Formatters.currency(
-                              p.totalWithholdingTax > 0
+                              (hasStopaj && showNetValues)
                                   ? p.netTotalValue
                                   : p.totalValue,
                             ),
@@ -261,22 +279,6 @@ class _PortfolioCardState extends State<PortfolioCard> {
                             ),
                           ),
                         ),
-                        if (p.totalWithholdingTax > 0)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Brüt: ${Formatters.currency(p.totalValue)}',
-                                style: const TextStyle(
-                                  color: AppTheme.textMuted,
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                   ),
@@ -298,52 +300,30 @@ class _PortfolioCardState extends State<PortfolioCard> {
                           color: profitColor.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerRight,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isProfit
-                                      ? Icons.arrow_outward_rounded
-                                      : Icons.arrow_downward_rounded,
-                                  color: profitColor,
-                                  size: 13,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  '${Formatters.currency(p.totalWithholdingTax > 0 ? p.netTotalProfit : p.totalProfit)} (${Formatters.percent(p.totalWithholdingTax > 0 ? p.netTotalProfitPercent : p.totalProfitPercent)})',
-                                  style: TextStyle(
-                                    color: profitColor,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isProfit
+                                  ? Icons.arrow_outward_rounded
+                                  : Icons.arrow_downward_rounded,
+                              color: profitColor,
+                              size: 13,
                             ),
-                          ),
-                          if (p.totalWithholdingTax > 0)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  'Brüt: ${Formatters.currency(p.totalProfit)}',
-                                  style: const TextStyle(
-                                    color: AppTheme.textMuted,
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
+                              style: TextStyle(
+                                color: profitColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

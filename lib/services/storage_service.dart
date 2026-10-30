@@ -6,8 +6,52 @@ import '../models/portfolio_asset.dart';
 
 class StorageService {
   static const String _fileName = 'portfolios_data.json';
-
   static const String _logoCacheFileName = 'logo_cache.json';
+  static const String _settingsFileName = 'app_settings.json';
+
+  Future<File> _getSettingsFile() async {
+    Directory targetDir;
+    try {
+      final appData = Platform.environment['APPDATA'];
+      if (appData != null && appData.isNotEmpty) {
+        targetDir = Directory('$appData\\PortfoyApp');
+        if (!await targetDir.exists()) {
+          await targetDir.create(recursive: true);
+        }
+      } else {
+        targetDir = Directory.current;
+      }
+    } catch (_) {
+      targetDir = Directory.current;
+    }
+    return File('${targetDir.path}${Platform.pathSeparator}$_settingsFileName');
+  }
+
+  Future<Map<String, dynamic>> loadSettings() async {
+    try {
+      final file = await _getSettingsFile();
+      if (await file.exists()) {
+        final content = await file.readAsString();
+        if (content.trim().isNotEmpty) {
+          final decoded = jsonDecode(content);
+          if (decoded is Map<String, dynamic>) {
+            return decoded;
+          }
+        }
+      }
+    } catch (_) {}
+    return {
+      'showNetValuesWithholdingTax': true,
+    };
+  }
+
+  Future<void> saveSettings(Map<String, dynamic> settings) async {
+    try {
+      final file = await _getSettingsFile();
+      final content = const JsonEncoder.withIndent('  ').convert(settings);
+      await file.writeAsString(content);
+    } catch (_) {}
+  }
 
   Future<File> _getFile() async {
     Directory targetDir;

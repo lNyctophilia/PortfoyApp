@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/asset_category.dart';
+import '../providers/portfolio_provider.dart';
 import 'asset_logo.dart';
 import '../models/portfolio_asset.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
+import 'net_gross_badge.dart';
 
 class AssetItemTile extends StatelessWidget {
   final PortfolioAsset asset;
@@ -21,11 +24,17 @@ class AssetItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showNetValues = context.watch<PortfolioProvider>().showNetValues;
     final hasStopaj =
         asset.category == AssetCategory.fon && asset.withholdingTaxAmount > 0;
-    final displayProfit = hasStopaj ? asset.netProfit : asset.totalProfit;
-    final displayPercent =
-        hasStopaj ? asset.netProfitPercent : asset.totalProfitPercent;
+    final displayValue = (hasStopaj && showNetValues)
+        ? asset.netCurrentValue
+        : asset.currentValue;
+    final displayProfit =
+        (hasStopaj && showNetValues) ? asset.netProfit : asset.totalProfit;
+    final displayPercent = (hasStopaj && showNetValues)
+        ? asset.netProfitPercent
+        : asset.totalProfitPercent;
     final isProfit = displayProfit >= 0;
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
     final cat = asset.category;
@@ -176,15 +185,22 @@ class AssetItemTile extends StatelessWidget {
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerRight,
-                      child: Text(
-                        Formatters.currency(
-                          hasStopaj ? asset.netCurrentValue : asset.currentValue,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (hasStopaj) ...[
+                            NetGrossBadge(isNet: showNetValues),
+                            const SizedBox(width: 5),
+                          ],
+                          Text(
+                            Formatters.currency(displayValue),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -210,21 +226,6 @@ class AssetItemTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (hasStopaj) ...[
-                      const SizedBox(height: 3),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          'Brüt: ${Formatters.currency(asset.currentValue)} • Kâr: ${Formatters.currency(asset.totalProfit)}',
-                          style: const TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),

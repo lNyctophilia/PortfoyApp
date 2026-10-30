@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 import '../widgets/asset_item_tile.dart';
 import '../widgets/category_distribution_bar.dart';
+import '../widgets/net_gross_badge.dart';
 import '../widgets/period_performance_badge.dart';
 import 'add_edit_asset_dialog.dart';
 import 'add_edit_portfolio_dialog.dart';
@@ -65,7 +66,11 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       return matchesCat && matchesSearch;
     }).toList();
 
-    final isProfit = portfolio.netTotalProfit >= 0;
+    final showNetValues = provider.showNetValues;
+    final isProfit = ((portfolio.totalWithholdingTax > 0 && showNetValues)
+            ? portfolio.netTotalProfit
+            : portfolio.totalProfit) >=
+        0;
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
     final size = MediaQuery.sizeOf(context);
@@ -196,48 +201,47 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Toplam Portföy Değeri',
-                                        style: TextStyle(
-                                          color: AppTheme.textMuted,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          Formatters.currency(
-                                            portfolio.totalWithholdingTax > 0
-                                                ? portfolio.netTotalValue
-                                                : portfolio.totalValue,
-                                          ),
-                                          style: const TextStyle(
-                                            color: AppTheme.textPrimary,
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Toplam Maliyet: ${Formatters.currency(portfolio.totalCost)}',
-                                        style: const TextStyle(
-                                          color: AppTheme.textSecondary,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                      if (portfolio.totalWithholdingTax > 0)
-                                        Text(
-                                          'Brüt: ${Formatters.currency(portfolio.totalValue)}',
-                                          style: const TextStyle(
-                                            color: AppTheme.textMuted,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
+                                       Row(
+                                         children: [
+                                           const Text(
+                                             'Toplam Portföy Değeri',
+                                             style: TextStyle(
+                                               color: AppTheme.textMuted,
+                                               fontSize: 12,
+                                               fontWeight: FontWeight.w500,
+                                             ),
+                                           ),
+                                           if (portfolio.totalWithholdingTax > 0) ...[
+                                             const SizedBox(width: 6),
+                                             NetGrossBadge(isNet: showNetValues),
+                                           ],
+                                         ],
+                                       ),
+                                       const SizedBox(height: 4),
+                                       FittedBox(
+                                         fit: BoxFit.scaleDown,
+                                         alignment: Alignment.centerLeft,
+                                         child: Text(
+                                           Formatters.currency(
+                                             (portfolio.totalWithholdingTax > 0 && showNetValues)
+                                                 ? portfolio.netTotalValue
+                                                 : portfolio.totalValue,
+                                           ),
+                                           style: const TextStyle(
+                                             color: AppTheme.textPrimary,
+                                             fontSize: 22,
+                                             fontWeight: FontWeight.w800,
+                                           ),
+                                         ),
+                                       ),
+                                       const SizedBox(height: 2),
+                                       Text(
+                                         'Toplam Maliyet: ${Formatters.currency(portfolio.totalCost)}',
+                                         style: const TextStyle(
+                                           color: AppTheme.textSecondary,
+                                           fontSize: 11,
+                                         ),
+                                       ),
                                     ],
                                   ),
                                 ),
@@ -253,63 +257,62 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Açık Kâr / Zarar',
-                                        style: TextStyle(
-                                          color: AppTheme.textMuted,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        alignment: Alignment.centerLeft,
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              isProfit
-                                                  ? Icons.trending_up_rounded
-                                                  : Icons.trending_down_rounded,
-                                              color: profitColor,
-                                              size: 18,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              Formatters.currency(
-                                                portfolio.totalWithholdingTax > 0
-                                                    ? portfolio.netTotalProfit
-                                                    : portfolio.totalProfit,
-                                              ),
-                                              style: TextStyle(
-                                                color: profitColor,
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Getiri: ${Formatters.percent(portfolio.totalWithholdingTax > 0 ? portfolio.netTotalProfitPercent : portfolio.totalProfitPercent)}',
-                                        style: TextStyle(
-                                          color: profitColor,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      if (portfolio.totalWithholdingTax > 0)
-                                        Text(
-                                          'Brüt: ${Formatters.currency(portfolio.totalProfit)}',
-                                          style: const TextStyle(
-                                            color: AppTheme.textMuted,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                    ],
+                                       Row(
+                                         children: [
+                                           const Text(
+                                             'Açık Kâr / Zarar',
+                                             style: TextStyle(
+                                               color: AppTheme.textMuted,
+                                               fontSize: 12,
+                                               fontWeight: FontWeight.w500,
+                                             ),
+                                           ),
+                                           if (portfolio.totalWithholdingTax > 0) ...[
+                                             const SizedBox(width: 6),
+                                             NetGrossBadge(isNet: showNetValues),
+                                           ],
+                                         ],
+                                       ),
+                                       const SizedBox(height: 4),
+                                       FittedBox(
+                                         fit: BoxFit.scaleDown,
+                                         alignment: Alignment.centerLeft,
+                                         child: Row(
+                                           mainAxisSize: MainAxisSize.min,
+                                           children: [
+                                             Icon(
+                                               isProfit
+                                                   ? Icons.trending_up_rounded
+                                                   : Icons.trending_down_rounded,
+                                               color: profitColor,
+                                               size: 18,
+                                             ),
+                                             const SizedBox(width: 4),
+                                             Text(
+                                               Formatters.currency(
+                                                 (portfolio.totalWithholdingTax > 0 && showNetValues)
+                                                     ? portfolio.netTotalProfit
+                                                     : portfolio.totalProfit,
+                                               ),
+                                               style: TextStyle(
+                                                 color: profitColor,
+                                                 fontSize: 20,
+                                                 fontWeight: FontWeight.w800,
+                                               ),
+                                             ),
+                                           ],
+                                         ),
+                                       ),
+                                       const SizedBox(height: 2),
+                                       Text(
+                                         'Getiri: ${Formatters.percent((portfolio.totalWithholdingTax > 0 && showNetValues) ? portfolio.netTotalProfitPercent : portfolio.totalProfitPercent)}',
+                                         style: TextStyle(
+                                           color: profitColor,
+                                           fontSize: 11,
+                                           fontWeight: FontWeight.w600,
+                                         ),
+                                       ),
+                                      ],
                                   ),
                                 ),
                                 Container(
@@ -324,67 +327,65 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Gerçekleşen Kâr / Zarar',
-                                        style: TextStyle(
-                                          color: AppTheme.textMuted,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        alignment: Alignment.centerLeft,
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              portfolio.netRealizedProfit >= 0
-                                                  ? Icons.check_circle_outline_rounded
-                                                  : Icons.highlight_off_rounded,
-                                              color: portfolio.netRealizedProfit >= 0
-                                                  ? AppTheme.profit
-                                                  : AppTheme.loss,
-                                              size: 18,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              Formatters.currency(
-                                                portfolio.realizedWithholdingTax > 0
-                                                    ? portfolio.netRealizedProfit
-                                                    : portfolio.realizedProfit,
-                                              ),
-                                              style: TextStyle(
-                                                color: portfolio.netRealizedProfit >= 0
-                                                    ? AppTheme.profit
-                                                    : AppTheme.loss,
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      if (portfolio.realizedWithholdingTax > 0)
-                                        Text(
-                                          'Brüt: ${Formatters.currency(portfolio.realizedProfit)}',
-                                          style: const TextStyle(
-                                            color: AppTheme.textMuted,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        )
-                                      else
-                                        const Text(
-                                          'Kapatılan Satış İşlemleri',
-                                          style: TextStyle(
-                                            color: AppTheme.textSecondary,
-                                            fontSize: 11,
-                                          ),
-                                        ),
-                                    ],
+                                       Row(
+                                         children: [
+                                           const Text(
+                                             'Gerçekleşen Kâr / Zarar',
+                                             style: TextStyle(
+                                               color: AppTheme.textMuted,
+                                               fontSize: 12,
+                                               fontWeight: FontWeight.w500,
+                                             ),
+                                           ),
+                                           if (portfolio.realizedWithholdingTax > 0) ...[
+                                             const SizedBox(width: 6),
+                                             NetGrossBadge(isNet: showNetValues),
+                                           ],
+                                         ],
+                                       ),
+                                       const SizedBox(height: 4),
+                                       FittedBox(
+                                         fit: BoxFit.scaleDown,
+                                         alignment: Alignment.centerLeft,
+                                         child: Row(
+                                           mainAxisSize: MainAxisSize.min,
+                                           children: [
+                                             Icon(
+                                               portfolio.netRealizedProfit >= 0
+                                                   ? Icons.check_circle_outline_rounded
+                                                   : Icons.highlight_off_rounded,
+                                               color: portfolio.netRealizedProfit >= 0
+                                                   ? AppTheme.profit
+                                                   : AppTheme.loss,
+                                               size: 18,
+                                             ),
+                                             const SizedBox(width: 4),
+                                             Text(
+                                               Formatters.currency(
+                                                 (portfolio.realizedWithholdingTax > 0 && showNetValues)
+                                                     ? portfolio.netRealizedProfit
+                                                     : portfolio.realizedProfit,
+                                               ),
+                                               style: TextStyle(
+                                                 color: portfolio.netRealizedProfit >= 0
+                                                     ? AppTheme.profit
+                                                     : AppTheme.loss,
+                                                 fontSize: 20,
+                                                 fontWeight: FontWeight.w800,
+                                               ),
+                                             ),
+                                           ],
+                                         ),
+                                       ),
+                                       const SizedBox(height: 2),
+                                       const Text(
+                                         'Kapatılan Satış İşlemleri',
+                                         style: TextStyle(
+                                           color: AppTheme.textSecondary,
+                                           fontSize: 11,
+                                         ),
+                                       ),
+                                      ],
                                   ),
                                 ),
                               ],
@@ -912,36 +913,44 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                       color: profitColor.withValues(alpha: 0.3),
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Kâr: ${Formatters.currency(tx.category == AssetCategory.fon && tx.withholdingTax > 0 ? tx.netRealizedProfit : tx.realizedProfit)}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: profitColor,
-                        ),
-                      ),
-                      if (tx.category == AssetCategory.fon &&
-                          tx.withholdingTax > 0)
-                        Text(
-                          'Brüt: ${Formatters.currency(tx.realizedProfit)}',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.textMuted,
+                  child: Builder(
+                    builder: (context) {
+                      final showNetValues = context.watch<PortfolioProvider>().showNetValues;
+                      final hasStopaj = tx.category == AssetCategory.fon && tx.withholdingTax > 0;
+                      final displayProfit = (hasStopaj && showNetValues) ? tx.netRealizedProfit : tx.realizedProfit;
+                      final displayPercent = (hasStopaj && showNetValues) ? tx.netProfitPercent : tx.profitPercent;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Kâr: ${Formatters.currency(displayProfit)}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: profitColor,
+                                ),
+                              ),
+                              if (hasStopaj) ...[
+                                const SizedBox(width: 4),
+                                NetGrossBadge(isNet: showNetValues, fontSize: 8.5),
+                              ],
+                            ],
                           ),
-                        ),
-                      Text(
-                        'Oran: ${Formatters.percent(tx.category == AssetCategory.fon && tx.withholdingTax > 0 ? tx.netProfitPercent : tx.profitPercent)}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: profitColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                          Text(
+                            'Oran: ${Formatters.percent(displayPercent)}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: profitColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),

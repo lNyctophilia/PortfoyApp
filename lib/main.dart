@@ -6,8 +6,10 @@ import 'package:provider/provider.dart';
 import 'dialogs/add_edit_portfolio_dialog.dart';
 import 'dialogs/portfolio_detail_dialog.dart';
 import 'providers/portfolio_provider.dart';
+import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
 import 'utils/formatters.dart';
+import 'widgets/net_gross_badge.dart';
 import 'widgets/portfolio_card.dart';
 
 void main() {
@@ -193,31 +195,38 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth >= 960;
+                final hasStopaj = provider.grandTotalWithholdingTax > 0;
+                final hasRealizedStopaj =
+                    provider.grandTotalRealizedWithholdingTax > 0;
+                final isNet = provider.showNetValues;
 
                 final summaryCards = [
                   _buildHeaderSummaryCard(
                     title: 'Toplam Portföy Değeri',
+                    badge: hasStopaj ? NetGrossBadge(isNet: isNet) : null,
                     value: Formatters.currency(
-                      provider.grandTotalWithholdingTax > 0
+                      (hasStopaj && isNet)
                           ? provider.grandTotalNetValue
                           : provider.grandTotalValue,
                     ),
-                    subtitle: provider.grandTotalWithholdingTax > 0
-                        ? 'Maliyet: ${Formatters.currency(provider.grandTotalCost)} • Brüt: ${Formatters.currency(provider.grandTotalValue)}'
-                        : 'Toplam Maliyet: ${Formatters.currency(provider.grandTotalCost)}',
+                    subtitle:
+                        'Toplam Maliyet: ${Formatters.currency(provider.grandTotalCost)}',
                     icon: Icons.account_balance_rounded,
                     iconColor: AppTheme.primaryLight,
                   ),
                   _buildHeaderSummaryCard(
                     title: 'Toplam Kâr / Zarar',
+                    badge: hasStopaj ? NetGrossBadge(isNet: isNet) : null,
                     value: Formatters.currency(
-                      provider.grandTotalWithholdingTax > 0
+                      (hasStopaj && isNet)
                           ? provider.grandTotalNetProfit
                           : provider.grandTotalProfit,
                     ),
-                    subtitle: provider.grandTotalWithholdingTax > 0
-                        ? '${Formatters.percent(provider.grandTotalNetProfitPercent)} • Brüt: ${Formatters.currency(provider.grandTotalProfit)}'
-                        : Formatters.percent(provider.grandTotalProfitPercent),
+                    subtitle: Formatters.percent(
+                      (hasStopaj && isNet)
+                          ? provider.grandTotalNetProfitPercent
+                          : provider.grandTotalProfitPercent,
+                    ),
                     icon: isProfit
                         ? Icons.trending_up_rounded
                         : Icons.trending_down_rounded,
@@ -226,14 +235,13 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                   ),
                   _buildHeaderSummaryCard(
                     title: 'Gerçekleşen Kâr / Zarar',
+                    badge: hasRealizedStopaj ? NetGrossBadge(isNet: isNet) : null,
                     value: Formatters.currency(
-                      provider.grandTotalRealizedWithholdingTax > 0
+                      (hasRealizedStopaj && isNet)
                           ? provider.grandTotalNetRealizedProfit
                           : provider.grandTotalRealizedProfit,
                     ),
-                    subtitle: provider.grandTotalRealizedWithholdingTax > 0
-                        ? 'Brüt: ${Formatters.currency(provider.grandTotalRealizedProfit)}'
-                        : 'Kapatılan İşlemler',
+                    subtitle: 'Kapatılan İşlemler',
                     icon: provider.grandTotalNetRealizedProfit >= 0
                         ? Icons.check_circle_outline_rounded
                         : Icons.highlight_off_rounded,
@@ -247,7 +255,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                 ];
 
                 final actionButtons = SizedBox(
-                  width: 160,
+                  width: 210,
                   height: 84,
                   child: Column(
                     children: [
@@ -272,32 +280,54 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                       ),
                       const SizedBox(height: 8),
                       Expanded(
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: provider.isRefreshing
-                                ? null
-                                : () => _refreshAllData(),
-                            icon: provider.isRefreshing
-                                ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.refresh_rounded, size: 16),
-                            label: Text(
-                              provider.isRefreshing ? 'Güncelleniyor...' : 'Yenile (F5)',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: provider.isRefreshing
+                                    ? null
+                                    : () => _refreshAllData(),
+                                icon: provider.isRefreshing
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.refresh_rounded, size: 16),
+                                label: Text(
+                                  provider.isRefreshing ? '...' : 'Yenile (F5)',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  side: const BorderSide(color: AppTheme.borderSubtle),
+                                  foregroundColor: AppTheme.textPrimary,
+                                ),
                               ),
                             ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              side: const BorderSide(color: AppTheme.borderSubtle),
-                              foregroundColor: AppTheme.textPrimary,
+                            const SizedBox(width: 8),
+                            Tooltip(
+                              message: 'Ayarlar',
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const SettingsScreen(),
+                                    ),
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  side: const BorderSide(color: AppTheme.borderSubtle),
+                                  foregroundColor: AppTheme.textPrimary,
+                                ),
+                                child: const Icon(Icons.settings_outlined, size: 18),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ],
@@ -421,6 +451,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
     required IconData icon,
     required Color iconColor,
     Color? valueColor,
+    Widget? badge,
   }) {
     return Container(
       height: 84,
@@ -446,15 +477,25 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (badge != null) ...[
+                      const SizedBox(width: 6),
+                      badge,
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 2),
                 FittedBox(

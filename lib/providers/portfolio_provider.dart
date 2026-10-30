@@ -14,8 +14,10 @@ class PortfolioProvider extends ChangeNotifier {
   bool _isLoading = true;
   bool _isRefreshing = false;
   AssetCategory? _selectedCategoryFilter;
+  bool _showNetValues = true;
 
   bool get isRefreshing => _isRefreshing;
+  bool get showNetValues => _showNetValues;
 
   List<Portfolio> get portfolios {
     if (_selectedCategoryFilter == null) {
@@ -80,11 +82,23 @@ class PortfolioProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    final settings = await _storageService.loadSettings();
+    _showNetValues = settings['showNetValuesWithholdingTax'] ?? true;
+
     await MarketDataService.ensureLogoCacheLoaded();
     _portfolios = await _storageService.loadPortfolios();
     _backfillMissingAssetIcons();
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> setShowNetValues(bool value) async {
+    if (_showNetValues == value) return;
+    _showNetValues = value;
+    notifyListeners();
+    await _storageService.saveSettings({
+      'showNetValuesWithholdingTax': _showNetValues,
+    });
   }
 
   void _backfillMissingAssetIcons() {

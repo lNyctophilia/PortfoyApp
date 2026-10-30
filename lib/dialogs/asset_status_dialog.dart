@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../utils/fifo_calculator.dart';
 import '../utils/formatters.dart';
 import '../widgets/asset_logo.dart';
+import '../widgets/net_gross_badge.dart';
 import 'add_transaction_dialog.dart';
 import '../providers/portfolio_provider.dart';
 
@@ -52,7 +53,20 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     final dialogWidth = (size.width * 0.90).clamp(600.0, 840.0);
     final dialogHeight = (size.height * 0.88).clamp(520.0, 780.0);
 
-    final isProfit = currentAsset.netProfit >= 0;
+    final showNetValues = widget.provider.showNetValues;
+    final hasStopaj = currentAsset.category == AssetCategory.fon &&
+        currentAsset.withholdingTaxAmount > 0;
+    final displayCurrentPrice = (hasStopaj && showNetValues)
+        ? currentAsset.netCurrentPrice
+        : currentAsset.currentPrice;
+    final displayProfit = (hasStopaj && showNetValues)
+        ? currentAsset.netProfit
+        : currentAsset.totalProfit;
+    final displayProfitPercent = (hasStopaj && showNetValues)
+        ? currentAsset.netProfitPercent
+        : currentAsset.totalProfitPercent;
+
+    final isProfit = displayProfit >= 0;
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
     return Dialog(
@@ -187,44 +201,51 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                     _buildDivider(),
                     _buildMetricItem(
                       'Güncel Fiyat',
-                      Formatters.currency(currentAsset.currentPrice),
+                      Formatters.currency(displayCurrentPrice),
                       icon: Icons.show_chart_rounded,
-                      subtitle: currentAsset.category == AssetCategory.fon &&
-                              currentAsset.withholdingTaxAmount > 0
-                          ? 'Net: ${Formatters.currency(currentAsset.netCurrentPrice)}'
+                      badge: hasStopaj
+                          ? NetGrossBadge(isNet: showNetValues, fontSize: 8.5)
                           : null,
                     ),
                     _buildDivider(),
                     _buildMetricItem(
                       'Kalan Kâr / Zarar',
-                      currentAsset.withholdingTaxAmount > 0
-                          ? '${Formatters.currency(currentAsset.netProfit)} (${Formatters.percent(currentAsset.netProfitPercent)})'
-                          : '${Formatters.currency(currentAsset.totalProfit)} (${Formatters.percent(currentAsset.totalProfitPercent)})',
+                      '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
                       valueColor: profitColor,
                       icon: Icons.insights_rounded,
-                      subtitle: currentAsset.category == AssetCategory.fon &&
-                              currentAsset.withholdingTaxAmount > 0
-                          ? 'Brüt: ${Formatters.currency(currentAsset.totalProfit)}'
+                      badge: hasStopaj
+                          ? NetGrossBadge(isNet: showNetValues, fontSize: 8.5)
                           : null,
                     ),
                     if (fifoResult.totalRealizedProfit != 0) ...[
                       _buildDivider(),
-                      _buildMetricItem(
-                        'Gerçekleşen Kâr',
-                        currentAsset.category == AssetCategory.fon &&
-                                fifoResult.totalRealizedProfit > 0 &&
-                                currentAsset.effectiveWithholdingTaxRate > 0
-                            ? Formatters.currency(fifoResult.totalRealizedProfit - fifoResult.totalRealizedProfit * (currentAsset.effectiveWithholdingTaxRate / 100))
-                            : Formatters.currency(fifoResult.totalRealizedProfit),
-                        valueColor: fifoResult.totalRealizedProfit >= 0
-                            ? AppTheme.profit
-                            : AppTheme.loss,
-                        icon: Icons.monetization_on_outlined,
-                        subtitle: currentAsset.category == AssetCategory.fon &&
-                                fifoResult.totalRealizedProfit > 0 &&
-                                currentAsset.effectiveWithholdingTaxRate > 0
-                            ? 'Brüt: ${Formatters.currency(fifoResult.totalRealizedProfit)}'
-                            : null,
+                      Builder(
+                        builder: (context) {
+                          final hasRealizedStopaj = currentAsset.category ==
+                                  AssetCategory.fon &&
+                              fifoResult.totalRealizedProfit > 0 &&
+                              currentAsset.effectiveWithholdingTaxRate > 0;
+                          final netRealized = fifoResult.totalRealizedProfit -
+                              fifoResult.totalRealizedProfit *
+                                  (currentAsset.effectiveWithholdingTaxRate / 100);
+                          final displayRealized =
+                              (hasRealizedStopaj && showNetValues)
+                                  ? netRealized
+                                  : fifoResult.totalRealizedProfit;
+
+                          return _buildMetricItem(
+                            'Gerçekleşen Kâr',
+                            Formatters.currency(displayRealized),
+                            valueColor: fifoResult.totalRealizedProfit >= 0
+                                ? AppTheme.profit
+                                : AppTheme.loss,
+                            icon: Icons.monetization_on_outlined,
+                            badge: hasRealizedStopaj
+                                ? NetGrossBadge(
+                                    isNet: showNetValues, fontSize: 8.5)
+                                : null,
+                          );
+                        },
                       ),
                     ],
                   ],
@@ -353,6 +374,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     IconData? icon,
     String? subtitle,
     Color? subtitleColor,
+    Widget? badge,
   }) {
     return Expanded(
       child: Column(
@@ -377,6 +399,10 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (badge != null) ...[
+                const SizedBox(width: 4),
+                badge,
+              ],
             ],
           ),
           const SizedBox(height: 3),
@@ -772,26 +798,25 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                                 100
                             : saleRecord.realizedProfitPercent;
 
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                        final showNetValues = widget.provider.showNetValues;
+                        final displayRealized = (hasStopaj && showNetValues) ? netRealized : saleRecord.realizedProfit;
+                        final displayPct = (hasStopaj && showNetValues) ? netPct : saleRecord.realizedProfitPercent;
+
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Gerçekleşen: ${Formatters.currency(netRealized)} (${Formatters.percent(netPct)})',
+                              'Gerçekleşen: ${Formatters.currency(displayRealized)} (${Formatters.percent(displayPct)})',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: profitColor,
                               ),
                             ),
-                            if (hasStopaj)
-                              Text(
-                                'Brüt: ${Formatters.currency(saleRecord.realizedProfit)}',
-                                style: const TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppTheme.textMuted,
-                                ),
-                              ),
+                            if (hasStopaj) ...[
+                              const SizedBox(width: 4),
+                              NetGrossBadge(isNet: showNetValues, fontSize: 8.5),
+                            ],
                           ],
                         );
                       },
