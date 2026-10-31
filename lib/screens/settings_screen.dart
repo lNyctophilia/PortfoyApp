@@ -135,16 +135,16 @@ class SettingsScreen extends StatelessWidget {
 
                       const Divider(color: AppTheme.borderSubtle, height: 1),
 
-                      // 3. SEÇENEK: REEL GETİRİ (TÜFE)
+                      // 3. SEÇENEK: REEL GETİRİ
                       _buildRadioOption(
                         context: context,
                         provider: provider,
                         mode: ReturnCalculationMode.reel,
                         icon: Icons.auto_graph_rounded,
                         iconColor: const Color(0xFFF59E0B),
-                        title: 'Reel Getiri (TÜFE Enflasyonuna Göre)',
+                        title: 'Reel Getiri',
                         subtitle:
-                            'İnternetten TCMB / TÜİK resmi TÜFE enflasyon verisini çeker; varlığın alış tarihinden bu yana gerçekleşen enflasyonu arındırarak gerçek satın alma gücü getirisini gösterir.',
+                            'Varlığın alış tarihinden bu yana gerçekleşen enflasyonu arındırarak gerçek satın alma gücü getirisini gösterir.',
                       ),
 
                       const Divider(color: AppTheme.borderSubtle, height: 1),
@@ -173,7 +173,7 @@ class SettingsScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 const Text(
-                                  'Åu anki mod:',
+                                  'Şuanki mod:',
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -323,106 +323,112 @@ class SettingsScreen extends StatelessWidget {
               _buildSectionHeader('Uygulama Hakkında'),
 
               Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
                 decoration: BoxDecoration(
                   color: AppTheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppTheme.borderSubtle),
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppTheme.surfaceLight,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppTheme.borderSubtle),
-                            ),
-                            child: const Icon(
-                              Icons.wallet_rounded,
-                              color: AppTheme.primaryLight,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'PortföyApp',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.surfaceLight,
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: AppTheme.borderSubtle,
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        'v1.0.0',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppTheme.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  'Kişisel Finans ve Portföy Takip Uygulaması',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceLight,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.borderSubtle),
+                      ),
+                      child: const Icon(
+                        Icons.wallet_rounded,
+                        color: AppTheme.primaryLight,
+                        size: 32,
                       ),
                     ),
-                    const Divider(color: AppTheme.borderSubtle, height: 1),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            Icons.shield_outlined,
-                            size: 18,
-                            color: AppTheme.textMuted,
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'PortfoyApp',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary,
                           ),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Text(
-                              'Portföy, varlık ve işlem verileriniz yerel bilgisayarınızda (%APPDATA%\\PortfoyApp) güvenle saklanır.',
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                color: AppTheme.textMuted,
-                                height: 1.4,
-                              ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceLight,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: AppTheme.borderSubtle,
                             ),
                           ),
-                        ],
+                          child: const Text(
+                            'v1.0.0',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Kişisel Finans ve Portföy Takip Uygulaması',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const SizedBox(
+                      width: 140,
+                      child: Divider(color: AppTheme.borderSubtle, height: 1),
+                    ),
+                    const SizedBox(height: 14),
+                    const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.code_rounded,
+                          size: 15,
+                          color: AppTheme.primaryLight,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Geliştirici: ',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          'lNyctophilia',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      '© 2026 | Tüm hakları saklıdır.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppTheme.textMuted,
                       ),
                     ),
                   ],
