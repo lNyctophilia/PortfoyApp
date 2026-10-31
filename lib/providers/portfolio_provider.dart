@@ -116,9 +116,8 @@ class PortfolioProvider extends ChangeNotifier {
       case ReturnCalculationMode.brut:
         return grandTotalProfit;
       case ReturnCalculationMode.net:
-        return grandTotalNetProfit;
       case ReturnCalculationMode.reel:
-        return grandTotalRealProfit;
+        return grandTotalNetProfit;
     }
   }
 

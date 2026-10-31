@@ -208,20 +208,21 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                         ? NetGrossBadge(mode: mode)
                         : null,
                     value: Formatters.currency(provider.displayGrandTotalValue),
-                    subtitle: mode == ReturnCalculationMode.reel
-                        ? 'Düzeltilmiş Maliyet: ${Formatters.currency(provider.grandTotalRealCost)}'
-                        : 'Toplam Maliyet: ${Formatters.currency(provider.grandTotalCost)}',
+                    subtitle: 'Toplam Maliyet: ${Formatters.currency(provider.grandTotalCost)}',
                     icon: Icons.account_balance_rounded,
                     iconColor: AppTheme.primaryLight,
                   ),
                   _buildHeaderSummaryCard(
-                    title: mode == ReturnCalculationMode.reel
-                        ? 'Reel Kâr / Zarar (TÜFE)'
-                        : 'Toplam Kâr / Zarar',
+                    title: 'Toplam Kâr / Zarar',
                     badge: NetGrossBadge(mode: mode),
                     value: Formatters.currency(provider.displayGrandTotalProfit),
                     subtitle: Formatters.percent(
                         provider.displayGrandTotalProfitPercent),
+                    subtitleColor: mode == ReturnCalculationMode.reel
+                        ? (provider.displayGrandTotalProfitPercent >= 0
+                            ? AppTheme.profit
+                            : AppTheme.loss)
+                        : null,
                     icon: isProfit
                         ? Icons.trending_up_rounded
                         : Icons.trending_down_rounded,
@@ -452,6 +453,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
     required IconData icon,
     required Color iconColor,
     Color? valueColor,
+    Color? subtitleColor,
     Widget? badge,
   }) {
     return Container(
@@ -514,9 +516,12 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                 const SizedBox(height: 1),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
+                  style: TextStyle(
+                    color: subtitleColor ?? AppTheme.textSecondary,
                     fontSize: 11,
+                    fontWeight: subtitleColor != null
+                        ? FontWeight.w600
+                        : FontWeight.normal,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

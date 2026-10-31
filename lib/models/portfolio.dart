@@ -79,9 +79,8 @@ class Portfolio {
       case ReturnCalculationMode.brut:
         return totalProfit;
       case ReturnCalculationMode.net:
-        return netTotalProfit;
       case ReturnCalculationMode.reel:
-        return realTotalProfit(assetInflationRates);
+        return netTotalProfit;
     }
   }
 

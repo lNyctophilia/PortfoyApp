@@ -45,7 +45,7 @@ extension ReturnCalculationModeExtension on ReturnCalculationMode {
       case ReturnCalculationMode.net:
         return 'Fon kârlarından yasal stopaj vergisi düşülmüş net tutarları gösterir.';
       case ReturnCalculationMode.reel:
-        return 'TÜFE enflasyonundan arındırılmış gerçek satın alma gücü getirisini gösterir.';
+        return 'Bakiye ve kâr tutarını eksiltmeden, TÜFE enflasyonuna göre net getiri oranını (%) gösterir.';
     }
   }
 
@@ -56,7 +56,7 @@ extension ReturnCalculationModeExtension on ReturnCalculationMode {
       case ReturnCalculationMode.net:
         return 'Yatırım fonu kazançlarından yasal stopaj vergisi (%0 - %17,5) düşülerek net kazançları listeler.';
       case ReturnCalculationMode.reel:
-        return 'İnternet üzerinden TCMB / TÜİK resmi TÜFE enflasyon verisini çeker; varlığın alış tarihinden bu yana gerçekleşen enflasyonu arındırarak gerçek satın alma gücü getirisini sunar.';
+        return 'İnternet üzerinden TCMB / TÜİK resmi TÜFE enflasyon verisini çeker; bakiye ve kâr tutarınızı eksiltmeksizin enflasyon karşısındaki reel getiri yüzdenizi (%) sunar.';
     }
   }
 }

@@ -111,7 +111,9 @@ void main() {
 
       // Toplam Reel Kâr: 2.000 + (-2.000) = 0.0 TL
       expect(portfolio.realTotalProfit(inflationRates), 0.0);
-      expect(portfolio.profitForMode(ReturnCalculationMode.reel, inflationRates), 0.0);
+      // Reel modda bakiye ve kâr tutarı eksiltilmez (net kâr tutarı korunur)
+      expect(portfolio.profitForMode(ReturnCalculationMode.reel, inflationRates), 7000.0);
+      // Yalnızca yüzde getiri enflasyon arındırılmış reel oranı gösterir
       expect(portfolio.profitPercentForMode(ReturnCalculationMode.reel, inflationRates), 0.0);
       expect(portfolio.realCost(inflationRates), 37000.0);
     });

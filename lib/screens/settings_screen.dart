@@ -144,7 +144,7 @@ class SettingsScreen extends StatelessWidget {
                         iconColor: const Color(0xFFF59E0B),
                         title: 'Reel Getiri',
                         subtitle:
-                            'Varlığın alış tarihinden bu yana gerçekleşen enflasyonu arındırarak gerçek satın alma gücü getirisini gösterir.',
+                            'Bakiye ve kâr tutarınızı eksiltmeden, enflasyona (TÜFE) göre yüzdelik kâr/zarar getiri oranınızı gösterir.',
                       ),
 
                       const Divider(color: AppTheme.borderSubtle, height: 1),

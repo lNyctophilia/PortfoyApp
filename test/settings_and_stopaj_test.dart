@@ -59,7 +59,9 @@ void main() {
       // Reel Kâr: 15.400 - 13.000 = 2.400 TL
       // Fisher Denklemi: (1 + 0.54) / (1 + 0.30) - 1 = 1.54 / 1.30 - 1 = +18.46%
       expect(asset.realCost(inflation), 13000.0);
-      expect(asset.profitForMode(ReturnCalculationMode.reel, inflation), 2400.0);
+      expect(asset.realProfit(inflation), 2400.0);
+      // Reel modda kâr tutarı eksiltilmez (net kâr tutarı korunur):
+      expect(asset.profitForMode(ReturnCalculationMode.reel, inflation), 5400.0);
       expect(
         asset.profitPercentForMode(ReturnCalculationMode.reel, inflation),
         closeTo(18.46, 0.01),

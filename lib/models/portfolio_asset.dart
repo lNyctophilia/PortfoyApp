@@ -97,9 +97,8 @@ class PortfolioAsset {
       case ReturnCalculationMode.brut:
         return totalProfit;
       case ReturnCalculationMode.net:
-        return netProfit;
       case ReturnCalculationMode.reel:
-        return realProfit(inflationPercent);
+        return netProfit;
     }
   }
 
