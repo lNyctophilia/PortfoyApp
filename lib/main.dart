@@ -9,6 +9,7 @@ import 'providers/portfolio_provider.dart';
 import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
 import 'utils/formatters.dart';
+import 'models/return_mode.dart';
 import 'widgets/net_gross_badge.dart';
 import 'widgets/portfolio_card.dart';
 
@@ -179,7 +180,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<PortfolioProvider>();
     final portfolios = provider.portfolios;
-    final isProfit = provider.grandTotalNetProfit >= 0;
+    final isProfit = provider.displayGrandTotalProfit >= 0;
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
     return Scaffold(
@@ -198,35 +199,29 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                 final hasStopaj = provider.grandTotalWithholdingTax > 0;
                 final hasRealizedStopaj =
                     provider.grandTotalRealizedWithholdingTax > 0;
-                final isNet = provider.showNetValues;
+                final mode = provider.returnMode;
 
                 final summaryCards = [
                   _buildHeaderSummaryCard(
                     title: 'Toplam Portföy Değeri',
-                    badge: hasStopaj ? NetGrossBadge(isNet: isNet) : null,
-                    value: Formatters.currency(
-                      (hasStopaj && isNet)
-                          ? provider.grandTotalNetValue
-                          : provider.grandTotalValue,
-                    ),
-                    subtitle:
-                        'Toplam Maliyet: ${Formatters.currency(provider.grandTotalCost)}',
+                    badge: (hasStopaj || mode == ReturnCalculationMode.reel)
+                        ? NetGrossBadge(mode: mode)
+                        : null,
+                    value: Formatters.currency(provider.displayGrandTotalValue),
+                    subtitle: mode == ReturnCalculationMode.reel
+                        ? 'Düzeltilmiş Maliyet: ${Formatters.currency(provider.grandTotalRealCost)}'
+                        : 'Toplam Maliyet: ${Formatters.currency(provider.grandTotalCost)}',
                     icon: Icons.account_balance_rounded,
                     iconColor: AppTheme.primaryLight,
                   ),
                   _buildHeaderSummaryCard(
-                    title: 'Toplam Kâr / Zarar',
-                    badge: hasStopaj ? NetGrossBadge(isNet: isNet) : null,
-                    value: Formatters.currency(
-                      (hasStopaj && isNet)
-                          ? provider.grandTotalNetProfit
-                          : provider.grandTotalProfit,
-                    ),
+                    title: mode == ReturnCalculationMode.reel
+                        ? 'Reel Kâr / Zarar (TÜFE)'
+                        : 'Toplam Kâr / Zarar',
+                    badge: NetGrossBadge(mode: mode),
+                    value: Formatters.currency(provider.displayGrandTotalProfit),
                     subtitle: Formatters.percent(
-                      (hasStopaj && isNet)
-                          ? provider.grandTotalNetProfitPercent
-                          : provider.grandTotalProfitPercent,
-                    ),
+                        provider.displayGrandTotalProfitPercent),
                     icon: isProfit
                         ? Icons.trending_up_rounded
                         : Icons.trending_down_rounded,
@@ -235,9 +230,15 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                   ),
                   _buildHeaderSummaryCard(
                     title: 'Gerçekleşen Kâr / Zarar',
-                    badge: hasRealizedStopaj ? NetGrossBadge(isNet: isNet) : null,
+                    badge: hasRealizedStopaj
+                        ? NetGrossBadge(
+                            mode: mode == ReturnCalculationMode.brut
+                                ? ReturnCalculationMode.brut
+                                : ReturnCalculationMode.net,
+                          )
+                        : null,
                     value: Formatters.currency(
-                      (hasRealizedStopaj && isNet)
+                      (hasRealizedStopaj && mode != ReturnCalculationMode.brut)
                           ? provider.grandTotalNetRealizedProfit
                           : provider.grandTotalRealizedProfit,
                     ),

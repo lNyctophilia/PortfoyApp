@@ -3,11 +3,13 @@ import 'dart:io';
 import '../models/asset_category.dart';
 import '../models/portfolio.dart';
 import '../models/portfolio_asset.dart';
+import 'inflation_service.dart';
 
 class StorageService {
   static const String _fileName = 'portfolios_data.json';
   static const String _logoCacheFileName = 'logo_cache.json';
   static const String _settingsFileName = 'app_settings.json';
+  static const String _inflationCacheFileName = 'inflation_cache.json';
 
   Future<File> _getSettingsFile() async {
     Directory targetDir;
@@ -107,6 +109,50 @@ class StorageService {
     try {
       final file = await _getLogoCacheFile();
       final content = const JsonEncoder.withIndent('  ').convert(cache);
+      await file.writeAsString(content);
+    } catch (_) {}
+  }
+
+  Future<File> _getInflationCacheFile() async {
+    Directory targetDir;
+    try {
+      final appData = Platform.environment['APPDATA'];
+      if (appData != null && appData.isNotEmpty) {
+        targetDir = Directory('$appData\\PortfoyApp');
+        if (!await targetDir.exists()) {
+          await targetDir.create(recursive: true);
+        }
+      } else {
+        targetDir = Directory.current;
+      }
+    } catch (_) {
+      targetDir = Directory.current;
+    }
+    return File(
+        '${targetDir.path}${Platform.pathSeparator}$_inflationCacheFileName');
+  }
+
+  Future<Map<String, InflationInfo>> loadInflationCache() async {
+    try {
+      final file = await _getInflationCacheFile();
+      if (await file.exists()) {
+        final content = await file.readAsString();
+        if (content.trim().isNotEmpty) {
+          final Map<String, dynamic> raw =
+              jsonDecode(content) as Map<String, dynamic>;
+          return raw.map((k, v) => MapEntry(
+              k, InflationInfo.fromJson(v as Map<String, dynamic>)));
+        }
+      }
+    } catch (_) {}
+    return {};
+  }
+
+  Future<void> saveInflationCache(Map<String, InflationInfo> cache) async {
+    try {
+      final file = await _getInflationCacheFile();
+      final map = cache.map((k, v) => MapEntry(k, v.toJson()));
+      final content = const JsonEncoder.withIndent('  ').convert(map);
       await file.writeAsString(content);
     } catch (_) {}
   }

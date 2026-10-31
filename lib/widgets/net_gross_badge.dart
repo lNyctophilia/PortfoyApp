@@ -1,31 +1,55 @@
 import 'package:flutter/material.dart';
+import '../models/return_mode.dart';
 import '../theme/app_theme.dart';
 
 class NetGrossBadge extends StatelessWidget {
-  final bool isNet;
+  final bool? isNet;
+  final ReturnCalculationMode? mode;
   final double fontSize;
   final EdgeInsetsGeometry? padding;
 
   const NetGrossBadge({
     super.key,
-    required this.isNet,
+    this.isNet,
+    this.mode,
     this.fontSize = 9.5,
     this.padding,
-  });
+  }) : assert(isNet != null || mode != null,
+            'isNet veya mode parametrelerinden en az biri sağlanmalıdır.');
+
+  ReturnCalculationMode get effectiveMode {
+    if (mode != null) return mode!;
+    return isNet == true
+        ? ReturnCalculationMode.net
+        : ReturnCalculationMode.brut;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final color = isNet ? AppTheme.profit : const Color(0xFF38BDF8);
-    final bgColor = isNet
-        ? AppTheme.profit.withValues(alpha: 0.12)
-        : const Color(0xFF38BDF8).withValues(alpha: 0.12);
-    final borderColor = isNet
-        ? AppTheme.profit.withValues(alpha: 0.32)
-        : const Color(0xFF38BDF8).withValues(alpha: 0.32);
-    final label = isNet ? 'NET' : 'BRÜT';
-    final tooltip = isNet
-        ? 'Stopaj vergisi düşülmüş net tutar'
-        : 'Stopaj vergisi düşülmemiş brüt tutar';
+    Color color;
+    String label;
+    String tooltip;
+
+    switch (effectiveMode) {
+      case ReturnCalculationMode.brut:
+        color = const Color(0xFF38BDF8); // Açık Mavi
+        label = 'BRÜT';
+        tooltip = 'Stopaj vergisi ve enflasyon düşülmemiş brüt tutar';
+        break;
+      case ReturnCalculationMode.net:
+        color = AppTheme.profit; // Zümrüt Yeşili
+        label = 'NET';
+        tooltip = 'Stopaj vergisi düşülmüş net tutar';
+        break;
+      case ReturnCalculationMode.reel:
+        color = const Color(0xFFF59E0B); // Amber / Altın
+        label = 'REEL';
+        tooltip = 'TÜFE enflasyonundan arındırılmış reel getiri';
+        break;
+    }
+
+    final bgColor = color.withValues(alpha: 0.12);
+    final borderColor = color.withValues(alpha: 0.35);
 
     return Tooltip(
       message: tooltip,
@@ -51,4 +75,3 @@ class NetGrossBadge extends StatelessWidget {
     );
   }
 }
-

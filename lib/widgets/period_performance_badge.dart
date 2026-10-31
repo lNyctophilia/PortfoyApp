@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/portfolio.dart';
+import '../models/return_mode.dart';
+import '../services/inflation_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 
@@ -19,6 +21,7 @@ class PeriodPerformanceRow extends StatelessWidget {
   final double? allTimePercent;
   final double? allTimeAmount;
   final bool compact;
+  final ReturnCalculationMode mode;
 
   const PeriodPerformanceRow({
     super.key,
@@ -37,23 +40,112 @@ class PeriodPerformanceRow extends StatelessWidget {
     this.allTimePercent,
     this.allTimeAmount,
     this.compact = false,
+    this.mode = ReturnCalculationMode.brut,
   });
 
   factory PeriodPerformanceRow.fromPortfolio(
     Portfolio p, {
     bool compact = false,
+    ReturnCalculationMode mode = ReturnCalculationMode.brut,
+    PeriodInflationData? periodInflation,
+    Map<String, double>? assetInflationRates,
   }) {
+    if (mode == ReturnCalculationMode.reel && periodInflation != null) {
+      double? calcRealPercent(double? nominal, double inf) {
+        if (nominal == null) return null;
+        return InflationService.calculateRealReturnPercent(
+          nominalReturnPercent: nominal,
+          inflationPercent: inf,
+        );
+      }
+
+      double? calcRealAmount(double? nominalProfit, double inf) {
+        if (nominalProfit == null || p.totalValue <= 0) return null;
+        final prev = p.totalValue - nominalProfit;
+        return p.totalValue - (prev * (1.0 + (inf / 100.0)));
+      }
+
+      return PeriodPerformanceRow(
+        compact: compact,
+        mode: mode,
+        dailyPercent:
+            calcRealPercent(p.dailyChangePercent, periodInflation.daily),
+        dailyAmount: calcRealAmount(p.dailyProfit, periodInflation.daily),
+        weeklyPercent: p.hasWeeklyData
+            ? calcRealPercent(p.weeklyChangePercent, periodInflation.weekly)
+            : null,
+        weeklyAmount: p.hasWeeklyData
+            ? calcRealAmount(p.weeklyProfit, periodInflation.weekly)
+            : null,
+        monthlyPercent: p.hasMonthlyData
+            ? calcRealPercent(p.monthlyChangePercent, periodInflation.monthly)
+            : null,
+        monthlyAmount: p.hasMonthlyData
+            ? calcRealAmount(p.monthlyProfit, periodInflation.monthly)
+            : null,
+        threeMonthlyPercent: p.hasThreeMonthlyData
+            ? calcRealPercent(
+                p.threeMonthlyChangePercent, periodInflation.threeMonthly)
+            : null,
+        threeMonthlyAmount: p.hasThreeMonthlyData
+            ? calcRealAmount(
+                p.threeMonthlyProfit, periodInflation.threeMonthly)
+            : null,
+        sixMonthlyPercent: p.hasSixMonthlyData
+            ? calcRealPercent(
+                p.sixMonthlyChangePercent, periodInflation.sixMonthly)
+            : null,
+        sixMonthlyAmount: p.hasSixMonthlyData
+            ? calcRealAmount(p.sixMonthlyProfit, periodInflation.sixMonthly)
+            : null,
+        yearlyPercent: p.hasYearlyData
+            ? calcRealPercent(p.yearlyChangePercent, periodInflation.yearly)
+            : null,
+        yearlyAmount: p.hasYearlyData
+            ? calcRealAmount(p.yearlyProfit, periodInflation.yearly)
+            : null,
+        allTimePercent: p.realTotalProfitPercent(assetInflationRates),
+        allTimeAmount: p.realTotalProfit(assetInflationRates),
+      );
+    }
+
+    if (mode == ReturnCalculationMode.net) {
+      return PeriodPerformanceRow(
+        compact: compact,
+        mode: mode,
+        dailyPercent: p.dailyChangePercent,
+        dailyAmount: p.dailyProfit,
+        weeklyPercent: p.hasWeeklyData ? p.weeklyChangePercent : null,
+        weeklyAmount: p.hasWeeklyData ? p.weeklyProfit : null,
+        monthlyPercent: p.hasMonthlyData ? p.monthlyChangePercent : null,
+        monthlyAmount: p.hasMonthlyData ? p.monthlyProfit : null,
+        threeMonthlyPercent:
+            p.hasThreeMonthlyData ? p.threeMonthlyChangePercent : null,
+        threeMonthlyAmount: p.hasThreeMonthlyData ? p.threeMonthlyProfit : null,
+        sixMonthlyPercent:
+            p.hasSixMonthlyData ? p.sixMonthlyChangePercent : null,
+        sixMonthlyAmount: p.hasSixMonthlyData ? p.sixMonthlyProfit : null,
+        yearlyPercent: p.hasYearlyData ? p.yearlyChangePercent : null,
+        yearlyAmount: p.hasYearlyData ? p.yearlyProfit : null,
+        allTimePercent: p.netTotalProfitPercent,
+        allTimeAmount: p.netTotalProfit,
+      );
+    }
+
     return PeriodPerformanceRow(
       compact: compact,
+      mode: mode,
       dailyPercent: p.dailyChangePercent,
       dailyAmount: p.dailyProfit,
       weeklyPercent: p.hasWeeklyData ? p.weeklyChangePercent : null,
       weeklyAmount: p.hasWeeklyData ? p.weeklyProfit : null,
       monthlyPercent: p.hasMonthlyData ? p.monthlyChangePercent : null,
       monthlyAmount: p.hasMonthlyData ? p.monthlyProfit : null,
-      threeMonthlyPercent: p.hasThreeMonthlyData ? p.threeMonthlyChangePercent : null,
+      threeMonthlyPercent:
+          p.hasThreeMonthlyData ? p.threeMonthlyChangePercent : null,
       threeMonthlyAmount: p.hasThreeMonthlyData ? p.threeMonthlyProfit : null,
-      sixMonthlyPercent: p.hasSixMonthlyData ? p.sixMonthlyChangePercent : null,
+      sixMonthlyPercent:
+          p.hasSixMonthlyData ? p.sixMonthlyChangePercent : null,
       sixMonthlyAmount: p.hasSixMonthlyData ? p.sixMonthlyProfit : null,
       yearlyPercent: p.hasYearlyData ? p.yearlyChangePercent : null,
       yearlyAmount: p.hasYearlyData ? p.yearlyProfit : null,
@@ -162,7 +254,9 @@ class PeriodPerformanceRow extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  isPositive ? Icons.arrow_drop_up_rounded : Icons.arrow_drop_down_rounded,
+                  isPositive
+                      ? Icons.arrow_drop_up_rounded
+                      : Icons.arrow_drop_down_rounded,
                   color: color,
                   size: compact ? 15 : 18,
                 ),
@@ -181,13 +275,18 @@ class PeriodPerformanceRow extends StatelessWidget {
       ),
     );
 
+    final modeSuffix = mode == ReturnCalculationMode.reel ? ' (Reel)' : '';
     if (amount != null) {
       return Tooltip(
-        message: '$title: ${Formatters.currency(amount)} (${Formatters.percent(percent)})',
+        message:
+            '$title$modeSuffix: ${Formatters.currency(amount)} (${Formatters.percent(percent)})',
         child: tile,
       );
     }
 
-    return tile;
+    return Tooltip(
+      message: '$title$modeSuffix: ${Formatters.percent(percent)}',
+      child: tile,
+    );
   }
 }

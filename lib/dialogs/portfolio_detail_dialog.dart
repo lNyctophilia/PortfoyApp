@@ -9,35 +9,30 @@ import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 import '../widgets/asset_item_tile.dart';
 import '../widgets/category_distribution_bar.dart';
+import '../models/return_mode.dart';
 import '../widgets/net_gross_badge.dart';
 import '../widgets/period_performance_badge.dart';
 import 'add_edit_asset_dialog.dart';
 import 'add_edit_portfolio_dialog.dart';
 import 'add_transaction_dialog.dart';
 import 'asset_status_dialog.dart';
-
 class PortfolioDetailDialog extends StatefulWidget {
   final String portfolioId;
-
   const PortfolioDetailDialog({
     super.key,
     required this.portfolioId,
   });
-
   @override
   State<PortfolioDetailDialog> createState() => _PortfolioDetailDialogState();
 }
-
 class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
   int _selectedTab = 0; // 0: Varlıklar, 1: İşlem Geçmişi
   AssetCategory? _filterCategory;
   String _search = '';
-
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<PortfolioProvider>();
     final portfolio = provider.getPortfolioById(widget.portfolioId);
-
     if (portfolio == null) {
       return Dialog(
         child: Padding(
@@ -56,7 +51,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         ),
       );
     }
-
     final filteredAssets = portfolio.assets.where((a) {
       final matchesCat =
           _filterCategory == null || a.category == _filterCategory;
@@ -65,18 +59,18 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           a.symbol.toLowerCase().contains(_search.toLowerCase());
       return matchesCat && matchesSearch;
     }).toList();
-
+    final mode = provider.returnMode;
+    final inflationRates = provider.assetInflationRates;
+    final displayValue = portfolio.valueForMode(mode);
+    final displayProfit = portfolio.profitForMode(mode, inflationRates);
+    final displayProfitPercent =
+        portfolio.profitPercentForMode(mode, inflationRates);
     final showNetValues = provider.showNetValues;
-    final isProfit = ((portfolio.totalWithholdingTax > 0 && showNetValues)
-            ? portfolio.netTotalProfit
-            : portfolio.totalProfit) >=
-        0;
+    final isProfit = displayProfit >= 0;
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
-
     final size = MediaQuery.sizeOf(context);
     final dialogWidth = (size.width * 0.94).clamp(650.0, 1100.0);
     final dialogHeight = (size.height * 0.90).clamp(520.0, 880.0);
-
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: SizedBox(
@@ -85,7 +79,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ÜST BAŞLIK & İŞLEM BUTONLARI
+            // ÜST BAÅLIK & İÅLEM BUTONLARI
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
               child: Row(
@@ -182,7 +176,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ÖZET KARTLARI (DEĞER, KAZANÇ, TARİHSEL VERİLER)
+                      // ÖZET KARTLARI (DEÄER, KAZANÇ, TARİHSEL VERİLER)
                       Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
@@ -193,7 +187,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Üçlü İstatistik Şeridi
+                            // Üçlü İstatistik Åeridi
                             Row(
                               children: [
                                 // 1. Portföy Değeri & Maliyet
@@ -211,9 +205,9 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                                fontWeight: FontWeight.w500,
                                              ),
                                            ),
-                                           if (portfolio.totalWithholdingTax > 0) ...[
+                                           if (portfolio.totalWithholdingTax > 0 || mode == ReturnCalculationMode.reel) ...[
                                              const SizedBox(width: 6),
-                                             NetGrossBadge(isNet: showNetValues),
+                                             NetGrossBadge(mode: mode),
                                            ],
                                          ],
                                        ),
@@ -222,11 +216,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                          fit: BoxFit.scaleDown,
                                          alignment: Alignment.centerLeft,
                                          child: Text(
-                                           Formatters.currency(
-                                             (portfolio.totalWithholdingTax > 0 && showNetValues)
-                                                 ? portfolio.netTotalValue
-                                                 : portfolio.totalValue,
-                                           ),
+                                            Formatters.currency(displayValue),
                                            style: const TextStyle(
                                              color: AppTheme.textPrimary,
                                              fontSize: 22,
@@ -251,7 +241,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                   color: AppTheme.borderSubtle,
                                   margin: const EdgeInsets.symmetric(horizontal: 16),
                                 ),
-
                                 // 2. Açık Kâr / Zarar
                                 Expanded(
                                   child: Column(
@@ -267,9 +256,9 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                                fontWeight: FontWeight.w500,
                                              ),
                                            ),
-                                           if (portfolio.totalWithholdingTax > 0) ...[
+                                           if (portfolio.totalWithholdingTax > 0 || mode == ReturnCalculationMode.reel) ...[
                                              const SizedBox(width: 6),
-                                             NetGrossBadge(isNet: showNetValues),
+                                             NetGrossBadge(mode: mode),
                                            ],
                                          ],
                                        ),
@@ -289,11 +278,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                              ),
                                              const SizedBox(width: 4),
                                              Text(
-                                               Formatters.currency(
-                                                 (portfolio.totalWithholdingTax > 0 && showNetValues)
-                                                     ? portfolio.netTotalProfit
-                                                     : portfolio.totalProfit,
-                                               ),
+                                               Formatters.currency(displayProfit),
                                                style: TextStyle(
                                                  color: profitColor,
                                                  fontSize: 20,
@@ -305,7 +290,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                        ),
                                        const SizedBox(height: 2),
                                        Text(
-                                         'Getiri: ${Formatters.percent((portfolio.totalWithholdingTax > 0 && showNetValues) ? portfolio.netTotalProfitPercent : portfolio.totalProfitPercent)}',
+                                         'Getiri: ${Formatters.percent(displayProfitPercent)}',
                                          style: TextStyle(
                                            color: profitColor,
                                            fontSize: 11,
@@ -321,7 +306,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                   color: AppTheme.borderSubtle,
                                   margin: const EdgeInsets.symmetric(horizontal: 16),
                                 ),
-
                                 // 3. Gerçekleşen Kâr / Zarar
                                 Expanded(
                                   child: Column(
@@ -339,7 +323,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                            ),
                                            if (portfolio.realizedWithholdingTax > 0) ...[
                                              const SizedBox(width: 6),
-                                             NetGrossBadge(isNet: showNetValues),
+                                             NetGrossBadge(mode: mode),
                                            ],
                                          ],
                                        ),
@@ -394,7 +378,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                               padding: EdgeInsets.symmetric(vertical: 12),
                               child: Divider(color: AppTheme.borderSubtle, height: 1),
                             ),
-
                             // Tarihsel Dönem Verileri
                             Row(
                               children: [
@@ -414,13 +397,14 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                             PeriodPerformanceRow.fromPortfolio(
                               portfolio,
                               compact: false,
+                              mode: provider.returnMode,
+                              periodInflation: provider.periodInflation,
+                              assetInflationRates: provider.assetInflationRates,
                             ),
-
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 12),
                               child: Divider(color: AppTheme.borderSubtle, height: 1),
                             ),
-
                             // Kategori Dağılım Çubuğu ve Yüzdeler
                             Row(
                               children: [
@@ -445,8 +429,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // SEKME SEÇİCİ VE İŞLEM BUTONLARI (VARLIKLAR & İŞLEM GEÇMİŞİ)
+                      // SEKME SEÇİCİ VE İÅLEM BUTONLARI (VARLIKLAR & İÅLEM GEÇMİÅİ)
                       Row(
                         children: [
                           // Sekme Butonları (Varlıklar / İşlem Geçmişi)
@@ -476,7 +459,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                             ),
                           ),
                           const Spacer(),
-
                           // Alış / Satış Butonu
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
@@ -510,8 +492,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                         ],
                       ),
                       const SizedBox(height: 14),
-
-                      // SEÇİLEN SEKMENİN İÇERİĞİ
+                      // SEÇİLEN SEKMENİN İÇERİÄİ
                       _selectedTab == 0
                           ? _buildAssetsTab(portfolio, filteredAssets, provider)
                           : _buildTransactionsTab(portfolio, provider),
@@ -526,7 +507,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       ),
     );
   }
-
   Widget _buildTabButton({
     required int index,
     required IconData icon,
@@ -568,7 +548,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       ),
     );
   }
-
   Widget _buildAssetsTab(Portfolio portfolio,
       List<PortfolioAsset> filteredAssets, PortfolioProvider provider) {
     return Column(
@@ -615,7 +594,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           ],
         ),
         const SizedBox(height: 12),
-
         // Varlık Listesi
         if (filteredAssets.isEmpty)
           Padding(
@@ -708,7 +686,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       ],
     );
   }
-
   Widget _buildTransactionsTab(
       Portfolio portfolio, PortfolioProvider provider) {
     if (portfolio.transactions.isEmpty) {
@@ -770,7 +747,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         ),
       );
     }
-
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -780,7 +756,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         final isSatis = tx.type == TransactionType.satis;
         final isProfit = tx.realizedProfit >= 0;
         final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
-
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -837,7 +812,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                 ),
               ),
               const SizedBox(width: 14),
-
               // Sembol & Varlık Detayları
               Expanded(
                 child: Column(
@@ -876,13 +850,12 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   ],
                 ),
               ),
-
               // Fiyat ve Tutar Detayları
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${Formatters.currency(tx.price)} × ${tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2)} Adet',
+                    '${Formatters.currency(tx.price)} Ã— ${tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2)} Adet',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
@@ -900,7 +873,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                 ],
               ),
               const SizedBox(width: 16),
-
               // Gerçekleşen Kâr / Zarar Göstergesi (Satış ise)
               if (isSatis) ...[
                 Container(
@@ -919,7 +891,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                       final hasStopaj = tx.category == AssetCategory.fon && tx.withholdingTax > 0;
                       final displayProfit = (hasStopaj && showNetValues) ? tx.netRealizedProfit : tx.realizedProfit;
                       final displayPercent = (hasStopaj && showNetValues) ? tx.netProfitPercent : tx.profitPercent;
-
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -955,7 +926,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                 ),
                 const SizedBox(width: 8),
               ],
-
               // Geri Al Butonu
               IconButton(
                 icon: const Icon(Icons.undo_rounded, size: 20),
@@ -966,7 +936,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                       context, provider, portfolio.id, tx);
                 },
               ),
-
               // Silme Butonu
               IconButton(
                 icon: const Icon(Icons.delete_outline, size: 20),
@@ -983,7 +952,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       },
     );
   }
-
   void _confirmUndoTransaction(
     BuildContext context,
     PortfolioProvider provider,
@@ -994,7 +962,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     final qtyStr = transaction.quantity.toStringAsFixed(
       transaction.quantity.truncateToDouble() == transaction.quantity ? 0 : 2,
     );
-
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -1025,7 +992,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       ),
     );
   }
-
   void _confirmDeleteTransaction(
     BuildContext context,
     PortfolioProvider provider,
@@ -1037,7 +1003,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       builder: (ctx) => AlertDialog(
         title: const Text('İşlemi Sil'),
         content: Text(
-          '${transaction.symbol} (${transaction.type.label}) kaydı işlem geçmişinden silinecektir.\n\n• Portföydeki varlık adetleriniz DEĞİŞMEYECEKTİR (işlem gerçekleşmiş sayılır).\n• Bu işleme ait gerçekleşen kâr/zarar silinecektir.',
+          '${transaction.symbol} (${transaction.type.label}) kaydı işlem geçmişinden silinecektir.\n\n• Portföydeki varlık adetleriniz DEÄİÅMEYECEKTİR (işlem gerçekleşmiş sayılır).\n• Bu işleme ait gerçekleşen kâr/zarar silinecektir.',
         ),
         actions: [
           TextButton(
@@ -1057,7 +1023,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       ),
     );
   }
-
   Widget _buildFilterChip(String label, AssetCategory? cat) {
     final isSelected = _filterCategory == cat;
     return ChoiceChip(
@@ -1078,7 +1043,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
     );
   }
-
   void _confirmDeleteAsset(BuildContext context, PortfolioProvider provider,
       String portfolioId, PortfolioAsset asset) {
     showDialog(

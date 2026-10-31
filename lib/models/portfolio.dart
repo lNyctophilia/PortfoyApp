@@ -1,6 +1,7 @@
 import 'asset_category.dart';
 import 'portfolio_asset.dart';
 import 'portfolio_transaction.dart';
+import 'return_mode.dart';
 
 class Portfolio {
   final String id;
@@ -46,6 +47,69 @@ class Portfolio {
       totalCost > 0 ? (netTotalProfit / totalCost) * 100 : 0.0;
 
   double get netTotalValue => totalValue - totalWithholdingTax;
+
+  /// Enflasyona göre endekslenmiş toplam portföy maliyeti
+  double realCost([Map<String, double>? assetInflationRates]) => assets.fold(
+        0.0,
+        (sum, a) =>
+            sum + a.realCost(assetInflationRates?[a.id] ?? 0.0),
+      );
+
+  /// Reel Kâr / Zarar Tutarı (TL)
+  double realTotalProfit([Map<String, double>? assetInflationRates]) =>
+      assets.fold(
+        0.0,
+        (sum, a) =>
+            sum + a.realProfit(assetInflationRates?[a.id] ?? 0.0),
+      );
+
+  /// Reel Getiri Oranı (%)
+  double realTotalProfitPercent([Map<String, double>? assetInflationRates]) {
+    final cost = realCost(assetInflationRates);
+    if (cost <= 0) return 0.0;
+    return (realTotalProfit(assetInflationRates) / cost) * 100.0;
+  }
+
+  /// Seçili moda göre toplam kâr tutarı
+  double profitForMode(
+    ReturnCalculationMode mode, [
+    Map<String, double>? assetInflationRates,
+  ]) {
+    switch (mode) {
+      case ReturnCalculationMode.brut:
+        return totalProfit;
+      case ReturnCalculationMode.net:
+        return netTotalProfit;
+      case ReturnCalculationMode.reel:
+        return realTotalProfit(assetInflationRates);
+    }
+  }
+
+  /// Seçili moda göre getiri yüzdesi (%)
+  double profitPercentForMode(
+    ReturnCalculationMode mode, [
+    Map<String, double>? assetInflationRates,
+  ]) {
+    switch (mode) {
+      case ReturnCalculationMode.brut:
+        return totalProfitPercent;
+      case ReturnCalculationMode.net:
+        return netTotalProfitPercent;
+      case ReturnCalculationMode.reel:
+        return realTotalProfitPercent(assetInflationRates);
+    }
+  }
+
+  /// Seçili moda göre toplam portföy değeri (TL)
+  double valueForMode(ReturnCalculationMode mode) {
+    switch (mode) {
+      case ReturnCalculationMode.brut:
+        return totalValue;
+      case ReturnCalculationMode.net:
+      case ReturnCalculationMode.reel:
+        return netTotalValue;
+    }
+  }
 
   double get allTimeProfitPercent => totalProfitPercent;
 

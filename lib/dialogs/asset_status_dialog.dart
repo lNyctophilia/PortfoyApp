@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../utils/fifo_calculator.dart';
 import '../utils/formatters.dart';
 import '../widgets/asset_logo.dart';
+import '../models/return_mode.dart';
 import '../widgets/net_gross_badge.dart';
 import 'add_transaction_dialog.dart';
 import '../providers/portfolio_provider.dart';
@@ -53,18 +54,17 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     final dialogWidth = (size.width * 0.90).clamp(600.0, 840.0);
     final dialogHeight = (size.height * 0.88).clamp(520.0, 780.0);
 
+    final mode = widget.provider.returnMode;
+    final inflationRate = widget.provider.getAssetInflation(currentAsset.id);
     final showNetValues = widget.provider.showNetValues;
     final hasStopaj = currentAsset.category == AssetCategory.fon &&
         currentAsset.withholdingTaxAmount > 0;
-    final displayCurrentPrice = (hasStopaj && showNetValues)
+    final displayCurrentPrice = (hasStopaj && mode != ReturnCalculationMode.brut)
         ? currentAsset.netCurrentPrice
         : currentAsset.currentPrice;
-    final displayProfit = (hasStopaj && showNetValues)
-        ? currentAsset.netProfit
-        : currentAsset.totalProfit;
-    final displayProfitPercent = (hasStopaj && showNetValues)
-        ? currentAsset.netProfitPercent
-        : currentAsset.totalProfitPercent;
+    final displayProfit = currentAsset.profitForMode(mode, inflationRate);
+    final displayProfitPercent =
+        currentAsset.profitPercentForMode(mode, inflationRate);
 
     final isProfit = displayProfit >= 0;
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
@@ -81,7 +81,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
         ),
         child: Column(
           children: [
-            // ÜST BAŞLIK VE KAPAT BUTONU
+            // ÜST BAÅLIK VE KAPAT BUTONU
             Padding(
               padding: const EdgeInsets.fromLTRB(22, 20, 20, 14),
               child: Row(
@@ -203,8 +203,8 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                       'Güncel Fiyat',
                       Formatters.currency(displayCurrentPrice),
                       icon: Icons.show_chart_rounded,
-                      badge: hasStopaj
-                          ? NetGrossBadge(isNet: showNetValues, fontSize: 8.5)
+                      badge: (hasStopaj || mode == ReturnCalculationMode.reel)
+                          ? NetGrossBadge(mode: mode, fontSize: 8.5)
                           : null,
                     ),
                     _buildDivider(),
@@ -213,8 +213,8 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                       '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
                       valueColor: profitColor,
                       icon: Icons.insights_rounded,
-                      badge: hasStopaj
-                          ? NetGrossBadge(isNet: showNetValues, fontSize: 8.5)
+                      badge: (hasStopaj || mode == ReturnCalculationMode.reel)
+                          ? NetGrossBadge(mode: mode, fontSize: 8.5)
                           : null,
                     ),
                     if (fifoResult.totalRealizedProfit != 0) ...[
@@ -284,7 +284,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   : _buildSalesTab(fifoResult, currentAsset),
             ),
 
-            // ALT AKSİYON ÇUBUĞU
+            // ALT AKSİYON ÇUBUÄU
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
               decoration: const BoxDecoration(
@@ -507,7 +507,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     );
   }
 
-  // ALIŞ LOTLARI SEKMESİ
+  // ALIÅ LOTLARI SEKMESİ
   Widget _buildLotsTab(FifoResult result, PortfolioAsset asset) {
     if (result.allLots.isEmpty) {
       return const Center(
@@ -680,7 +680,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     );
   }
 
-  // SATIŞ GEÇMİŞİ SEKMESİ
+  // SATIÅ GEÇMİÅİ SEKMESİ
   Widget _buildSalesTab(FifoResult result, PortfolioAsset asset) {
     if (result.saleRecords.isEmpty) {
       return Center(
@@ -874,7 +874,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                         border: Border.all(color: AppTheme.borderSubtle),
                       ),
                       child: Text(
-                        '↳ ${_formatQty(c.quantityConsumed)} Adet (${Formatters.date(c.lot.date)} alışından @ ${Formatters.currency(c.unitCost)})',
+                        'â†³ ${_formatQty(c.quantityConsumed)} Adet (${Formatters.date(c.lot.date)} alışından @ ${Formatters.currency(c.unitCost)})',
                         style: const TextStyle(
                           fontSize: 10,
                           color: AppTheme.textMuted,

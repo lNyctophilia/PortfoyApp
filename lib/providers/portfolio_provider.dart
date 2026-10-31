@@ -3,6 +3,8 @@ import '../models/asset_category.dart';
 import '../models/portfolio.dart';
 import '../models/portfolio_asset.dart';
 import '../models/portfolio_transaction.dart';
+import '../models/return_mode.dart';
+import '../services/inflation_service.dart';
 import '../services/market_data_service.dart';
 import '../services/storage_service.dart';
 import '../utils/fifo_calculator.dart';
@@ -15,9 +17,22 @@ class PortfolioProvider extends ChangeNotifier {
   bool _isRefreshing = false;
   AssetCategory? _selectedCategoryFilter;
   bool _showNetValues = true;
+  ReturnCalculationMode _returnMode = ReturnCalculationMode.net;
+  Map<String, double> _assetInflationRates = {};
+  double _latestAnnualInflation = 0.0;
+  PeriodInflationData? _periodInflation;
+  bool _isLoadingInflation = false;
 
   bool get isRefreshing => _isRefreshing;
   bool get showNetValues => _showNetValues;
+  ReturnCalculationMode get returnMode => _returnMode;
+  Map<String, double> get assetInflationRates => _assetInflationRates;
+  double get latestAnnualInflation => _latestAnnualInflation;
+  PeriodInflationData? get periodInflation => _periodInflation;
+  bool get isLoadingInflation => _isLoadingInflation;
+
+  double getAssetInflation(String assetId) =>
+      _assetInflationRates[assetId] ?? 0.0;
 
   List<Portfolio> get portfolios {
     if (_selectedCategoryFilter == null) {
@@ -68,6 +83,56 @@ class PortfolioProvider extends ChangeNotifier {
   double get grandTotalNetValue =>
       grandTotalValue - grandTotalWithholdingTax;
 
+  // Enflasyona göre düzeltilmiş genel toplamlar (Reel Getiri)
+  double get grandTotalRealCost => visiblePortfolios.fold(
+        0.0,
+        (sum, p) => sum + p.realCost(_assetInflationRates),
+      );
+
+  double get grandTotalRealProfit => visiblePortfolios.fold(
+        0.0,
+        (sum, p) => sum + p.realTotalProfit(_assetInflationRates),
+      );
+
+  double get grandTotalRealProfitPercent {
+    final cost = grandTotalRealCost;
+    if (cost <= 0) return 0.0;
+    return (grandTotalRealProfit / cost) * 100.0;
+  }
+
+  // Seçili getiri moduna duyarlı genel gösterim değerleri
+  double get displayGrandTotalValue {
+    switch (_returnMode) {
+      case ReturnCalculationMode.brut:
+        return grandTotalValue;
+      case ReturnCalculationMode.net:
+      case ReturnCalculationMode.reel:
+        return grandTotalNetValue;
+    }
+  }
+
+  double get displayGrandTotalProfit {
+    switch (_returnMode) {
+      case ReturnCalculationMode.brut:
+        return grandTotalProfit;
+      case ReturnCalculationMode.net:
+        return grandTotalNetProfit;
+      case ReturnCalculationMode.reel:
+        return grandTotalRealProfit;
+    }
+  }
+
+  double get displayGrandTotalProfitPercent {
+    switch (_returnMode) {
+      case ReturnCalculationMode.brut:
+        return grandTotalProfitPercent;
+      case ReturnCalculationMode.net:
+        return grandTotalNetProfitPercent;
+      case ReturnCalculationMode.reel:
+        return grandTotalRealProfitPercent;
+    }
+  }
+
   int get grandTotalAssetCount =>
       visiblePortfolios.fold(0, (sum, p) => sum + p.assetCount);
 
@@ -83,24 +148,95 @@ class PortfolioProvider extends ChangeNotifier {
     notifyListeners();
 
     final settings = await _storageService.loadSettings();
-    _showNetValues = settings['showNetValuesWithholdingTax'] ?? true;
+    final modeStr = settings['returnCalculationMode'] as String?;
+    if (modeStr != null) {
+      _returnMode = ReturnCalculationMode.values.firstWhere(
+        (e) => e.name == modeStr,
+        orElse: () => ReturnCalculationMode.net,
+      );
+    } else {
+      final netVal = settings['showNetValuesWithholdingTax'] ?? true;
+      _returnMode =
+          netVal ? ReturnCalculationMode.net : ReturnCalculationMode.brut;
+    }
+    _showNetValues = _returnMode == ReturnCalculationMode.net;
 
     await MarketDataService.ensureLogoCacheLoaded();
     _portfolios = await _storageService.loadPortfolios();
     _backfillMissingAssetIcons();
+    if (_returnMode == ReturnCalculationMode.reel) {
+      refreshInflationData();
+    }
     _isLoading = false;
     notifyListeners();
   }
 
-  Future<void> setShowNetValues(bool value) async {
-    if (_showNetValues == value) return;
-    _showNetValues = value;
+  Future<void> setReturnMode(ReturnCalculationMode mode) async {
+    if (_returnMode == mode) return;
+    _returnMode = mode;
+    _showNetValues = mode == ReturnCalculationMode.net;
     notifyListeners();
+
+
     await _storageService.saveSettings({
+      'returnCalculationMode': _returnMode.name,
       'showNetValuesWithholdingTax': _showNetValues,
+
+    });
+
+    if (_returnMode == ReturnCalculationMode.reel) {
+      await refreshInflationData();
+    }
+  }
+
+  Future<void> refreshInflationData() async {
+    _isLoadingInflation = true;
+    notifyListeners();
+
+    try {
+      await InflationService.ensureCacheLoaded();
+      _periodInflation =
+          await InflationService.getPeriodInflationRates(forceRefresh: true);
+      _latestAnnualInflation = _periodInflation?.yearly ??
+          await InflationService.getLatestAnnualInflation();
+
+      final rates = <String, double>{};
+      for (final portfolio in _portfolios) {
+        for (final asset in portfolio.assets) {
+          final txs = portfolio.transactions
+              .where((t) =>
+                  t.type == TransactionType.alis &&
+                  (t.assetId == asset.id ||
+                      t.symbol.toUpperCase() == asset.symbol.toUpperCase()))
+              .toList();
+          DateTime buyDate = asset.purchaseDate;
+          if (txs.isNotEmpty) {
+            txs.sort((a, b) => a.date.compareTo(b.date));
+            buyDate = txs.first.date;
+          }
+          final rate = await InflationService.getInflationSince(buyDate);
+          rates[asset.id] = rate;
+        }
+      }
+      _assetInflationRates = rates;
+    } catch (_) {
+    } finally {
+      _isLoadingInflation = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> setShowNetValues(bool value) async {
+    await setReturnMode(value ? ReturnCalculationMode.net : ReturnCalculationMode.brut);
+  } /*
+
+    notifyListeners();
+
+
     });
   }
 
+  */
   void _backfillMissingAssetIcons() {
     bool hasChanges = false;
     final updatedPortfolios = <Portfolio>[];

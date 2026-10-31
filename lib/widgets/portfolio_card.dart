@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/portfolio.dart';
+import '../models/return_mode.dart';
 import '../providers/portfolio_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
@@ -34,13 +35,13 @@ class _PortfolioCardState extends State<PortfolioCard> {
   @override
   Widget build(BuildContext context) {
     final p = widget.portfolio;
-    final showNetValues = context.watch<PortfolioProvider>().showNetValues;
+    final provider = context.watch<PortfolioProvider>();
+    final mode = provider.returnMode;
     final hasStopaj = p.totalWithholdingTax > 0;
-    final displayProfit =
-        (hasStopaj && showNetValues) ? p.netTotalProfit : p.totalProfit;
-    final displayProfitPercent = (hasStopaj && showNetValues)
-        ? p.netTotalProfitPercent
-        : p.totalProfitPercent;
+    final inflationRates = provider.assetInflationRates;
+    final displayValue = p.valueForMode(mode);
+    final displayProfit = p.profitForMode(mode, inflationRates);
+    final displayProfitPercent = p.profitPercentForMode(mode, inflationRates);
     final isProfit = displayProfit >= 0;
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
@@ -255,9 +256,9 @@ class _PortfolioCardState extends State<PortfolioCard> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                            if (hasStopaj) ...[
+                            if (hasStopaj || mode == ReturnCalculationMode.reel) ...[
                               const SizedBox(width: 6),
-                              NetGrossBadge(isNet: showNetValues),
+                              NetGrossBadge(mode: mode),
                             ],
                           ],
                         ),
@@ -266,11 +267,7 @@ class _PortfolioCardState extends State<PortfolioCard> {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            Formatters.currency(
-                              (hasStopaj && showNetValues)
-                                  ? p.netTotalValue
-                                  : p.totalValue,
-                            ),
+                            Formatters.currency(displayValue),
                             style: const TextStyle(
                               color: AppTheme.textPrimary,
                               fontSize: 21,
@@ -352,6 +349,9 @@ class _PortfolioCardState extends State<PortfolioCard> {
                   PeriodPerformanceRow.fromPortfolio(
                     p,
                     compact: true,
+                    mode: mode,
+                    periodInflation: provider.periodInflation,
+                    assetInflationRates: inflationRates,
                   ),
                 ],
               ),
