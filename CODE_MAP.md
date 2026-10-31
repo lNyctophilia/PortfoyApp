@@ -1,0 +1,195 @@
+# Code Map Index
+
+- **File:** `lib/dialogs/add_edit_asset_dialog.dart`
+  - **Lines 1-55:** Imports, AddEditAssetDialog declaration, and state controllers.
+  - **Lines 56-129:** State initialization (initState), teardown (dispose), and numeric formatters.
+  - **Lines 130-189:** _buildReadonlyPeriodBadge() - Readonly badges for asset historical period performance.
+  - **Lines 190-352:** Market data fetching, suggestion selection, debounce logic, and date picking.
+  - **Lines 353-395:** _submit() form validation and asset creation/update dispatch to provider.
+  - **Lines 396-650:** build() method: Dialog shell, category selection dropdown/chips, and symbol autocomplete.
+  - **Lines 651-850:** Asset quantity, purchase price, current price, and date input fields.
+  - **Lines 851-1088:** Withholding tax (stopaj) configuration, summary preview, and action buttons.
+- **File:** `lib/dialogs/add_edit_portfolio_dialog.dart`
+  - **Lines 1-24:** Imports, AddEditPortfolioDialog declaration, and state setup.
+  - **Lines 25-46:** Lifecycle methods (initState, dispose) and form submission logic (_submit).
+  - **Lines 47-131:** Dialog UI: build() method with form fields (name, description) and action buttons (cancel, save).
+- **File:** `lib/dialogs/add_transaction_dialog.dart`
+  - **Lines 1-71:** Imports, AddTransactionDialog declaration, and state variables (controllers, modes).
+  - **Lines 72-150:** initState(), dispose(), price/number parsing and formatting helpers.
+  - **Lines 151-265:** Buy (Alis) transaction logic: autocomplete selection, debounced symbol changes, market data fetching.
+  - **Lines 266-400:** Custom calendar picker dialog (_showCalendarPicker()) and buy date selection (_pickAlisDate()).
+  - **Lines 401-462:** _buildReadonlyPeriodBadge() - Read-only badges for period performance.
+  - **Lines 463-580:** Sell (Satis) transaction logic: asset selection from portfolio, historical price lookup, and date picker.
+  - **Lines 581-670:** _saveTransaction() - FIFO validation, cost estimation, transaction persistence, and asset updating.
+  - **Lines 671-909:** build() method: Dialog shell, tab switcher (Alis / Satis), responsive constraints, and actions.
+  - **Lines 910-1431:** _buildAlisForm() - Form fields for purchasing assets (category, symbol, quantity, price, stopaj).
+  - **Lines 1432-1883:** _buildSatisForm() - Form fields for selling assets (lot selection, quantity, sale price, realized profit/loss preview).
+- **File:** `lib/dialogs/asset_status_dialog.dart`
+  - **Lines 1-33:** Imports, AssetStatusDialog declaration, and state setup.
+  - **Lines 34-369:** build() method: Dialog shell, header with asset summary, total value, profit/loss banner, and tab selector.
+  - **Lines 370-510:** Metric items, dividers, and tab buttons (_buildMetricItem, _buildDivider, _buildTabButton).
+  - **Lines 511-683:** _buildLotsTab() - Detailed list of open/closed purchase lots with holding durations, costs, and returns.
+  - **Lines 684-893:** _buildSalesTab() - Realized sales history, sell prices, capital gains, and withholding taxes.
+  - **Lines 894-977:** Helper widgets (_buildLotStatusBadge, _buildSubStat, _formatQty).
+- **File:** `lib/dialogs/portfolio_detail_dialog.dart`
+  - **Lines 1-32:** Imports, PortfolioDetailDialog declaration, and state setup.
+  - **Lines 33-509:** build() method: Dialog shell, header summary metrics, refresh trigger, category breakdown, and tab bar.
+  - **Lines 510-550:** _buildTabButton() - Tab switch button between Assets and Transactions.
+  - **Lines 551-688:** _buildAssetsTab() - List of portfolio assets, empty state, and asset management actions.
+  - **Lines 689-954:** _buildTransactionsTab() - Chronological transaction history cards, transaction badges, and details.
+  - **Lines 955-1072:** Transaction undo/delete confirmations (_confirmUndoTransaction, _confirmDeleteTransaction), filter chips, and asset deletion modal (_confirmDeleteAsset).
+- **File:** `lib/main.dart`
+  - **Lines 1-27:** Imports, platform setup, WindowOptions, and main() entry point.
+  - **Lines 28-56:** PortfoyApp root widget, MultiProvider setup, and MaterialApp configuration.
+  - **Lines 57-179:** PortfolioHomeScreen stateful shell, keyboard shortcut listener (F5 refresh), refresh logic, and dialog triggers.
+  - **Lines 180-448:** PortfolioHomeScreen build() method: responsive Scaffold, top header, actions, category chips, and portfolio list/grid.
+  - **Lines 449-536:** _buildHeaderSummaryCard() - Aggregate portfolio performance & summary card.
+  - **Lines 537-582:** _buildEmptyState() - Placeholder illustration and prompt when no portfolios exist.
+- **File:** `lib/models/asset_category.dart`
+  - **Lines 1-10:** Enum declaration AssetCategory (hisse, tefas, kripto, emtia, doviz, eurobond, fon).
+  - **Lines 11-25:** Getter displayName for localized Turkish category names.
+  - **Lines 26-40:** Getter shortName for compact badges and tags.
+  - **Lines 41-55:** Getter defaultIcon mapping category to Material icon.
+  - **Lines 56-86:** Method buildIcon() with custom SVG/vector handling for emtia/metals.
+- **File:** `lib/models/portfolio.dart`
+  - **Lines 1-24:** Imports, Portfolio class declaration, properties, and constructor.
+  - **Lines 25-51:** Aggregate getters for asset counts, gross total cost, gross total value, and net values.
+  - **Lines 52-112:** Real (inflation-adjusted) return calculations and mode-based profit evaluation methods (profitForMode, valueForMode).
+  - **Lines 113-217:** Realized gains from transactions, holding duration, and period performance metrics (daily, weekly, monthly, yearly).
+  - **Lines 218-299:** Asset allocation breakdown calculations (assetAllocations, categoryPercentages, categoryValues).
+  - **Lines 300-350:** Immutable helper copyWith() and JSON serialization methods (toJson, fromJson).
+  - **Lines 351-365:** AssetAllocationItem model representing category and asset distribution weights.
+- **File:** `lib/models/portfolio_asset.dart`
+  - **Lines 1-25:** Imports, PortfolioAsset class declaration, and properties.
+  - **Lines 26-44:** Constructor definition with default parameter values.
+  - **Lines 45-72:** Withholding tax getters (withholdingTaxAmount), net values, gross cost, and current values.
+  - **Lines 73-130:** Real (inflation-adjusted) cost/profit calculations and mode-aware getters (profitForMode, valueForMode).
+  - **Lines 131-172:** Holding period calculation (holdingDays) and historical period profit estimators.
+  - **Lines 173-210:** copyWith() method for immutable updates.
+  - **Lines 211-252:** JSON serialization methods (toJson, fromJson).
+- **File:** `lib/models/portfolio_transaction.dart`
+  - **Lines 1-18:** TransactionType enum declaration (alis, satis) with JSON helpers.
+  - **Lines 19-68:** PortfolioTransaction class declaration, fields, and constructor.
+  - **Lines 69-95:** Tax and net profit calculations (effectiveWithholdingTaxRate, netRealizedProfit, netProfitPercent).
+  - **Lines 96-154:** JSON serialization methods (toJson, fromJson).
+- **File:** `lib/models/return_mode.dart`
+  - **Lines 1-6:** Enum declaration ReturnCalculationMode (brut, net, reel).
+  - **Lines 7-63:** Extension ReturnCalculationModeExtension with labels, badgeText, title, shortDescription, and detailedDescription.
+- **File:** `lib/providers/portfolio_provider.dart`
+  - **Lines 1-33:** Imports, PortfolioProvider declaration, and internal state variables.
+  - **Lines 34-95:** Filtered portfolio getters, inflation map getters, and category filter accessors.
+  - **Lines 96-143:** Grand total aggregate getters across all visible portfolios (cost, value, profit, profit percent for brut/net/reel).
+  - **Lines 144-189:** Data loading (loadData()), return calculation mode changes (setReturnMode()), and preferences persistence.
+  - **Lines 190-237:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
+  - **Lines 238-287:** Missing asset icon resolution & backfill helper (_backfillMissingAssetIcons()).
+  - **Lines 288-341:** Category filtering setter and portfolio CRUD operations (addPortfolio, updatePortfolio, togglePortfolioVisibility, deletePortfolio).
+  - **Lines 342-380:** Direct asset management (addAsset, updateAsset, deleteAsset).
+  - **Lines 381-565:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
+  - **Lines 566-684:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
+- **File:** `lib/screens/settings_screen.dart`
+  - **Lines 1-12:** Imports and SettingsScreen declaration.
+  - **Lines 13-322:** build() method - Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators).
+  - **Lines 323-445:** About app section (version, developer, data source details, disclaimer).
+  - **Lines 446-537:** _buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators.
+  - **Lines 538-552:** _buildSectionHeader() - Section heading widget with custom typography and accent indicator.
+  - **Lines 553-574:** _buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
+- **File:** `lib/services/asset_catalog_service.dart`
+  - **Lines 1-21:** Imports and AssetSuggestion model class.
+  - **Lines 22-124:** AssetCatalogService class declaration and static catalog for TEFAS investment funds (_knownFunds).
+  - **Lines 125-185:** Static catalog for BIST stocks and equities (_knownStocks).
+  - **Lines 186-220:** Static catalog for major cryptocurrencies (_knownCryptos).
+  - **Lines 221-236:** Static catalog for precious metals / commodities (_knownCommodities).
+  - **Lines 237-252:** Static catalog for foreign exchange currencies (_knownCurrencies).
+  - **Lines 253-290:** Search query normalizer (_cleanText) and unified search() entry point across categories.
+  - **Lines 291-360:** _searchFunds() - Query matcher and online lookup for TEFAS funds.
+  - **Lines 361-478:** _searchStocks() - Query matcher and online lookup for BIST stocks.
+  - **Lines 479-554:** _searchCryptos() - Query matcher for cryptocurrencies.
+  - **Lines 555-581:** _searchCommodities() - Query matcher for precious metals and gold types.
+  - **Lines 582-607:** _searchCurrencies() - Query matcher for fiat currencies.
+- **File:** `lib/services/inflation_service.dart`
+  - **Lines 1-50:** Imports and InflationInfo data class with JSON serialization.
+  - **Lines 51-95:** PeriodInflationData data model representing 1-month, 3-month, 6-month, 1-year, and 5-year CPI rates.
+  - **Lines 96-190:** InflationService setup, client configuration, and historical monthly TUFE fallback index table (_fallbackTufeIndices).
+  - **Lines 191-319:** Cache loading (ensureCacheLoaded()) and live CPI inflation fetcher (fetchInflationRate()) via TCMB EVDS / web scraping.
+  - **Lines 320-371:** Fallback calculation logic (_calculateFromFallback, _findClosestIndex, _saveToCache).
+  - **Lines 372-422:** Helper to determine latest officially released CPI month/year (getLatestAvailablePeriod()).
+  - **Lines 423-520:** Multi-period inflation fetcher (getPeriodInflationRates()).
+  - **Lines 521-583:** Annual and custom purchase date inflation calculators (getLatestAnnualInflation(), getInflationSince()).
+  - **Lines 584-607:** Mathematical formulas for calculating real return percent and real profit amount.
+- **File:** `lib/services/market_data_service.dart`
+  - **Lines 1-94:** Imports and MarketAssetInfo data model (currentPrice, change percentages, history map).
+  - **Lines 95-273:** MarketDataService initialization, logo caching, and TEFAS fund logo resolver mapping (resolveFundLogo).
+  - **Lines 274-412:** Static logos for popular crypto, stock, and forex tickers (getKnownAssetLogo).
+  - **Lines 413-494:** Web logo scraping and fallback resolver (fetchAssetLogo).
+  - **Lines 495-539:** Main dispatch function fetchAssetData() routing by AssetCategory.
+  - **Lines 540-662:** TEFAS fund data fetcher (_fetchTefasFund()) and symbol normalizer.
+  - **Lines 663-773:** BIST stock price & historical chart fetcher (_fetchBistStock(), _fetchYahooChart()).
+  - **Lines 774-869:** Currency / Forex rate fetcher (_fetchCurrency(), _fetchYahooForex()).
+  - **Lines 870-1108:** Commodities & precious metals fetcher (_fetchCommodity(), Truncgil API / Gold price parsers).
+  - **Lines 1109-1346:** Cryptocurrency live prices & history fetchers via Binance & Yahoo Finance (_fetchCrypto(), _fetchYahooCrypto()).
+  - **Lines 1347-1418:** Historical price interpolation helpers (_findClosestPrice, _calcChange, _currencyName).
+- **File:** `lib/services/storage_service.dart`
+  - **Lines 1-13:** Imports and StorageService class declaration.
+  - **Lines 14-57:** App settings storage (loadSettings(), saveSettings()).
+  - **Lines 58-115:** Portfolio file paths and logo cache persistence (loadLogoCache(), saveLogoCache()).
+  - **Lines 116-159:** Inflation cache persistence (loadInflationCache(), saveInflationCache()).
+  - **Lines 160-188:** Portfolios persistence (loadPortfolios(), savePortfolios()).
+  - **Lines 189-411:** Initial sample dummy portfolios for first-time launch (_getInitialSamplePortfolios()).
+- **File:** `lib/theme/app_theme.dart`
+  - **Lines 1-26:** Imports and AppTheme color palette constants (background, surface, profit, loss, text, borders).
+  - **Lines 27-131:** AppTheme.darkTheme - Material 3 dark theme configuration (Card, AppBar, InputDecoration, Button, Dialog, SnackBar themes).
+- **File:** `lib/utils/fifo_calculator.dart`
+  - **Lines 1-5:** Imports and file documentation.
+  - **Lines 6-35:** AssetLot model representing individual purchase lots, remaining quantity, and holding days.
+  - **Lines 36-50:** FifoConsumption model linking lot consumptions to sales.
+  - **Lines 51-69:** FifoSaleRecord model recording realized profits, costs, and tax amounts per sale.
+  - **Lines 70-102:** FifoResult container for active lots, closed lots, and sale records.
+  - **Lines 103-118:** FifoCostEstimation model for pre-sale cost and profit estimation.
+  - **Lines 119-245:** FifoCalculator.calculate() - Core FIFO simulation algorithm tracking lot depletion and capital gains.
+  - **Lines 246-303:** FifoCalculator.estimateSaleCost() - Hypothetical sale cost basis simulator.
+- **File:** `lib/utils/formatters.dart`
+  - **Lines 1-18:** Imports and static DateFormat & NumberFormat instances for Turkish locale.
+  - **Lines 19-37:** Currency and percentage string formatters (currency, compactCurrency, percent).
+  - **Lines 38-58:** Date and relative time formatters (date, monthYear, daysAgo).
+  - **Lines 59-112:** Holding duration text formatter (formatDuration calculating days, months, and years in Turkish).
+  - **Lines 113-130:** Decimal price and quantity formatters (formatPrice, formatNumber).
+  - **Lines 131-163:** Robust string-to-double parser handling Turkish comma decimals (parseDouble).
+- **File:** `lib/widgets/asset_item_tile.dart`
+  - **Lines 1-27:** Imports and AssetItemTile declaration with callback definitions (onTap, onDelete, onEdit).
+  - **Lines 28-108:** build() method: Card container, ink response, layout shell, and value calculation setups.
+  - **Lines 109-193:** Leading asset logo, asset name, symbol, category tag, and date badges.
+  - **Lines 194-293:** Performance indicators, period profit pills, current value, total cost, and profit percentage badge.
+  - **Lines 294-350:** Action buttons (history/status button, edit/delete actions).
+  - **Lines 351-401:** _buildSmallStat() - Helper widget for compact secondary metric rows.
+- **File:** `lib/widgets/asset_logo.dart`
+  - **Lines 1-30:** Imports, constants, and AssetLogo widget declaration.
+  - **Lines 31-94:** _AssetLogoState lifecycle, SVG icon detection, and logo resolution dispatch (_resolveLogo()).
+  - **Lines 95-119:** build() method: Image network loader with cached network image, fallback category icon, or initials avatar.
+  - **Lines 120-227:** buildGoldCard() - Vector gold ingot badge for gold and precious metal assets.
+- **File:** `lib/widgets/asset_symbol_autocomplete.dart`
+  - **Lines 1-33:** Imports and AssetSymbolAutocomplete declaration with controllers and callbacks.
+  - **Lines 34-71:** _AssetSymbolAutocompleteState declaration, focus node listeners, and lifecycle hooks (initState, dispose).
+  - **Lines 72-151:** Event handling (_onFocusChanged, _onControllerChanged), debounced search invocation (_performSearch).
+  - **Lines 152-355:** Custom floating dropdown overlay builder (_showOverlay(), CompositedTransformTarget, suggestions list).
+  - **Lines 356-361:** Overlay dismissal helper (_hideOverlay()).
+  - **Lines 362-396:** build() method: Text form field wrapped in CompositedTransformTarget with clear icon and search indicator.
+- **File:** `lib/widgets/category_distribution_bar.dart`
+  - **Lines 1-33:** Imports, CategoryDistributionBar declaration, and color palette definition.
+  - **Lines 34-160:** build() method: Multi-segmented horizontal progress bar, legend badges with percentages and monetary values.
+  - **Lines 161-173:** _AllocationDisplayItem private helper data class.
+- **File:** `lib/widgets/emtia_vector_icon.dart`
+  - **Lines 1-15:** Imports and EmtiaVectorIcon declaration.
+  - **Lines 16-36:** Custom metallic gold bar vector drawing widget.
+- **File:** `lib/widgets/net_gross_badge.dart`
+  - **Lines 1-27:** Imports and NetGrossBadge declaration.
+  - **Lines 28-77:** build() method: Compact badge showing BRUT, NET, or REEL with semantic styling and tooltip.
+- **File:** `lib/widgets/period_performance_badge.dart`
+  - **Lines 1-157:** Imports, PeriodPerformanceRow declaration, and period metric collection logic.
+  - **Lines 158-194:** build() method: Horizontal chips for Gunluk, Haftalik, Aylik, Yillik performance.
+  - **Lines 195-292:** _buildMetricTile() - Metric pill rendering change percentage and monetary amount with profit/loss styling.
+- **File:** `lib/widgets/portfolio_card.dart`
+  - **Lines 1-31:** Imports, PortfolioCard declaration, and callbacks (onTap, onDelete, onEdit).
+  - **Lines 32-150:** _PortfolioCardState and build() header: portfolio name, description, visibility toggle, popup menu.
+  - **Lines 151-260:** Total portfolio value, cost, profit/loss banner, and period return badges.
+  - **Lines 261-340:** Category distribution bar and asset allocation summary within card.
+  - **Lines 341-407:** Footer action area: asset count badge, fund count, and quick transaction trigger button.

@@ -13,6 +13,7 @@ coverage/
 /coverage/
 doc/api/
 **/doc/api/
+.agents/
 
 # ==========================================
 # Platform Specific Ephemeral & Build Outputs
