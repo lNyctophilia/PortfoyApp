@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
+  // Brand & Icon Colors:
+  // 1. Arka Plan: Color(0xFF0A1128)
+  // 2. Foreground: Color(0xFFFFFFFF)
+  // 3. Ekstra Renk (Açık Mavi): Color(0xFF3A86FF)
+
   // Palette
   static const Color background = Color(0xFF0B0F19);
   static const Color surface = Color(0xFF111827);

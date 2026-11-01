@@ -336,11 +336,11 @@ class Portfolio {
       description: json['description'] as String? ?? '',
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
       assets: (json['assets'] as List<dynamic>?)
-              ?.map((a) => PortfolioAsset.fromJson(a as Map<String, dynamic>))
+              ?.map((a) => PortfolioAsset.fromJson(Map<String, dynamic>.from(a as Map)))
               .toList() ??
           [],
       transactions: (json['transactions'] as List<dynamic>?)
-              ?.map((t) => PortfolioTransaction.fromJson(t as Map<String, dynamic>))
+              ?.map((t) => PortfolioTransaction.fromJson(Map<String, dynamic>.from(t as Map)))
               .toList() ??
           [],
       isVisible: json['isVisible'] as bool? ?? true,

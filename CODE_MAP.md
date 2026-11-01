@@ -1,5 +1,7 @@
 # Code Map Index
 
+- **File:** `firestore.rules`
+  - **Lines 1-19:** Firebase Security Rules restricting read/write access to `/users/{userId}/**` for authenticated account owner only.
 - **File:** `lib/core/constants/app_version.dart`
   - **Lines 1-5:** Class AppVersion with static current version constant.
 - **File:** `lib/dialogs/add_edit_asset_dialog.dart`
@@ -41,7 +43,7 @@
   - **Lines 690-955:** _buildTransactionsTab() - Chronological transaction history cards, transaction badges, and details.
   - **Lines 956-1073:** Transaction undo/delete confirmations (_confirmUndoTransaction, _confirmDeleteTransaction), filter chips, and asset deletion modal (_confirmDeleteAsset).
 - **File:** `lib/firebase_options.dart`
-  - **Lines 1-67:** DefaultFirebaseOptions auto-generated configuration mapping platform options for Android and Windows.
+  - **Lines 1-73:** DefaultFirebaseOptions auto-generated and configured mapping platform options for Web, Android, and Windows.
 - **File:** `lib/main.dart`
   - **Lines 1-35:** Imports, safe Firebase.initializeApp(), and main() entry point.
   - **Lines 36-62:** PortfoyApp root widget, MultiProvider setup, and MaterialApp configuration.
@@ -83,14 +85,14 @@
   - **Lines 1-48:** Imports, PortfolioProvider declaration, auth/firestore services, and internal state variables.
   - **Lines 49-110:** Filtered portfolio getters, auth state getters (currentUser, isSignedIn, isSyncing, lastSyncTime), and category filter accessors.
   - **Lines 111-158:** Grand total aggregate getters across all visible portfolios (cost, value, profit, profit percent for brut/net/reel).
-  - **Lines 159-270:** Auth lifecycle listener, dispose teardown, cloud synchronization (syncWithCloud()), Google sign-in/out dispatch, and background Firestore persistence (_persistPortfolios()).
+  - **Lines 159-270:** Auth lifecycle listener, dispose teardown, cloud synchronization with local merge (syncWithCloud()), Google sign-in/out dispatch, and background Firestore persistence (_persistPortfolios()).
   - **Lines 271-316:** Data loading (loadData()), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
   - **Lines 317-364:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
   - **Lines 365-414:** Missing asset icon resolution & backfill helper (_backfillMissingAssetIcons()).
   - **Lines 415-468:** Category filtering setter and portfolio CRUD operations (addPortfolio, updatePortfolio, togglePortfolioVisibility, deletePortfolio).
   - **Lines 469-507:** Direct asset management (addAsset, updateAsset, deleteAsset).
   - **Lines 508-692:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
-  - **Lines 693-811:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
+  - **Lines 693-822:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
 - **File:** `lib/screens/settings_screen.dart`
   - **Lines 1-16:** Imports and SettingsScreen declaration.
   - **Lines 17-53:** build() method - Shell and responsive constrained list view setup.
@@ -117,14 +119,14 @@
   - **Lines 582-607:** _searchCurrencies() - Query matcher for fiat currencies.
 - **File:** `lib/services/auth_service.dart`
   - **Lines 1-30:** Imports, AuthService singleton declaration, and state getters.
-  - **Lines 31-75:** signInWithGoogle() - Cross-platform Google sign-in with web popup and mobile credential exchange.
-  - **Lines 76-91:** signOut() - Clean teardown of GoogleSignIn and FirebaseAuth sessions.
+  - **Lines 31-90:** signInWithGoogle() - Cross-platform Google sign-in with web popup, friendly error translations, and mobile credential exchange.
+  - **Lines 91-117:** signOut() - Clean teardown of GoogleSignIn (guarded for non-web) and FirebaseAuth sessions.
 - **File:** `lib/services/firestore_service.dart`
   - **Lines 1-22:** Imports, FirestoreService singleton declaration, and Firebase availability check.
   - **Lines 23-55:** loadPortfolios() - Fetches all portfolio documents for user UID.
-  - **Lines 56-107:** savePortfolios() - Batch upsert of portfolios and pruning of deleted records.
-  - **Lines 108-145:** Single portfolio CRUD helpers (saveSinglePortfolio, deletePortfolio).
-  - **Lines 146-167:** Cloud settings persistence (saveSettings, loadSettings).
+  - **Lines 56-107:** savePortfolios() - Batch upsert of portfolios, deletion pruning, and error rethrow.
+  - **Lines 108-146:** Single portfolio CRUD helpers (saveSinglePortfolio, deletePortfolio).
+  - **Lines 147-169:** Cloud settings persistence (saveSettings, loadSettings).
 - **File:** `lib/services/inflation_service.dart`
   - **Lines 1-50:** Imports and InflationInfo data class with JSON serialization.
   - **Lines 51-95:** PeriodInflationData data model representing 1-month, 3-month, 6-month, 1-year, and 5-year CPI rates.
@@ -148,15 +150,16 @@
   - **Lines 1109-1346:** Cryptocurrency live prices & history fetchers via Binance & Yahoo Finance (_fetchCrypto(), _fetchYahooCrypto()).
   - **Lines 1347-1418:** Historical price interpolation helpers (_findClosestPrice, _calcChange, _currencyName).
 - **File:** `lib/services/storage_service.dart`
-  - **Lines 1-13:** Imports and StorageService class declaration.
-  - **Lines 14-57:** App settings storage (loadSettings(), saveSettings()).
-  - **Lines 58-115:** Portfolio file paths and logo cache persistence (loadLogoCache(), saveLogoCache()).
-  - **Lines 116-159:** Inflation cache persistence (loadInflationCache(), saveInflationCache()).
-  - **Lines 160-188:** Portfolios persistence (loadPortfolios(), savePortfolios()).
-  - **Lines 189-411:** Initial sample dummy portfolios for first-time launch (_getInitialSamplePortfolios()).
+  - **Lines 1-13:** Imports and StorageService class declaration with storage key constants.
+  - **Lines 14-36:** App settings persistence (loadSettings() defaulting to brut, saveSettings()) using SharedPreferences.
+  - **Lines 37-58:** Logo cache persistence (loadLogoCache(), saveLogoCache()).
+  - **Lines 59-80:** Inflation cache persistence (loadInflationCache(), saveInflationCache()).
+  - **Lines 81-107:** Portfolios persistence (loadPortfolios(), savePortfolios()) supporting cross-platform web localStorage.
+- **File:** `lib/theme/app_colors.dart`
+  - **Lines 1-11:** Class AppColors declaring static constants for background, foreground, and extraColorLightBlue colors.
 - **File:** `lib/theme/app_theme.dart`
-  - **Lines 1-26:** Imports and AppTheme color palette constants (background, surface, profit, loss, text, borders).
-  - **Lines 27-131:** AppTheme.darkTheme - Material 3 dark theme configuration (Card, AppBar, InputDecoration, Button, Dialog, SnackBar themes).
+  - **Lines 1-31:** Imports, icon/brand color notes, and AppTheme color palette constants (background, surface, profit, loss, text, borders).
+  - **Lines 32-136:** AppTheme.darkTheme - Material 3 dark theme configuration (Card, AppBar, InputDecoration, Button, Dialog, SnackBar themes).
 - **File:** `lib/utils/fifo_calculator.dart`
   - **Lines 1-5:** Imports and file documentation.
   - **Lines 6-35:** AssetLot model representing individual purchase lots, remaining quantity, and holding days.

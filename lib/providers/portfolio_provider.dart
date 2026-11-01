@@ -26,8 +26,8 @@ class PortfolioProvider extends ChangeNotifier {
   bool _isLoading = true;
   bool _isRefreshing = false;
   AssetCategory? _selectedCategoryFilter;
-  bool _showNetValues = true;
-  ReturnCalculationMode _returnMode = ReturnCalculationMode.net;
+  bool _showNetValues = false;
+  ReturnCalculationMode _returnMode = ReturnCalculationMode.brut;
   Map<String, double> _assetInflationRates = {};
   double _latestAnnualInflation = 0.0;
   PeriodInflationData? _periodInflation;
@@ -178,12 +178,16 @@ class PortfolioProvider extends ChangeNotifier {
     await _storageService.savePortfolios(_portfolios);
     final user = _authService.currentUser;
     if (user != null && _firestoreService.isFirebaseAvailable) {
-      _firestoreService.savePortfolios(user.uid, _portfolios).then((_) {
+      try {
+        await _firestoreService.savePortfolios(user.uid, _portfolios);
         _lastSyncTime = DateTime.now();
+        _syncError = null;
         notifyListeners();
-      }).catchError((e) {
+      } catch (e) {
         debugPrint('Bulut senkronizasyon hatası: $e');
-      });
+        _syncError = 'Bulut senkronizasyon hatası: $e';
+        notifyListeners();
+      }
     }
   }
 
@@ -226,7 +230,14 @@ class PortfolioProvider extends ChangeNotifier {
       final cloudPortfolios = await _firestoreService.loadPortfolios(user.uid);
 
       if (cloudPortfolios.isNotEmpty) {
-        _portfolios = cloudPortfolios;
+        final cloudIds = cloudPortfolios.map((p) => p.id).toSet();
+        final localOnly = _portfolios.where((p) => !cloudIds.contains(p.id)).toList();
+        if (localOnly.isNotEmpty) {
+          _portfolios = [...cloudPortfolios, ...localOnly];
+          await _firestoreService.savePortfolios(user.uid, _portfolios);
+        } else {
+          _portfolios = cloudPortfolios;
+        }
         await _storageService.savePortfolios(_portfolios);
         _backfillMissingAssetIcons();
       } else if (_portfolios.isNotEmpty) {
@@ -271,10 +282,10 @@ class PortfolioProvider extends ChangeNotifier {
     if (modeStr != null) {
       _returnMode = ReturnCalculationMode.values.firstWhere(
         (e) => e.name == modeStr,
-        orElse: () => ReturnCalculationMode.net,
+        orElse: () => ReturnCalculationMode.brut,
       );
     } else {
-      final netVal = settings['showNetValuesWithholdingTax'] ?? true;
+      final netVal = settings['showNetValuesWithholdingTax'] ?? false;
       _returnMode =
           netVal ? ReturnCalculationMode.net : ReturnCalculationMode.brut;
     }

@@ -93,6 +93,7 @@ class FirestoreService {
       await batch.commit();
     } catch (e) {
       debugPrint('Firestore savePortfolios Hatası: $e');
+      rethrow;
     }
   }
 

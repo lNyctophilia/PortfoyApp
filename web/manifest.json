@@ -4,12 +4,18 @@
     "start_url": "./",
     "scope": "./",
     "display": "standalone",
-    "background_color": "#0B0F19",
-    "theme_color": "#0B0F19",
+    "background_color": "#0A1128",
+    "theme_color": "#0A1128",
     "description": "Kişisel Finans ve Portföy Takip Uygulaması",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
+        {
+            "src": "icons/Icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
         {
             "src": "icons/Icon-192.png",
             "sizes": "192x192",

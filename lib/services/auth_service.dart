@@ -65,6 +65,31 @@ class AuthService {
       );
 
       return await _auth!.signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Google Sign-In FirebaseAuthException: ${e.code} - ${e.message}');
+      if (e.code == 'popup-closed-by-user') {
+        // Kullanıcı açılan pencereyi kapattı veya vazgeçti
+        return null;
+      }
+
+      String friendlyMessage;
+      switch (e.code) {
+        case 'popup-blocked':
+          friendlyMessage = 'Giriş penceresi tarayıcınız tarafından engellendi. Lütfen adres çubuğundan pop-up izni verin.';
+          break;
+        case 'unauthorized-domain':
+          friendlyMessage = 'Bu alan adı (domain) Firebase Yetkili Alan Adları listesinde ekli değil. Firebase Console > Authentication > Settings altından ekleyin.';
+          break;
+        case 'operation-not-allowed':
+          friendlyMessage = 'Google ile giriş Firebase konsolunda henüz etkinleştirilmemiş. Firebase Console > Authentication > Sign-in method altından Google\'ı aktif edin.';
+          break;
+        case 'network-request-failed':
+          friendlyMessage = 'İnternet bağlantısı hatası. Lütfen bağlantınızı kontrol edin.';
+          break;
+        default:
+          friendlyMessage = e.message ?? 'Giriş yapılırken bir hata oluştu (${e.code}).';
+      }
+      throw Exception(friendlyMessage);
     } catch (e) {
       debugPrint('Google Sign-In Hatası: $e');
       rethrow;
@@ -73,7 +98,7 @@ class AuthService {
 
   Future<void> signOut() async {
     try {
-      if (await _googleSignIn.isSignedIn()) {
+      if (!kIsWeb && await _googleSignIn.isSignedIn()) {
         await _googleSignIn.signOut();
       }
     } catch (e) {
