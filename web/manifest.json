@@ -1,6 +1,6 @@
 {
     "name": "PortfoyApp",
-    "short_name": "Portföy",
+    "short_name": "PortfoyApp",
     "start_url": "./",
     "scope": "./",
     "display": "standalone",

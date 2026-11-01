@@ -105,11 +105,11 @@ class CategoryDistributionBar extends StatelessWidget {
 
         // Yüzde Etiketleri (Varlık bazlı etiketler)
         Wrap(
-          spacing: 8,
-          runSpacing: 6,
+          spacing: 6,
+          runSpacing: 4,
           children: displayItems.map((item) {
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
                 color: item.color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
@@ -122,19 +122,19 @@ class CategoryDistributionBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 7,
-                    height: 7,
+                    width: 6,
+                    height: 6,
                     decoration: BoxDecoration(
                       color: item.color,
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 5),
                   Text(
                     '${Formatters.percent(item.percentage, includeSign: false)} ${item.label}',
                     style: TextStyle(
                       color: item.color,
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

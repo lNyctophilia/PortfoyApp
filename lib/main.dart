@@ -403,14 +403,20 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                       ),
                       const SizedBox(height: 12),
                       summaryCards[0],
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(child: summaryCards[1]),
-                          const SizedBox(width: 10),
-                          Expanded(child: summaryCards[2]),
-                        ],
-                      ),
+                      const SizedBox(height: 8),
+                      if (constraints.maxWidth < 500) ...[
+                        summaryCards[1],
+                        const SizedBox(height: 8),
+                        summaryCards[2],
+                      ] else ...[
+                        Row(
+                          children: [
+                            Expanded(child: summaryCards[1]),
+                            const SizedBox(width: 10),
+                            Expanded(child: summaryCards[2]),
+                          ],
+                        ),
+                      ],
                     ],
                   );
                 } else if (isWide) {
@@ -476,7 +482,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                               crossAxisCount: crossAxisCount,
                               crossAxisSpacing: isMobileScreen ? 12 : 20,
                               mainAxisSpacing: isMobileScreen ? 12 : 20,
-                              mainAxisExtent: isMobileScreen ? 355 : 345,
+                              mainAxisExtent: isMobileScreen ? 395 : 380,
                             ),
                             itemCount: portfolios.length,
                             itemBuilder: (context, index) {
@@ -537,8 +543,8 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
     Widget? badge,
   }) {
     return Container(
-      height: 84,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      constraints: const BoxConstraints(minHeight: 78),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(14),

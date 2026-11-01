@@ -404,7 +404,7 @@ class _PortfolioCardState extends State<PortfolioCard> {
                   CategoryDistributionBar(
                     portfolio: p,
                     showAmounts: false,
-                    maxItems: 5,
+                    maxItems: 4,
                   ),
                 ],
               ),

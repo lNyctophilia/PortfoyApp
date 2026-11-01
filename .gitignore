@@ -29,14 +29,31 @@ x86/
 ARM64/
 Debug/
 Release/
+[Bb]in/
+[Oo]bj/
 *.[Cc]ache
 !*.[Cc]ache/
 
-# Visual Studio user files
+# Desktop C++ / WebView2 wrapper build outputs & NuGet
+desktop/bin/
+desktop/obj/
+desktop/packages/
+*.obj
+*.res
+*.ilk
+*.pdb
+*.exp
+
+# Visual Studio user files & cache
+.vs/
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
+*.VC.db
+*.opendb
+*.idb
+*.ipch
 
 # Android & APK Outputs
 *.apk

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/asset_category.dart';
 import '../services/asset_catalog_service.dart';
@@ -159,8 +160,10 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
 
     _overlayEntry = OverlayEntry(
       builder: (context) {
+        final screenWidth = MediaQuery.sizeOf(context).width;
+        final targetWidth = math.min(size.width.clamp(200.0, 480.0), screenWidth - 32);
         return Positioned(
-          width: size.width.clamp(260.0, 480.0),
+          width: targetWidth,
           child: CompositedTransformFollower(
             link: _layerLink,
             showWhenUnlinked: false,

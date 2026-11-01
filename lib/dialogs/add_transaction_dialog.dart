@@ -404,58 +404,56 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     final bg = isPos ? AppTheme.profitBg : AppTheme.lossBg;
     final sign = isPos ? '+' : '';
 
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: color.withValues(alpha: 0.35),
-            width: 1.2,
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withValues(alpha: 0.35),
+          width: 1.2,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textMuted,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textMuted,
             ),
-            const SizedBox(height: 3),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isPos
-                        ? Icons.trending_up_rounded
-                        : Icons.trending_down_rounded,
-                    size: 13,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isPos
+                      ? Icons.trending_up_rounded
+                      : Icons.trending_down_rounded,
+                  size: 13,
+                  color: color,
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  '$sign${val.toStringAsFixed(2)}%',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
                     color: color,
                   ),
-                  const SizedBox(width: 2),
-                  Text(
-                    '$sign${val.toStringAsFixed(2)}%',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -671,14 +669,16 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   Widget build(BuildContext context) {
     final isAlis = _selectedType == TransactionType.alis;
 
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return Dialog(
-      insetPadding: EdgeInsets.symmetric(horizontal: MediaQuery.sizeOf(context).width < 600 ? 10 : 20, vertical: MediaQuery.sizeOf(context).width < 600 ? 10 : 16),
+      insetPadding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 20, vertical: isMobile ? 10 : 16),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640),
         child: Form(
           key: _formKey,
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(isMobile ? 16 : 24),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -775,16 +775,22 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                         : AppTheme.textSecondary,
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    'Alış (Yeni / Ek Alım)',
-                                    style: TextStyle(
-                                      fontWeight: isAlis
-                                          ? FontWeight.w700
-                                          : FontWeight.w500,
-                                      color: isAlis
-                                          ? AppTheme.primaryLight
-                                          : AppTheme.textSecondary,
-                                      fontSize: 13,
+                                  Flexible(
+                                    child: Text(
+                                      MediaQuery.sizeOf(context).width < 500
+                                          ? 'Alış Yap'
+                                          : 'Alış (Yeni / Ek Alım)',
+                                      style: TextStyle(
+                                        fontWeight: isAlis
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: isAlis
+                                            ? AppTheme.primaryLight
+                                            : AppTheme.textSecondary,
+                                        fontSize: 13,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
@@ -831,16 +837,22 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                         : AppTheme.textSecondary,
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    'Satış (Kâr / Zarar Gerçekleştir)',
-                                    style: TextStyle(
-                                      fontWeight: !isAlis
-                                          ? FontWeight.w700
-                                          : FontWeight.w500,
-                                      color: !isAlis
-                                          ? AppTheme.profit
-                                          : AppTheme.textSecondary,
-                                      fontSize: 13,
+                                  Flexible(
+                                    child: Text(
+                                      MediaQuery.sizeOf(context).width < 500
+                                          ? 'Satış Yap'
+                                          : 'Satış (Kâr / Zarar Gerçekleştir)',
+                                      style: TextStyle(
+                                        fontWeight: !isAlis
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: !isAlis
+                                            ? AppTheme.profit
+                                            : AppTheme.textSecondary,
+                                        fontSize: 13,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
@@ -1003,10 +1015,42 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         const SizedBox(height: 16),
 
         // Sembol ve İsim
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 480;
+            final symbolField = AssetSymbolAutocomplete(
+              controller: _alisSymbolController,
+              category: _alisCategory,
+              isLoading: _isLoadingAlisMarketData,
+              hintText: _alisCategory == AssetCategory.fon
+                  ? 'Örn: TI2 / Fon adı'
+                  : _alisCategory == AssetCategory.hisse
+                      ? 'Örn: THYAO / Hisse adı'
+                      : _alisCategory == AssetCategory.doviz
+                          ? 'Örn: USD / Dolar'
+                          : _alisCategory == AssetCategory.emtia
+                              ? 'Örn: Altın / Gümüş'
+                              : 'Örn: BTC / Bitcoin',
+              onChanged: _onAlisSymbolChanged,
+              onSelected: _onAlisSuggestionSelected,
+              onFetchManual: () => _fetchAlisMarketData(
+                _alisSymbolController.text.trim(),
+                forceHistoricalPrice: true,
+              ),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Sembol girin' : null,
+            );
+            final nameField = TextFormField(
+              controller: _alisNameController,
+              decoration: const InputDecoration(
+                labelText: 'Varlık Adı *',
+                hintText: 'Örn: Türk Hava Yolları',
+                prefixIcon: Icon(Icons.badge_outlined),
+              ),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'İsim girin' : null,
+            );
+            final logo = Padding(
               padding: const EdgeInsets.only(top: 4, right: 10),
               child: AssetLogo(
                 iconUrl: _alisIconUrl,
@@ -1017,47 +1061,35 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 iconSize: 24,
                 borderRadius: 12,
               ),
-            ),
-            Expanded(
-              flex: 2,
-              child: AssetSymbolAutocomplete(
-                controller: _alisSymbolController,
-                category: _alisCategory,
-                isLoading: _isLoadingAlisMarketData,
-                hintText: _alisCategory == AssetCategory.fon
-                    ? 'Örn: TI2 / Fon adı'
-                    : _alisCategory == AssetCategory.hisse
-                        ? 'Örn: THYAO / Hisse adı'
-                        : _alisCategory == AssetCategory.doviz
-                            ? 'Örn: USD / Dolar'
-                            : _alisCategory == AssetCategory.emtia
-                                ? 'Örn: Altın / Gümüş'
-                                : 'Örn: BTC / Bitcoin',
-                onChanged: _onAlisSymbolChanged,
-                onSelected: _onAlisSuggestionSelected,
-                onFetchManual: () => _fetchAlisMarketData(
-                  _alisSymbolController.text.trim(),
-                  forceHistoricalPrice: true,
-                ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Sembol girin' : null,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 3,
-              child: TextFormField(
-                controller: _alisNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Varlık Adı *',
-                  hintText: 'Örn: Türk Hava Yolları',
-                  prefixIcon: Icon(Icons.badge_outlined),
-                ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'İsim girin' : null,
-              ),
-            ),
-          ],
+            );
+
+            if (isNarrow) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      logo,
+                      Expanded(child: symbolField),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  nameField,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                logo,
+                Expanded(flex: 2, child: symbolField),
+                const SizedBox(width: 12),
+                Expanded(flex: 3, child: nameField),
+              ],
+            );
+          },
         ),
 
         // Otomatik Fiyat Bildirimi
@@ -1406,26 +1438,46 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           ],
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            _buildReadonlyPeriodBadge(
-                'Günlük', _parseVal(_alisDailyChangeController.text)),
-            const SizedBox(width: 6),
-            _buildReadonlyPeriodBadge(
-                'Haftalık', _parseVal(_alisWeeklyChangeController.text)),
-            const SizedBox(width: 6),
-            _buildReadonlyPeriodBadge(
-                '1 Aylık', _parseVal(_alisMonthlyChangeController.text)),
-            const SizedBox(width: 6),
-            _buildReadonlyPeriodBadge(
-                '3 Aylık', _parseVal(_alisThreeMonthlyChangeController.text)),
-            const SizedBox(width: 6),
-            _buildReadonlyPeriodBadge(
-                '6 Aylık', _parseVal(_alisSixMonthlyChangeController.text)),
-            const SizedBox(width: 6),
-            _buildReadonlyPeriodBadge(
-                'Yıllık', _parseVal(_alisYearlyChangeController.text)),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 460;
+            if (isNarrow) {
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('Günlük', _parseVal(_alisDailyChangeController.text))),
+                    const SizedBox(width: 6),
+                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('Haftalık', _parseVal(_alisWeeklyChangeController.text))),
+                    const SizedBox(width: 6),
+                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('1 Aylık', _parseVal(_alisMonthlyChangeController.text))),
+                    const SizedBox(width: 6),
+                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('3 Aylık', _parseVal(_alisThreeMonthlyChangeController.text))),
+                    const SizedBox(width: 6),
+                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('6 Aylık', _parseVal(_alisSixMonthlyChangeController.text))),
+                    const SizedBox(width: 6),
+                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('Yıllık', _parseVal(_alisYearlyChangeController.text))),
+                  ],
+                ),
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: _buildReadonlyPeriodBadge('Günlük', _parseVal(_alisDailyChangeController.text))),
+                const SizedBox(width: 6),
+                Expanded(child: _buildReadonlyPeriodBadge('Haftalık', _parseVal(_alisWeeklyChangeController.text))),
+                const SizedBox(width: 6),
+                Expanded(child: _buildReadonlyPeriodBadge('1 Aylık', _parseVal(_alisMonthlyChangeController.text))),
+                const SizedBox(width: 6),
+                Expanded(child: _buildReadonlyPeriodBadge('3 Aylık', _parseVal(_alisThreeMonthlyChangeController.text))),
+                const SizedBox(width: 6),
+                Expanded(child: _buildReadonlyPeriodBadge('6 Aylık', _parseVal(_alisSixMonthlyChangeController.text))),
+                const SizedBox(width: 6),
+                Expanded(child: _buildReadonlyPeriodBadge('Yıllık', _parseVal(_alisYearlyChangeController.text))),
+              ],
+            );
+          },
         ),
       ],
     );
@@ -1527,10 +1579,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         const SizedBox(height: 14),
 
         // SEMBOL VE İSİM (Seçilen Varlık Bilgisi)
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 480;
+            final logo = Padding(
               padding: const EdgeInsets.only(top: 4, right: 10),
               child: AssetLogo(
                 iconUrl: _satisIconUrl,
@@ -1541,31 +1593,51 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 iconSize: 24,
                 borderRadius: 12,
               ),
-            ),
-            Expanded(
-              flex: 2,
-              child: TextFormField(
-                controller: _satisSymbolController,
-                readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: 'Sembol',
-                  filled: true,
-                ),
+            );
+            final symbolField = TextFormField(
+              controller: _satisSymbolController,
+              readOnly: true,
+              decoration: const InputDecoration(
+                labelText: 'Sembol',
+                filled: true,
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 3,
-              child: TextFormField(
-                controller: _satisNameController,
-                readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: 'Varlık Adı',
-                  filled: true,
-                ),
+            );
+            final nameField = TextFormField(
+              controller: _satisNameController,
+              readOnly: true,
+              decoration: const InputDecoration(
+                labelText: 'Varlık Adı',
+                filled: true,
               ),
-            ),
-          ],
+            );
+
+            if (isNarrow) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      logo,
+                      Expanded(child: symbolField),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  nameField,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                logo,
+                Expanded(flex: 2, child: symbolField),
+                const SizedBox(width: 12),
+                Expanded(flex: 3, child: nameField),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 14),
 

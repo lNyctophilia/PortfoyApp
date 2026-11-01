@@ -101,7 +101,10 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 4,
                           children: [
                             Text(
                               currentAsset.symbol,
@@ -111,7 +114,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                                 color: AppTheme.textPrimary,
                               ),
                             ),
-                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 7,
@@ -131,25 +133,25 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                'FIFO Maliyet & Durum',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.primaryLight,
+                            if (!isMobile)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'FIFO Maliyet & Durum',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primaryLight,
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                         const SizedBox(height: 3),
@@ -260,21 +262,27 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
 
             // TAB BUTONLARI (Alış Lotları / Satışlar)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 20, vertical: 4),
               child: Row(
                 children: [
-                  _buildTabButton(
-                    0,
-                    'Alış Lotları & Maliyetler',
-                    fifoResult.allLots.length,
-                    Icons.history_rounded,
+                  Expanded(
+                    child: _buildTabButton(
+                      0,
+                      isMobile ? 'Alış Lotları' : 'Alış Lotları & Maliyetler',
+                      fifoResult.allLots.length,
+                      Icons.history_rounded,
+                      isMobile: isMobile,
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  _buildTabButton(
-                    1,
-                    'Satış & Gerçekleşen Kâr',
-                    fifoResult.saleRecords.length,
-                    Icons.sell_outlined,
+                  Expanded(
+                    child: _buildTabButton(
+                      1,
+                      isMobile ? 'Satış Geçmişi' : 'Satış & Gerçekleşen Kâr',
+                      fifoResult.saleRecords.length,
+                      Icons.sell_outlined,
+                      isMobile: isMobile,
+                    ),
                   ),
                 ],
               ),
@@ -285,8 +293,8 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
             // İÇERİK LİSTESİ
             Expanded(
               child: _selectedTab == 0
-                  ? _buildLotsTab(fifoResult, currentAsset)
-                  : _buildSalesTab(fifoResult, currentAsset),
+                  ? _buildLotsTab(fifoResult, currentAsset, isMobile)
+                  : _buildSalesTab(fifoResult, currentAsset, isMobile),
             ),
 
             // ALT AKSİYON ÇUBUÄU
@@ -452,13 +460,13 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     );
   }
 
-  Widget _buildTabButton(int index, String label, int count, IconData icon) {
+  Widget _buildTabButton(int index, String label, int count, IconData icon, {bool isMobile = false}) {
     final isSelected = _selectedTab == index;
     return InkWell(
       onTap: () => setState(() => _selectedTab = index),
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
               ? AppTheme.primary.withValues(alpha: 0.15)
@@ -469,30 +477,34 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
           ),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
               size: 15,
-              color: isSelected ? AppTheme.primaryLight : AppTheme.textSecondary,
+              color: isSelected ? AppTheme.primaryLight : AppTheme.textMuted,
             ),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color:
-                    isSelected ? AppTheme.primaryLight : AppTheme.textSecondary,
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: isMobile ? 11.5 : 12.5,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? AppTheme.primaryLight : AppTheme.textSecondary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 6),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppTheme.primaryLight.withValues(alpha: 0.25)
-                    : AppTheme.surfaceLight,
+                    : AppTheme.surfaceElevated,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -500,9 +512,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: isSelected
-                      ? AppTheme.primaryLight
-                      : AppTheme.textSecondary,
+                  color: isSelected ? AppTheme.primaryLight : AppTheme.textMuted,
                 ),
               ),
             ),
@@ -513,7 +523,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
   }
 
   // ALIÅ LOTLARI SEKMESİ
-  Widget _buildLotsTab(FifoResult result, PortfolioAsset asset) {
+  Widget _buildLotsTab(FifoResult result, PortfolioAsset asset, bool isMobile) {
     if (result.allLots.isEmpty) {
       return const Center(
         child: Text(
@@ -595,37 +605,44 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
               const SizedBox(height: 10),
 
               // Alış Bilgileri
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSubStat(
-                      'Alınan Miktar',
-                      '${_formatQty(lot.originalQuantity)} Adet',
+              if (isMobile) ...[
+                Row(
+                  children: [
+                    Expanded(child: _buildSubStat('Alınan Miktar', '${_formatQty(lot.originalQuantity)} Adet')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildSubStat('Alış Fiyatı', Formatters.currency(lot.purchasePrice))),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(child: _buildSubStat('Toplam Maliyet', Formatters.currency(lot.totalOriginalCost))),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildSubStat(
+                        'Kalan Miktar',
+                        '${_formatQty(lot.remainingQuantity)} Adet',
+                        highlightColor: lot.isFullySold ? AppTheme.textMuted : AppTheme.textPrimary,
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: _buildSubStat(
-                      'Alış Fiyatı',
-                      Formatters.currency(lot.purchasePrice),
+                  ],
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    Expanded(child: _buildSubStat('Alınan Miktar', '${_formatQty(lot.originalQuantity)} Adet')),
+                    Expanded(child: _buildSubStat('Alış Fiyatı', Formatters.currency(lot.purchasePrice))),
+                    Expanded(child: _buildSubStat('Toplam Maliyet', Formatters.currency(lot.totalOriginalCost))),
+                    Expanded(
+                      child: _buildSubStat(
+                        'Kalan Miktar',
+                        '${_formatQty(lot.remainingQuantity)} Adet',
+                        highlightColor: lot.isFullySold ? AppTheme.textMuted : AppTheme.textPrimary,
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: _buildSubStat(
-                      'Toplam Maliyet',
-                      Formatters.currency(lot.totalOriginalCost),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildSubStat(
-                      'Kalan Miktar',
-                      '${_formatQty(lot.remainingQuantity)} Adet',
-                      highlightColor: lot.isFullySold
-                          ? AppTheme.textMuted
-                          : AppTheme.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
 
               // Kalan Miktar varsa Kâr / Zarar Satırı
               if (!lot.isFullySold) ...[
@@ -686,7 +703,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
   }
 
   // SATIÅ GEÇMİÅİ SEKMESİ
-  Widget _buildSalesTab(FifoResult result, PortfolioAsset asset) {
+  Widget _buildSalesTab(FifoResult result, PortfolioAsset asset, bool isMobile) {
     if (result.saleRecords.isEmpty) {
       return Center(
         child: Column(
@@ -832,34 +849,32 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
               const SizedBox(height: 10),
 
               // Satış Detayları
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSubStat(
-                      'Satılan Miktar',
-                      '${_formatQty(tx.quantity)} Adet',
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildSubStat(
-                      'Satış Fiyatı',
-                      Formatters.currency(tx.price),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildSubStat(
-                      'FIFO Maliyet Fiyatı',
-                      Formatters.currency(saleRecord.unitCost),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildSubStat(
-                      'Toplam Gelir',
-                      Formatters.currency(tx.quantity * tx.price),
-                    ),
-                  ),
-                ],
-              ),
+              if (isMobile) ...[
+                Row(
+                  children: [
+                    Expanded(child: _buildSubStat('Satılan Miktar', '${_formatQty(tx.quantity)} Adet')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildSubStat('Satış Fiyatı', Formatters.currency(tx.price))),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(child: _buildSubStat('FIFO Maliyet', Formatters.currency(saleRecord.unitCost))),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildSubStat('Toplam Gelir', Formatters.currency(tx.quantity * tx.price))),
+                  ],
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    Expanded(child: _buildSubStat('Satılan Miktar', '${_formatQty(tx.quantity)} Adet')),
+                    Expanded(child: _buildSubStat('Satış Fiyatı', Formatters.currency(tx.price))),
+                    Expanded(child: _buildSubStat('FIFO Maliyet Fiyatı', Formatters.currency(saleRecord.unitCost))),
+                    Expanded(child: _buildSubStat('Toplam Gelir', Formatters.currency(tx.quantity * tx.price))),
+                  ],
+                ),
+              ],
 
               // Tüketilen Lotlar
               if (saleRecord.consumptions.isNotEmpty) ...[
@@ -952,6 +967,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
   Widget _buildSubStat(String label, String value, {Color? highlightColor}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           label,
@@ -959,14 +975,20 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
             fontSize: 10,
             color: AppTheme.textMuted,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: highlightColor ?? AppTheme.textPrimary,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: highlightColor ?? AppTheme.textPrimary,
+            ),
           ),
         ),
       ],

@@ -82,31 +82,31 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           children: [
             // ÜST BAÅLIK & İÅLEM BUTONLARI
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              padding: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 14 : 24, isMobile ? 14 : 24, 14),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(isMobile ? 8 : 12),
                     decoration: BoxDecoration(
                       color: AppTheme.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.account_balance_wallet_rounded,
                       color: AppTheme.primaryLight,
-                      size: 26,
+                      size: isMobile ? 22 : 26,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: isMobile ? 10 : 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           portfolio.name,
-                          style: const TextStyle(
-                            fontSize: 22,
+                          style: TextStyle(
+                            fontSize: isMobile ? 18 : 22,
                             fontWeight: FontWeight.w800,
                             color: AppTheme.textPrimary,
                           ),
@@ -117,7 +117,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                           Text(
                             portfolio.description,
                             style: const TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               color: AppTheme.textMuted,
                             ),
                             maxLines: 1,
@@ -127,42 +127,79 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                       ],
                     ),
                   ),
-                  OutlinedButton.icon(
-                    onPressed: provider.isRefreshing
-                        ? null
-                        : () => provider.refreshPortfolioPrices(portfolio.id),
-                    icon: provider.isRefreshing
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.refresh_rounded, size: 16),
-                    label: Text(provider.isRefreshing ? 'Güncelleniyor...' : 'Fiyatları Güncelle'),
-                  ),
-                  const SizedBox(width: 8),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => AddEditPortfolioDialog(
-                          portfolio: portfolio,
-                          onSave: (name, desc) {
-                            provider.updatePortfolio(
-                              id: portfolio.id,
-                              name: name,
-                              description: desc,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: const Text('Portföyü Düzenle'),
-                  ),
-                  const SizedBox(width: 8),
+                  if (isMobile) ...[
+                    IconButton(
+                      tooltip: 'Fiyatları Güncelle',
+                      onPressed: provider.isRefreshing
+                          ? null
+                          : () => provider.refreshPortfolioPrices(portfolio.id),
+                      icon: provider.isRefreshing
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh_rounded, size: 20),
+                      color: AppTheme.textSecondary,
+                    ),
+                    IconButton(
+                      tooltip: 'Portföyü Düzenle',
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AddEditPortfolioDialog(
+                            portfolio: portfolio,
+                            onSave: (name, desc) {
+                              provider.updatePortfolio(
+                                id: portfolio.id,
+                                name: name,
+                                description: desc,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.edit_outlined, size: 20),
+                      color: AppTheme.textSecondary,
+                    ),
+                  ] else ...[
+                    OutlinedButton.icon(
+                      onPressed: provider.isRefreshing
+                          ? null
+                          : () => provider.refreshPortfolioPrices(portfolio.id),
+                      icon: provider.isRefreshing
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh_rounded, size: 16),
+                      label: Text(provider.isRefreshing ? 'Güncelleniyor...' : 'Fiyatları Güncelle'),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AddEditPortfolioDialog(
+                            portfolio: portfolio,
+                            onSave: (name, desc) {
+                              provider.updatePortfolio(
+                                id: portfolio.id,
+                                name: name,
+                                description: desc,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.edit_outlined, size: 16),
+                      label: const Text('Portföyü Düzenle'),
+                    ),
+                  ],
+                  const SizedBox(width: 4),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 24),
+                    icon: const Icon(Icons.close_rounded, size: 22),
                     onPressed: () => Navigator.of(context).pop(),
                     color: AppTheme.textMuted,
                   ),
@@ -188,192 +225,218 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Üçlü İstatistik Åeridi
-                            Row(
-                              children: [
-                                // 1. Portföy Değeri & Maliyet
-                                Expanded(
-                                  child: Column(
+                                                        Builder(
+                              builder: (context) {
+                                final metricValueWidget = Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Toplam Portföy Değeri',
+                                          style: TextStyle(
+                                            color: AppTheme.textMuted,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        if (portfolio.totalWithholdingTax > 0 || mode == ReturnCalculationMode.reel) ...[
+                                          const SizedBox(width: 6),
+                                          NetGrossBadge(mode: mode),
+                                        ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        Formatters.currency(displayValue),
+                                        style: const TextStyle(
+                                          color: AppTheme.textPrimary,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Toplam Maliyet: ${Formatters.currency(portfolio.totalCost)}',
+                                      style: const TextStyle(
+                                        color: AppTheme.textSecondary,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                );
+
+                                final metricProfitWidget = Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Açık Kâr / Zarar',
+                                          style: TextStyle(
+                                            color: AppTheme.textMuted,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        if (portfolio.totalWithholdingTax > 0 || mode == ReturnCalculationMode.reel) ...[
+                                          const SizedBox(width: 6),
+                                          NetGrossBadge(mode: mode),
+                                        ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            isProfit
+                                                ? Icons.trending_up_rounded
+                                                : Icons.trending_down_rounded,
+                                            color: profitColor,
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            Formatters.currency(displayProfit),
+                                            style: TextStyle(
+                                              color: profitColor,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Getiri: ${Formatters.percent(displayProfitPercent)}',
+                                      style: TextStyle(
+                                        color: profitColor,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                );
+
+                                final metricRealizedWidget = Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Gerçekleşen Kâr / Zarar',
+                                          style: TextStyle(
+                                            color: AppTheme.textMuted,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        if (portfolio.realizedWithholdingTax > 0) ...[
+                                          const SizedBox(width: 6),
+                                          NetGrossBadge(mode: mode),
+                                        ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            portfolio.netRealizedProfit >= 0
+                                                ? Icons.check_circle_outline_rounded
+                                                : Icons.highlight_off_rounded,
+                                            color: portfolio.netRealizedProfit >= 0
+                                                ? AppTheme.profit
+                                                : AppTheme.loss,
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            Formatters.currency(
+                                              (portfolio.realizedWithholdingTax > 0 && showNetValues)
+                                                  ? portfolio.netRealizedProfit
+                                                  : portfolio.realizedProfit,
+                                            ),
+                                            style: TextStyle(
+                                              color: portfolio.netRealizedProfit >= 0
+                                                  ? AppTheme.profit
+                                                  : AppTheme.loss,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    const Text(
+                                      'Kapatılan Satış İşlemleri',
+                                      style: TextStyle(
+                                        color: AppTheme.textSecondary,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                );
+
+                                if (isMobile) {
+                                  return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                       Row(
-                                         children: [
-                                           const Text(
-                                             'Toplam Portföy Değeri',
-                                             style: TextStyle(
-                                               color: AppTheme.textMuted,
-                                               fontSize: 12,
-                                               fontWeight: FontWeight.w500,
-                                             ),
-                                           ),
-                                           if (portfolio.totalWithholdingTax > 0 || mode == ReturnCalculationMode.reel) ...[
-                                             const SizedBox(width: 6),
-                                             NetGrossBadge(mode: mode),
-                                           ],
-                                         ],
-                                       ),
-                                       const SizedBox(height: 4),
-                                       FittedBox(
-                                         fit: BoxFit.scaleDown,
-                                         alignment: Alignment.centerLeft,
-                                         child: Text(
-                                            Formatters.currency(displayValue),
-                                           style: const TextStyle(
-                                             color: AppTheme.textPrimary,
-                                             fontSize: 22,
-                                             fontWeight: FontWeight.w800,
-                                           ),
-                                         ),
-                                       ),
-                                       const SizedBox(height: 2),
-                                       Text(
-                                         'Toplam Maliyet: ${Formatters.currency(portfolio.totalCost)}',
-                                         style: const TextStyle(
-                                           color: AppTheme.textSecondary,
-                                           fontSize: 11,
-                                         ),
-                                       ),
+                                      metricValueWidget,
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 10),
+                                        child: Divider(color: AppTheme.borderSubtle, height: 1),
+                                      ),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(child: metricProfitWidget),
+                                          Container(
+                                            width: 1,
+                                            height: 44,
+                                            color: AppTheme.borderSubtle,
+                                            margin: const EdgeInsets.symmetric(horizontal: 10),
+                                          ),
+                                          Expanded(child: metricRealizedWidget),
+                                        ],
+                                      ),
                                     ],
-                                  ),
-                                ),
-                                Container(
-                                  width: 1,
-                                  height: 44,
-                                  color: AppTheme.borderSubtle,
-                                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                                ),
-                                // 2. Açık Kâr / Zarar
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                       Row(
-                                         children: [
-                                           const Text(
-                                             'Açık Kâr / Zarar',
-                                             style: TextStyle(
-                                               color: AppTheme.textMuted,
-                                               fontSize: 12,
-                                               fontWeight: FontWeight.w500,
-                                             ),
-                                           ),
-                                           if (portfolio.totalWithholdingTax > 0 || mode == ReturnCalculationMode.reel) ...[
-                                             const SizedBox(width: 6),
-                                             NetGrossBadge(mode: mode),
-                                           ],
-                                         ],
-                                       ),
-                                       const SizedBox(height: 4),
-                                       FittedBox(
-                                         fit: BoxFit.scaleDown,
-                                         alignment: Alignment.centerLeft,
-                                         child: Row(
-                                           mainAxisSize: MainAxisSize.min,
-                                           children: [
-                                             Icon(
-                                               isProfit
-                                                   ? Icons.trending_up_rounded
-                                                   : Icons.trending_down_rounded,
-                                               color: profitColor,
-                                               size: 18,
-                                             ),
-                                             const SizedBox(width: 4),
-                                             Text(
-                                               Formatters.currency(displayProfit),
-                                               style: TextStyle(
-                                                 color: profitColor,
-                                                 fontSize: 20,
-                                                 fontWeight: FontWeight.w800,
-                                               ),
-                                             ),
-                                           ],
-                                         ),
-                                       ),
-                                       const SizedBox(height: 2),
-                                       Text(
-                                         'Getiri: ${Formatters.percent(displayProfitPercent)}',
-                                         style: TextStyle(
-                                           color: profitColor,
-                                           fontSize: 11,
-                                           fontWeight: FontWeight.w600,
-                                         ),
-                                       ),
-                                      ],
-                                  ),
-                                ),
-                                Container(
-                                  width: 1,
-                                  height: 44,
-                                  color: AppTheme.borderSubtle,
-                                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                                ),
-                                // 3. Gerçekleşen Kâr / Zarar
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                       Row(
-                                         children: [
-                                           const Text(
-                                             'Gerçekleşen Kâr / Zarar',
-                                             style: TextStyle(
-                                               color: AppTheme.textMuted,
-                                               fontSize: 12,
-                                               fontWeight: FontWeight.w500,
-                                             ),
-                                           ),
-                                           if (portfolio.realizedWithholdingTax > 0) ...[
-                                             const SizedBox(width: 6),
-                                             NetGrossBadge(mode: mode),
-                                           ],
-                                         ],
-                                       ),
-                                       const SizedBox(height: 4),
-                                       FittedBox(
-                                         fit: BoxFit.scaleDown,
-                                         alignment: Alignment.centerLeft,
-                                         child: Row(
-                                           mainAxisSize: MainAxisSize.min,
-                                           children: [
-                                             Icon(
-                                               portfolio.netRealizedProfit >= 0
-                                                   ? Icons.check_circle_outline_rounded
-                                                   : Icons.highlight_off_rounded,
-                                               color: portfolio.netRealizedProfit >= 0
-                                                   ? AppTheme.profit
-                                                   : AppTheme.loss,
-                                               size: 18,
-                                             ),
-                                             const SizedBox(width: 4),
-                                             Text(
-                                               Formatters.currency(
-                                                 (portfolio.realizedWithholdingTax > 0 && showNetValues)
-                                                     ? portfolio.netRealizedProfit
-                                                     : portfolio.realizedProfit,
-                                               ),
-                                               style: TextStyle(
-                                                 color: portfolio.netRealizedProfit >= 0
-                                                     ? AppTheme.profit
-                                                     : AppTheme.loss,
-                                                 fontSize: 20,
-                                                 fontWeight: FontWeight.w800,
-                                               ),
-                                             ),
-                                           ],
-                                         ),
-                                       ),
-                                       const SizedBox(height: 2),
-                                       const Text(
-                                         'Kapatılan Satış İşlemleri',
-                                         style: TextStyle(
-                                           color: AppTheme.textSecondary,
-                                           fontSize: 11,
-                                         ),
-                                       ),
-                                      ],
-                                  ),
-                                ),
-                              ],
+                                  );
+                                }
+
+                                return Row(
+                                  children: [
+                                    Expanded(child: metricValueWidget),
+                                    Container(
+                                      width: 1,
+                                      height: 44,
+                                      color: AppTheme.borderSubtle,
+                                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                                    ),
+                                    Expanded(child: metricProfitWidget),
+                                    Container(
+                                      width: 1,
+                                      height: 44,
+                                      color: AppTheme.borderSubtle,
+                                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                                    ),
+                                    Expanded(child: metricRealizedWidget),
+                                  ],
+                                );
+                              },
                             ),
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 12),
@@ -430,38 +493,42 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // SEKME SEÇİCİ VE İÅLEM BUTONLARI (VARLIKLAR & İÅLEM GEÇMİÅİ)
-                      Row(
-                        children: [
-                          // Sekme Butonları (Varlıklar / İşlem Geçmişi)
-                          Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              color: AppTheme.surfaceLight,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppTheme.borderSubtle),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _buildTabButton(
+                                            // SEKME SEÇİCİ VE İŞLEM BUTONLARI
+                      if (isMobile) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceLight,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppTheme.borderSubtle),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildTabButton(
                                   index: 0,
                                   icon: Icons.inventory_2_outlined,
                                   label: 'Varlıklar (${portfolio.assets.length})',
+                                  compact: true,
                                 ),
-                                const SizedBox(width: 4),
-                                _buildTabButton(
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: _buildTabButton(
                                   index: 1,
                                   icon: Icons.history_rounded,
-                                  label:
-                                      'İşlem Geçmişi (${portfolio.transactions.length})',
+                                  label: 'İşlemler (${portfolio.transactions.length})',
+                                  compact: true,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          const Spacer(),
-                          // Alış / Satış Butonu
-                          ElevatedButton.icon(
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.profit.withValues(alpha: 0.15),
                               foregroundColor: AppTheme.profit,
@@ -486,17 +553,76 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                             },
                             icon: const Icon(Icons.swap_horiz_rounded, size: 18),
                             label: const Text(
-                              'Alış / Satış',
+                              'Alış / Satış Yap',
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ] else ...[
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surfaceLight,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppTheme.borderSubtle),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildTabButton(
+                                    index: 0,
+                                    icon: Icons.inventory_2_outlined,
+                                    label: 'Varlıklar (${portfolio.assets.length})',
+                                  ),
+                                  const SizedBox(width: 4),
+                                  _buildTabButton(
+                                    index: 1,
+                                    icon: Icons.history_rounded,
+                                    label: 'İşlem Geçmişi (${portfolio.transactions.length})',
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.profit.withValues(alpha: 0.15),
+                                foregroundColor: AppTheme.profit,
+                                side: const BorderSide(color: AppTheme.profit),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                              ),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AddTransactionDialog(
+                                    portfolio: portfolio,
+                                    onSave: (tx, updateHoldings) {
+                                      provider.addTransaction(
+                                        portfolio.id,
+                                        tx,
+                                        updateHoldings: updateHoldings,
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                              label: const Text(
+                                'Alış / Satış',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 14),
-                      // SEÇİLEN SEKMENİN İÇERİÄİ
+                      // SEÇİLEN SEKMENİN İÇERİĞİ
                       _selectedTab == 0
-                          ? _buildAssetsTab(portfolio, filteredAssets, provider)
-                          : _buildTransactionsTab(portfolio, provider),
+                          ? _buildAssetsTab(portfolio, filteredAssets, provider, isMobile)
+                          : _buildTransactionsTab(portfolio, provider, isMobile),
                       const SizedBox(height: 8),
                     ],
                   ),
@@ -512,13 +638,14 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     required int index,
     required IconData icon,
     required String label,
+    bool compact = false,
   }) {
     final isSelected = _selectedTab == index;
     return InkWell(
       onTap: () => setState(() => _selectedTab = index),
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
               ? AppTheme.primary.withValues(alpha: 0.2)
@@ -527,6 +654,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           border: isSelected ? Border.all(color: AppTheme.primary) : null,
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
@@ -535,13 +663,16 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
               color: isSelected ? AppTheme.primaryLight : AppTheme.textSecondary,
             ),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color:
-                    isSelected ? AppTheme.primaryLight : AppTheme.textSecondary,
-                fontSize: 13,
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? AppTheme.primaryLight : AppTheme.textSecondary,
+                  fontSize: compact ? 12 : 13,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -550,50 +681,87 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     );
   }
   Widget _buildAssetsTab(Portfolio portfolio,
-      List<PortfolioAsset> filteredAssets, PortfolioProvider provider) {
+      List<PortfolioAsset> filteredAssets, PortfolioProvider provider, bool isMobile) {
     return Column(
       children: [
-        // Filtre ve Arama Çubuğu
-        Row(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildFilterChip('Tümü', null),
-                    const SizedBox(width: 6),
-                    ...AssetCategory.values.map(
-                      (c) => Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: _buildFilterChip(c.displayName, c),
+        if (isMobile) ...[
+          SizedBox(
+            height: 38,
+            child: TextField(
+              onChanged: (v) => setState(() => _search = v),
+              decoration: InputDecoration(
+                hintText: 'Varlık ara...',
+                prefixIcon: const Icon(Icons.search, size: 18),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                suffixIcon: _search.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 16),
+                        onPressed: () => setState(() => _search = ''),
+                      )
+                    : null,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildFilterChip('Tümü', null),
+                const SizedBox(width: 6),
+                ...AssetCategory.values.map(
+                  (c) => Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: _buildFilterChip(c.displayName, c),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else ...[
+          Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: [
+                      _buildFilterChip('Tümü', null),
+                      const SizedBox(width: 6),
+                      ...AssetCategory.values.map(
+                        (c) => Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: _buildFilterChip(c.displayName, c),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 180,
-              height: 38,
-              child: TextField(
-                onChanged: (v) => setState(() => _search = v),
-                decoration: InputDecoration(
-                  hintText: 'Varlık ara...',
-                  prefixIcon: const Icon(Icons.search, size: 18),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                  suffixIcon: _search.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 16),
-                          onPressed: () => setState(() => _search = ''),
-                        )
-                      : null,
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 180,
+                height: 38,
+                child: TextField(
+                  onChanged: (v) => setState(() => _search = v),
+                  decoration: InputDecoration(
+                    hintText: 'Varlık ara...',
+                    prefixIcon: const Icon(Icons.search, size: 18),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                    suffixIcon: _search.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 16),
+                            onPressed: () => setState(() => _search = ''),
+                          )
+                        : null,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
         const SizedBox(height: 12),
         // Varlık Listesi
         if (filteredAssets.isEmpty)
@@ -688,7 +856,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     );
   }
   Widget _buildTransactionsTab(
-      Portfolio portfolio, PortfolioProvider provider) {
+      Portfolio portfolio, PortfolioProvider provider, bool isMobile) {
     if (portfolio.transactions.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 36),
@@ -757,6 +925,205 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         final isSatis = tx.type == TransactionType.satis;
         final isProfit = tx.realizedProfit >= 0;
         final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
+
+        final typeBadge = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isSatis
+                ? (isProfit ? AppTheme.profit : AppTheme.loss).withValues(alpha: 0.15)
+                : AppTheme.primary.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSatis
+                  ? (isProfit ? AppTheme.profit : AppTheme.loss).withValues(alpha: 0.4)
+                  : AppTheme.primaryLight.withValues(alpha: 0.4),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isSatis
+                    ? (isProfit ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded)
+                    : Icons.add_shopping_cart_rounded,
+                size: 13,
+                color: isSatis
+                    ? (isProfit ? AppTheme.profit : AppTheme.loss)
+                    : AppTheme.primaryLight,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                tx.type.label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: isSatis
+                      ? (isProfit ? AppTheme.profit : AppTheme.loss)
+                      : AppTheme.primaryLight,
+                ),
+              ),
+            ],
+          ),
+        );
+
+        Widget? profitBadgeWidget;
+        if (isSatis) {
+          profitBadgeWidget = Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: profitColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: profitColor.withValues(alpha: 0.3)),
+            ),
+            child: Builder(
+              builder: (context) {
+                final showNetValues = context.watch<PortfolioProvider>().showNetValues;
+                final hasStopaj = tx.category == AssetCategory.fon && tx.withholdingTax > 0;
+                final displayProfit = (hasStopaj && showNetValues) ? tx.netRealizedProfit : tx.realizedProfit;
+                final displayPercent = (hasStopaj && showNetValues) ? tx.netProfitPercent : tx.profitPercent;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Kâr: ${Formatters.currency(displayProfit)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: profitColor,
+                          ),
+                        ),
+                        if (hasStopaj) ...[
+                          const SizedBox(width: 4),
+                          NetGrossBadge(isNet: showNetValues, fontSize: 8.5),
+                        ],
+                      ],
+                    ),
+                    Text(
+                      'Oran: ${Formatters.percent(displayPercent)}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: profitColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          );
+        }
+
+        if (isMobile) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLight,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.borderSubtle),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    typeBadge,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                tx.symbol,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '• ${Formatters.date(tx.date)}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            tx.name,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.undo_rounded, size: 18),
+                      tooltip: 'Geri Al',
+                      color: const Color(0xFFF59E0B),
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.all(6),
+                      constraints: const BoxConstraints(),
+                      onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 18),
+                      tooltip: 'Sil',
+                      color: AppTheme.loss,
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.all(6),
+                      constraints: const BoxConstraints(),
+                      onPressed: () => _confirmDeleteTransaction(context, provider, portfolio.id, tx),
+                    ),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(color: AppTheme.borderSubtle, height: 1),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${Formatters.currency(tx.price)} × ${tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2)} Adet',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          Formatters.currency(tx.totalAmount),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    ?profitBadgeWidget,
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -767,53 +1134,8 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           ),
           child: Row(
             children: [
-              // İşlem Türü Rozeti
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isSatis
-                      ? (isProfit ? AppTheme.profit : AppTheme.loss)
-                          .withValues(alpha: 0.15)
-                      : AppTheme.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSatis
-                        ? (isProfit ? AppTheme.profit : AppTheme.loss)
-                            .withValues(alpha: 0.4)
-                        : AppTheme.primaryLight.withValues(alpha: 0.4),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isSatis
-                          ? (isProfit
-                              ? Icons.arrow_upward_rounded
-                              : Icons.arrow_downward_rounded)
-                          : Icons.add_shopping_cart_rounded,
-                      size: 14,
-                      color: isSatis
-                          ? (isProfit ? AppTheme.profit : AppTheme.loss)
-                          : AppTheme.primaryLight,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      tx.type.label,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: isSatis
-                            ? (isProfit ? AppTheme.profit : AppTheme.loss)
-                            : AppTheme.primaryLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              typeBadge,
               const SizedBox(width: 14),
-              // Sembol & Varlık Detayları
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -851,12 +1173,11 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   ],
                 ),
               ),
-              // Fiyat ve Tutar Detayları
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${Formatters.currency(tx.price)} Ã— ${tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2)} Adet',
+                    '${Formatters.currency(tx.price)} × ${tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2)} Adet',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
@@ -873,79 +1194,22 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   ),
                 ],
               ),
-              const SizedBox(width: 16),
-              // Gerçekleşen Kâr / Zarar Göstergesi (Satış ise)
-              if (isSatis) ...[
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: profitColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: profitColor.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Builder(
-                    builder: (context) {
-                      final showNetValues = context.watch<PortfolioProvider>().showNetValues;
-                      final hasStopaj = tx.category == AssetCategory.fon && tx.withholdingTax > 0;
-                      final displayProfit = (hasStopaj && showNetValues) ? tx.netRealizedProfit : tx.realizedProfit;
-                      final displayPercent = (hasStopaj && showNetValues) ? tx.netProfitPercent : tx.profitPercent;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Kâr: ${Formatters.currency(displayProfit)}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: profitColor,
-                                ),
-                              ),
-                              if (hasStopaj) ...[
-                                const SizedBox(width: 4),
-                                NetGrossBadge(isNet: showNetValues, fontSize: 8.5),
-                              ],
-                            ],
-                          ),
-                          Text(
-                            'Oran: ${Formatters.percent(displayPercent)}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: profitColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
+              if (profitBadgeWidget != null) ...[
+                const SizedBox(width: 16),
+                profitBadgeWidget,
               ],
-              // Geri Al Butonu
+              const SizedBox(width: 8),
               IconButton(
                 icon: const Icon(Icons.undo_rounded, size: 20),
                 tooltip: 'İşlemi Geri Al (Varlık & K/Z iade edilir)',
                 color: const Color(0xFFF59E0B),
-                onPressed: () {
-                  _confirmUndoTransaction(
-                      context, provider, portfolio.id, tx);
-                },
+                onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
               ),
-              // Silme Butonu
               IconButton(
                 icon: const Icon(Icons.delete_outline, size: 20),
                 tooltip: 'İşlemi Sil (Varlıklar korunur, K/Z silinir)',
                 color: AppTheme.loss,
-                onPressed: () {
-                  _confirmDeleteTransaction(
-                      context, provider, portfolio.id, tx);
-                },
+                onPressed: () => _confirmDeleteTransaction(context, provider, portfolio.id, tx),
               ),
             ],
           ),

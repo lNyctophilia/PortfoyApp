@@ -133,56 +133,56 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
     final bg = isPos ? AppTheme.profitBg : AppTheme.lossBg;
     final sign = isPos ? '+' : '';
 
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: color.withValues(alpha: 0.35),
-            width: 1.2,
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withValues(alpha: 0.35),
+          width: 1.2,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textMuted,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textMuted,
             ),
-            const SizedBox(height: 3),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isPos ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-                    size: 13,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isPos
+                      ? Icons.trending_up_rounded
+                      : Icons.trending_down_rounded,
+                  size: 13,
+                  color: color,
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  '$sign${Formatters.percent(val)}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                     color: color,
                   ),
-                  const SizedBox(width: 2),
-                  Text(
-                    '$sign${val.toStringAsFixed(2)}%',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -410,16 +410,26 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
     final isProfit = totalProfit >= 0;
     final hasData = totalCost > 0;
 
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return Dialog(
-      insetPadding: EdgeInsets.symmetric(horizontal: MediaQuery.sizeOf(context).width < 600 ? 10 : 20, vertical: MediaQuery.sizeOf(context).width < 600 ? 10 : 16),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 10 : 20,
+        vertical: isMobile ? 10 : 16,
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640),
         child: Form(
           key: _formKey,
           child: Padding(
-            padding: const EdgeInsets.only(left: 24, top: 24, right: 8, bottom: 24),
+            padding: EdgeInsets.only(
+              left: isMobile ? 14 : 24,
+              top: isMobile ? 16 : 24,
+              right: isMobile ? 6 : 8,
+              bottom: isMobile ? 16 : 24,
+            ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(right: 16),
+              padding: EdgeInsets.only(right: isMobile ? 8 : 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,10 +548,44 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                   const SizedBox(height: 16),
 
                   // Sembol ve İsim
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 480;
+                      final symbolField = AssetSymbolAutocomplete(
+                        controller: _symbolController,
+                        category: _selectedCategory,
+                        isLoading: _isLoadingMarketData,
+                        hintText: _selectedCategory == AssetCategory.fon
+                            ? 'Örn: TI2 / Fon adı'
+                            : _selectedCategory == AssetCategory.hisse
+                                ? 'Örn: THYAO / Hisse adı'
+                                : _selectedCategory == AssetCategory.doviz
+                                    ? 'Örn: USD / Dolar'
+                                    : _selectedCategory == AssetCategory.emtia
+                                        ? 'Örn: Altın / Gümüş'
+                                        : 'Örn: BTC / Bitcoin',
+                        onChanged: _onSymbolChanged,
+                        onSelected: _onSuggestionSelected,
+                        onFetchManual: () => _fetchMarketData(
+                          _symbolController.text.trim(),
+                          forceHistoricalPrice: true,
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Sembol girin'
+                            : null,
+                      );
+                      final nameField = TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Varlık Adı *',
+                          hintText: 'Örn: İş Portföy Hisse Senedi Fonu',
+                          prefixIcon: Icon(Icons.badge_outlined),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'İsim girin'
+                            : null,
+                      );
+                      final logo = Padding(
                         padding: const EdgeInsets.only(top: 4, right: 10),
                         child: AssetLogo(
                           iconUrl: _iconUrl,
@@ -552,49 +596,35 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                           iconSize: 24,
                           borderRadius: 12,
                         ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: AssetSymbolAutocomplete(
-                          controller: _symbolController,
-                          category: _selectedCategory,
-                          isLoading: _isLoadingMarketData,
-                          hintText: _selectedCategory == AssetCategory.fon
-                              ? 'Örn: TI2 / Fon adı'
-                              : _selectedCategory == AssetCategory.hisse
-                                  ? 'Örn: THYAO / Hisse adı'
-                                  : _selectedCategory == AssetCategory.doviz
-                                      ? 'Örn: USD / Dolar'
-                                      : _selectedCategory == AssetCategory.emtia
-                                          ? 'Örn: Altın / Gümüş'
-                                          : 'Örn: BTC / Bitcoin',
-                          onChanged: _onSymbolChanged,
-                          onSelected: _onSuggestionSelected,
-                          onFetchManual: () => _fetchMarketData(
-                            _symbolController.text.trim(),
-                            forceHistoricalPrice: true,
-                          ),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Sembol girin'
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 3,
-                        child: TextFormField(
-                          controller: _nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Varlık Adı *',
-                            hintText: 'Örn: İş Portföy Hisse Senedi Fonu',
-                            prefixIcon: Icon(Icons.badge_outlined),
-                          ),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'İsim girin'
-                              : null,
-                        ),
-                      ),
-                    ],
+                      );
+
+                      if (isNarrow) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                logo,
+                                Expanded(child: symbolField),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            nameField,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          logo,
+                          Expanded(flex: 2, child: symbolField),
+                          const SizedBox(width: 12),
+                          Expanded(flex: 3, child: nameField),
+                        ],
+                      );
+                    },
                   ),
 
                   // Otomatik Fiyat Bildirimi
@@ -1049,20 +1079,46 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _buildReadonlyPeriodBadge('Günlük', _parseVal(_dailyChangeController.text)),
-                      const SizedBox(width: 6),
-                      _buildReadonlyPeriodBadge('Haftalık', _parseVal(_weeklyChangeController.text)),
-                      const SizedBox(width: 6),
-                      _buildReadonlyPeriodBadge('1 Aylık', _parseVal(_monthlyChangeController.text)),
-                      const SizedBox(width: 6),
-                      _buildReadonlyPeriodBadge('3 Aylık', _parseVal(_threeMonthlyChangeController.text)),
-                      const SizedBox(width: 6),
-                      _buildReadonlyPeriodBadge('6 Aylık', _parseVal(_sixMonthlyChangeController.text)),
-                      const SizedBox(width: 6),
-                      _buildReadonlyPeriodBadge('Yıllık', _parseVal(_yearlyChangeController.text)),
-                    ],
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 460;
+                      if (isNarrow) {
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          child: Row(
+                            children: [
+                              SizedBox(width: 72, child: _buildReadonlyPeriodBadge('Günlük', _parseVal(_dailyChangeController.text))),
+                              const SizedBox(width: 6),
+                              SizedBox(width: 72, child: _buildReadonlyPeriodBadge('Haftalık', _parseVal(_weeklyChangeController.text))),
+                              const SizedBox(width: 6),
+                              SizedBox(width: 72, child: _buildReadonlyPeriodBadge('1 Aylık', _parseVal(_monthlyChangeController.text))),
+                              const SizedBox(width: 6),
+                              SizedBox(width: 72, child: _buildReadonlyPeriodBadge('3 Aylık', _parseVal(_threeMonthlyChangeController.text))),
+                              const SizedBox(width: 6),
+                              SizedBox(width: 72, child: _buildReadonlyPeriodBadge('6 Aylık', _parseVal(_sixMonthlyChangeController.text))),
+                              const SizedBox(width: 6),
+                              SizedBox(width: 72, child: _buildReadonlyPeriodBadge('Yıllık', _parseVal(_yearlyChangeController.text))),
+                            ],
+                          ),
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(child: _buildReadonlyPeriodBadge('Günlük', _parseVal(_dailyChangeController.text))),
+                          const SizedBox(width: 6),
+                          Expanded(child: _buildReadonlyPeriodBadge('Haftalık', _parseVal(_weeklyChangeController.text))),
+                          const SizedBox(width: 6),
+                          Expanded(child: _buildReadonlyPeriodBadge('1 Aylık', _parseVal(_monthlyChangeController.text))),
+                          const SizedBox(width: 6),
+                          Expanded(child: _buildReadonlyPeriodBadge('3 Aylık', _parseVal(_threeMonthlyChangeController.text))),
+                          const SizedBox(width: 6),
+                          Expanded(child: _buildReadonlyPeriodBadge('6 Aylık', _parseVal(_sixMonthlyChangeController.text))),
+                          const SizedBox(width: 6),
+                          Expanded(child: _buildReadonlyPeriodBadge('Yıllık', _parseVal(_yearlyChangeController.text))),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 

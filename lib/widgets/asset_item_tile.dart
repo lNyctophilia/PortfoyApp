@@ -106,11 +106,11 @@ class AssetItemTile extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Varlık Logosu / İkonu
-              AssetLogo(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isCompact = constraints.maxWidth < 520;
+
+              final logoWidget = AssetLogo(
                 iconUrl: asset.iconUrl,
                 symbol: asset.symbol,
                 name: asset.name,
@@ -118,186 +118,170 @@ class AssetItemTile extends StatelessWidget {
                 size: 44,
                 iconSize: 22,
                 borderRadius: 12,
-              ),
-              const SizedBox(width: 14),
+              );
 
-              // İsim, Sembol ve Durumum Butonu
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              final symbolAndCategoryWidget = Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    asset.symbol,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cat.color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      cat.displayName,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: cat.color,
+                      ),
+                    ),
+                  ),
+                  if (asset.category == AssetCategory.fon) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceElevated,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppTheme.border),
+                      ),
+                      child: Text(
+                        'Stopaj: %${asset.effectiveWithholdingTaxRate.toStringAsFixed(asset.effectiveWithholdingTaxRate % 1 == 0 ? 0 : 1)}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+
+              final nameWidget = Text(
+                asset.name,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textSecondary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              );
+
+              Widget? statusButtonWidget;
+              if (onStatus != null) {
+                statusButtonWidget = InkWell(
+                  onTap: onStatus,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: AppTheme.primaryLight.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Flexible(
+                        Icon(
+                          Icons.receipt_long_rounded,
+                          size: 13,
+                          color: AppTheme.primaryLight,
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          'Durumum',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primaryLight,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              final valueAndProfitWidget = Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (hasStopaj || mode == ReturnCalculationMode.reel) ...[
+                        NetGrossBadge(mode: mode),
+                        const SizedBox(width: 5),
+                      ],
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
                           child: Text(
-                            asset.symbol,
+                            Formatters.currency(displayValue),
                             style: const TextStyle(
-                              fontSize: 15,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: AppTheme.textPrimary,
                             ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: cat.color.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            cat.displayName,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: cat.color,
-                            ),
-                          ),
-                        ),
-                        if (asset.category == AssetCategory.fon) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.surfaceElevated,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: AppTheme.border),
-                            ),
-                            child: Text(
-                              'Stopaj: %${asset.effectiveWithholdingTaxRate.toStringAsFixed(asset.effectiveWithholdingTaxRate % 1 == 0 ? 0 : 1)}',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      asset.name,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (onStatus != null) ...[
-                      const SizedBox(height: 6),
-                      InkWell(
-                        onTap: onStatus,
-                        borderRadius: BorderRadius.circular(6),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: AppTheme.primaryLight.withValues(alpha: 0.35),
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.receipt_long_rounded,
-                                size: 13,
-                                color: AppTheme.primaryLight,
-                              ),
-                              SizedBox(width: 5),
-                              Text(
-                                'Durumum',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.primaryLight,
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                       ),
                     ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              // Değer ve Kâr/Zarar
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (hasStopaj || mode == ReturnCalculationMode.reel) ...[
-                          NetGrossBadge(mode: mode),
-                          const SizedBox(width: 5),
-                        ],
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              Formatters.currency(displayValue),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerRight,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isProfit ? AppTheme.profitBg : AppTheme.lossBg,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          mode == ReturnCalculationMode.reel
-                              ? '${Formatters.currency(displayProfit)} (${Formatters.percent(displayPercent)}) • TÜFE: %${Formatters.percent(inflationRate)}'
-                              : '${Formatters.currency(displayProfit)} (${Formatters.percent(displayPercent)})',
-                          style: TextStyle(
-                            color: profitColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
+                  ),
+                  const SizedBox(height: 5),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isProfit ? AppTheme.profitBg : AppTheme.lossBg,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        mode == ReturnCalculationMode.reel
+                            ? '${Formatters.currency(displayProfit)} (${Formatters.percent(displayPercent)}) • TÜFE: %${Formatters.percent(inflationRate)}'
+                            : '${Formatters.currency(displayProfit)} (${Formatters.percent(displayPercent)})',
+                        style: TextStyle(
+                          color: profitColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
+                  ),
+                ],
+              );
 
-              // Düzenle & Sil butonları
-              Row(
+              final actionButtonsWidget = Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
@@ -322,9 +306,76 @@ class AssetItemTile extends StatelessWidget {
                     onPressed: onDelete,
                   ),
                 ],
-              ),
-              const SizedBox(width: 4),
-            ],
+              );
+
+              if (isCompact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        logoWidget,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              symbolAndCategoryWidget,
+                              const SizedBox(height: 2),
+                              nameWidget,
+                            ],
+                          ),
+                        ),
+                        actionButtonsWidget,
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        if (statusButtonWidget != null)
+                          statusButtonWidget
+                        else
+                          const SizedBox.shrink(),
+                        Flexible(
+                          child: valueAndProfitWidget,
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  logoWidget,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        symbolAndCategoryWidget,
+                        const SizedBox(height: 2),
+                        nameWidget,
+                        if (statusButtonWidget != null) ...[
+                          const SizedBox(height: 6),
+                          statusButtonWidget,
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Flexible(
+                    child: valueAndProfitWidget,
+                  ),
+                  const SizedBox(width: 10),
+                  actionButtonsWidget,
+                ],
+              );
+            },
           ),
 
           // Dönemsel Değişimler (Mobilde ve dar ekranda yatay kaydırılabilir)

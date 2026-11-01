@@ -43,7 +43,7 @@ class SettingsScreen extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            padding: EdgeInsets.symmetric(horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 24, vertical: 20),
             children: [
               // BÖLÜM 1: HESAP VE BULUT SENKRONİZASYONU
               _buildAccountSection(context, provider),
@@ -173,14 +173,16 @@ class SettingsScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 6,
                               children: [
                                 const Icon(
                                   Icons.info_outline_rounded,
                                   size: 18,
                                   color: AppTheme.primaryLight,
                                 ),
-                                const SizedBox(width: 8),
                                 const Text(
                                   'Şuanki mod:',
                                   style: TextStyle(
@@ -189,7 +191,6 @@ class SettingsScreen extends StatelessWidget {
                                     color: AppTheme.textSecondary,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
                                 NetGrossBadge(
                                   mode: provider.returnMode,
                                   fontSize: 11,
@@ -198,15 +199,11 @@ class SettingsScreen extends StatelessWidget {
                                     vertical: 3,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    provider.returnMode.shortDescription,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppTheme.textMuted,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  '(${provider.returnMode.shortDescription})',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.textMuted,
                                   ),
                                 ),
                               ],
@@ -250,7 +247,10 @@ class SettingsScreen extends StatelessWidget {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Row(
+                                          Wrap(
+                                            crossAxisAlignment: WrapCrossAlignment.center,
+                                            spacing: 6,
+                                            runSpacing: 4,
                                             children: [
                                               const Text(
                                                 'Resmi TÜFE Oranları:',
@@ -260,7 +260,6 @@ class SettingsScreen extends StatelessWidget {
                                                   color: AppTheme.textPrimary,
                                                 ),
                                               ),
-                                              const SizedBox(width: 6),
                                               Text(
                                                 provider.latestAnnualInflation >
                                                         0
@@ -481,7 +480,10 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 4,
                     children: [
                       Text(
                         title,
@@ -494,7 +496,6 @@ class SettingsScreen extends StatelessWidget {
                               : AppTheme.textPrimary.withValues(alpha: 0.9),
                         ),
                       ),
-                      const SizedBox(width: 8),
                       NetGrossBadge(
                         mode: mode,
                         fontSize: 9.5,

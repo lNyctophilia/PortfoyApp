@@ -46,13 +46,14 @@ class _AddEditPortfolioDialogState extends State<AddEditPortfolioDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.portfolio != null;
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
 
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      insetPadding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 20, vertical: isMobile ? 12 : 16),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(isMobile ? 18 : 24),
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
