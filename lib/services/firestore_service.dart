@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import '../models/portfolio.dart';
@@ -223,6 +224,58 @@ class FirestoreService {
       debugPrint('Firestore loadSettings Hatası: $e');
     }
     return null;
+  }
+
+  /// Kullanıcının onay durumunu ve profil bilgilerini Firestore'a kaydeder / günceller.
+  Future<void> markUserApproved(User user) async {
+    if (!isFirebaseAvailable || _firestore == null) return;
+
+    try {
+      final userDocRef = _firestore!.collection('users').doc(user.uid);
+      await userDocRef.set({
+        'isApproved': true,
+        'email': user.email,
+        'displayName': user.displayName,
+        'photoUrl': user.photoURL,
+        'lastLoginAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Firestore markUserApproved Hatası: $e');
+    }
+  }
+
+  /// Kullanıcının daha önce Google ile giriş yapıp onaylandığını kontrol eder.
+  /// Eğer kullanıcı daha önce portföy/ayar kaydetmişse veya isApproved true ise onaylı kabul edilir.
+  Future<bool> isUserApproved(String uid) async {
+    if (!isFirebaseAvailable || _firestore == null) return false;
+
+    try {
+      final doc = await _firestore!.collection('users').doc(uid).get();
+      if (!doc.exists) return false;
+      final data = doc.data();
+      if (data == null) return false;
+
+      final isApproved = data['isApproved'] == true;
+      final hasPreviousData = data.containsKey('lastSyncAt') ||
+          data.containsKey('settings') ||
+          data.containsKey('portfolioCount');
+
+      if (isApproved || hasPreviousData) {
+        // Eğer kullanıcı daha önce giriş yapmış ama isApproved bayrağı eksikse Firestore'da tamamla
+        if (!isApproved) {
+          await _firestore!.collection('users').doc(uid).set({
+            'isApproved': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Firestore isUserApproved kontrol hatası: $e');
+      return false;
+    }
   }
 }
 

@@ -96,18 +96,22 @@
 - **File:** `lib/features/auth_gate/screens/auth_gate_screen.dart`
   - **Lines 1-43:** Apple-minimalist fullscreen responsive gate screen centering AuthGateCard with LayoutBuilder and constraints.
 - **File:** `lib/features/auth_gate/services/auth_gate_service.dart`
-  - **Lines 1-40:** Imports, AuthGateService singleton declaration, and session state variables.
-  - **Lines 41-75:** initialize() - Verifies stored session token from SharedPreferences and restores authenticated session without prompting.
-  - **Lines 76-128:** verifyAndUnlock() - Multi-round cryptographic verification, anti-brute-force lockout delays, and session token storage.
-  - **Lines 129-138:** lock() - Revokes session token from SharedPreferences and re-engages gate protection.
+  - **Lines 1-42:** Imports, AuthGateService singleton declaration, and session/approval state variables.
+  - **Lines 43-108:** initialize() - Verifies stored session token from SharedPreferences, Google account cached approval, and Firestore database approval.
+  - **Lines 109-138:** _attachAuthListener() - Real-time listener automatically unlocking gate when Google authentication settles.
+  - **Lines 139-153:** unlockByGoogleUser() - Persists Google approval locally and unlocks gate.
+  - **Lines 154-178:** clearGoogleApproval() - Clears Google approval on sign-out and locks if no password session exists.
+  - **Lines 179-240:** verifyAndUnlock() - Multi-round cryptographic verification, anti-brute-force lockout delays, session token storage, and Google account auto-approval linking.
+  - **Lines 241-260:** lock() & dispose() - Revokes session token and Google approval from SharedPreferences and re-engages gate protection.
 - **File:** `lib/features/auth_gate/utils/gate_crypto_utils.dart`
   - **Lines 1-28:** GateCryptoUtils class declaration and multi-round HMAC-SHA256 key stretching (computeHash).
   - **Lines 29-37:** generateSessionToken() - Derives persistent browser authorization session token.
   - **Lines 38-50:** secureCompare() - Constant-time string equality checker preventing timing side-channel attacks.
 - **File:** `lib/features/auth_gate/widgets/auth_gate_card.dart`
-  - **Lines 1-46:** Imports, AuthGateCard declaration, controllers, focus node, and lockout countdown timer.
-  - **Lines 47-92:** _submit() method - Password validation, lockout checking, verification dispatch, and responsive error handling.
-  - **Lines 93-275:** build() method - Apple-minimalist surface card, lock icon badge, obscured textfield with reveal toggle, and submit button.
+  - **Lines 1-50:** Imports, AuthGateCard declaration, controllers, focus node, and lockout countdown timer.
+  - **Lines 51-85:** _signInWithGoogle() - Direct Google Sign-In with Firestore database approval and automatic gate unlocking.
+  - **Lines 86-130:** _submit() method - Password validation, lockout checking, verification dispatch, and responsive error handling.
+  - **Lines 131-388:** build() method - Apple-minimalist card, lock shield icon, authentic Google Sign-In button, subtle divider, obscured textfield with reveal toggle, and submit button.
 - **File:** `lib/features/auth_gate/widgets/auth_gate_wrapper.dart`
   - **Lines 1-74:** AuthGateWrapper stateful widget dynamically rendering PortfolioHomeScreen when authorized or AuthGateScreen when locked.
 - **File:** `lib/firebase_options.dart`
@@ -121,7 +125,7 @@
   - **Lines 549-650:** _buildMobileView() - Dedicated mobile layout with mobile AppBar, NetGrossBadge, pull-to-refresh (RefreshIndicator), mobile summary card, thumb-friendly list of portfolio cards, and FloatingActionButton.
   - **Lines 651-785:** _buildMobileSummaryCard() - Apple-minimalist summary card for smartphones.
   - **Lines 786-855:** _buildHeaderSummaryCard() - Desktop aggregate portfolio performance metric tiles.
-  - **Lines 856-961:** _buildEmptyState() - Placeholder illustration and prompt when no portfolios exist.
+  - **Lines 856-982:** _buildEmptyState() - Centered responsive placeholder illustration and prompt when no portfolios exist.
 - **File:** `lib/models/asset_category.dart`
   - **Lines 1-10:** Enum declaration AssetCategory (hisse, tefas, kripto, emtia, doviz, eurobond, fon).
   - **Lines 11-25:** Getter displayName for localized Turkish category names.
@@ -153,42 +157,42 @@
   - **Lines 1-6:** Enum declaration ReturnCalculationMode (brut, net, reel).
   - **Lines 7-63:** Extension ReturnCalculationModeExtension with labels, badgeText, title, shortDescription, and detailedDescription.
 - **File:** `lib/providers/portfolio_provider.dart`
-  - **Lines 1-51:** Imports, PortfolioProvider declaration, auth/firestore services, and internal state variables (realtime stream subscriptions and isLiveConnected state).
-  - **Lines 52-114:** Filtered portfolio getters, auth state getters (currentUser, isSignedIn, isSyncing, lastSyncTime, syncError, isLiveConnected), and category filter accessors.
-  - **Lines 115-162:** Grand total aggregate getters across all visible portfolios (cost, value, profit, profit percent for brut/net/reel).
-  - **Lines 163-287:** Auth lifecycle listener, dispose teardown, cloud synchronization with local merge (syncWithCloud()), Google sign-in/out dispatch, and background Firestore persistence (\_persistPortfolios()).
-  - **Lines 288-410:** Realtime Firestore stream handlers (\_startRealtimeSubscriptions, \_cancelRealtimeSubscriptions, \_onPortfoliosSnapshot, \_onSettingsSnapshot).
-  - **Lines 411-456:** Data loading (loadData()), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
-  - **Lines 457-504:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
-  - **Lines 505-554:** Missing asset icon resolution & backfill helper (\_backfillMissingAssetIcons()).
-  - **Lines 555-608:** Category filtering setter and portfolio CRUD operations (addPortfolio, updatePortfolio, togglePortfolioVisibility, deletePortfolio).
-  - **Lines 609-647:** Direct asset management (addAsset, updateAsset, deleteAsset).
-  - **Lines 648-832:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
-  - **Lines 833-961:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
+  - **Lines 1-52:** Imports, PortfolioProvider declaration, auth/firestore services, and internal state variables (realtime stream subscriptions and isLiveConnected state).
+  - **Lines 53-115:** Filtered portfolio getters, auth state getters (currentUser, isSignedIn, isSyncing, lastSyncTime, syncError, isLiveConnected), and category filter accessors.
+  - **Lines 116-163:** Grand total aggregate getters across all visible portfolios (cost, value, profit, profit percent for brut/net/reel).
+  - **Lines 164-288:** Auth lifecycle listener, dispose teardown, cloud synchronization with local merge (syncWithCloud() with auto markUserApproved and gate unlocking), Google sign-in/out dispatch, and background Firestore persistence (_persistPortfolios()).
+  - **Lines 289-411:** Realtime Firestore stream handlers (_startRealtimeSubscriptions, _cancelRealtimeSubscriptions, _onPortfoliosSnapshot, _onSettingsSnapshot).
+  - **Lines 412-457:** Data loading (loadData()), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
+  - **Lines 458-505:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
+  - **Lines 506-555:** Missing asset icon resolution & backfill helper (_backfillMissingAssetIcons()).
+  - **Lines 556-609:** Category filtering setter and portfolio CRUD operations (addPortfolio, updatePortfolio, togglePortfolioVisibility, deletePortfolio).
+  - **Lines 610-648:** Direct asset management (addAsset, updateAsset, deleteAsset).
+  - **Lines 649-833:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
+  - **Lines 834-970:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
 - **File:** `lib/screens/settings_screen.dart`
-  - **Lines 1-17:** Imports and SettingsScreen declaration.
-  - **Lines 18-54:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
-  - **Lines 55-330:** Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators with Wrap).
-  - **Lines 331-430:** About app section with version, AppUpdateAction trigger, developer, and copyright info.
-  - **Lines 431-525:** \_buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators with responsive Wrap header.
-  - **Lines 526-678:** \_buildAccountSection() & \_buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
-  - **Lines 679-890:** \_buildSignedInContent(), user avatar fallback builder, live sync badge with sensor icon, and sync/sign-out actions.
-  - **Lines 891-949:** \_confirmSignOut() - Modal confirmation dialog for Google account sign out.
-  - **Lines 950-964:** \_buildSectionHeader() - Section heading widget with custom typography and accent indicator.
-  - **Lines 965-986:** \_buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
+  - **Lines 1-16:** Imports and SettingsScreen declaration.
+  - **Lines 17-47:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
+  - **Lines 48-329:** Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators with Wrap).
+  - **Lines 330-441:** About app section with official app icon, version, AppUpdateAction trigger, developer, and copyright info.
+  - **Lines 442-535:** _buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators with responsive Wrap header.
+  - **Lines 536-688:** _buildAccountSection() & _buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
+  - **Lines 689-856:** _buildSignedInContent(), user avatar fallback builder, and sync/sign-out actions.
+  - **Lines 857-914:** _confirmSignOut() - Modal confirmation dialog for Google account sign out.
+  - **Lines 915-929:** _buildSectionHeader() - Section heading widget with custom typography and accent indicator.
+  - **Lines 930-951:** _buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
 - **File:** `lib/services/asset_catalog_service.dart`
   - **Lines 1-21:** Imports and AssetSuggestion model class.
-  - **Lines 22-123:** AssetCatalogService class declaration and static catalog for TEFAS investment funds (\_knownFunds).
-  - **Lines 124-184:** Static catalog for BIST stocks and equities (\_knownStocks).
-  - **Lines 185-219:** Static catalog for major cryptocurrencies (\_knownCryptos).
-  - **Lines 220-235:** Static catalog for precious metals / commodities (\_knownCommodities).
-  - **Lines 236-251:** Static catalog for foreign exchange currencies (\_knownCurrencies).
-  - **Lines 252-289:** Search query normalizer (\_cleanText) and unified search() entry point across categories.
-  - **Lines 290-355:** \_searchFunds() - Query matcher and online lookup for TEFAS funds via AppHttpClient.
-  - **Lines 356-470:** \_searchStocks() - Query matcher and online lookup for BIST stocks via TradingView.
-  - **Lines 471-540:** \_searchCryptos() - Query matcher for cryptocurrencies via TradingView.
-  - **Lines 541-562:** \_searchCommodities() - Query matcher for precious metals and gold types.
-  - **Lines 563-583:** \_searchCurrencies() - Query matcher for fiat currencies.
+  - **Lines 22-123:** AssetCatalogService class declaration and static catalog for TEFAS investment funds (_knownFunds).
+  - **Lines 124-184:** Static catalog for BIST stocks and equities (_knownStocks).
+  - **Lines 185-219:** Static catalog for major cryptocurrencies (_knownCryptos).
+  - **Lines 220-235:** Static catalog for precious metals / commodities (_knownCommodities).
+  - **Lines 236-251:** Static catalog for foreign exchange currencies (_knownCurrencies).
+  - **Lines 252-289:** Search query normalizer (_cleanText) and unified search() entry point across categories.
+  - **Lines 290-355:** _searchFunds() - Query matcher and online lookup for TEFAS funds via AppHttpClient.
+  - **Lines 356-470:** _searchStocks() - Query matcher and online lookup for BIST stocks via TradingView.
+  - **Lines 471-540:** _searchCryptos() - Query matcher for cryptocurrencies via TradingView.
+  - **Lines 541-562:** _searchCommodities() - Query matcher for precious metals and gold types.
+  - **Lines 563-583:** _searchCurrencies() - Query matcher for fiat currencies.
 - **File:** `lib/services/auth_service.dart`
   - **Lines 1-30:** Imports, AuthService singleton declaration, and state getters.
   - **Lines 31-90:** signInWithGoogle() - Cross-platform Google sign-in with web popup, friendly error translations, and mobile credential exchange.
@@ -201,12 +205,14 @@
   - **Lines 139-172:** Single portfolio CRUD helpers (saveSinglePortfolio, deletePortfolio).
   - **Lines 173-198:** settingsStream() - Realtime Firestore listener stream for user configuration and display modes.
   - **Lines 199-228:** Cloud settings persistence (saveSettings, loadSettings).
+  - **Lines 229-247:** markUserApproved() - Records user approval flag (isApproved: true), email, displayName, and login timestamps in Firestore.
+  - **Lines 248-281:** isUserApproved() - Checks if user has already entered and is marked approved in Firestore; auto backfills isApproved flag for existing users.
 - **File:** `lib/services/inflation_service.dart`
   - **Lines 1-50:** Imports and InflationInfo data class with JSON serialization.
   - **Lines 51-95:** PeriodInflationData data model representing 1-month, 3-month, 6-month, 1-year, and 5-year CPI rates.
-  - **Lines 96-187:** InflationService setup and historical monthly TUFE fallback index table (\_fallbackTufeIndices).
+  - **Lines 96-187:** InflationService setup and historical monthly TUFE fallback index table (_fallbackTufeIndices).
   - **Lines 188-305:** Cache loading (ensureCacheLoaded()) and live CPI inflation fetcher (fetchInflationRate()) via TCMB API through AppHttpClient.
-  - **Lines 306-356:** Fallback calculation logic (\_calculateFromFallback, \_findClosestIndex, \_saveToCache).
+  - **Lines 306-356:** Fallback calculation logic (_calculateFromFallback, _findClosestIndex, _saveToCache).
   - **Lines 357-407:** Helper to determine latest officially released CPI month/year (getLatestAvailablePeriod()).
   - **Lines 408-505:** Multi-period inflation fetcher (getPeriodInflationRates()).
   - **Lines 506-568:** Annual and custom purchase date inflation calculators (getLatestAnnualInflation(), getInflationSince()).
@@ -217,12 +223,12 @@
   - **Lines 271-409:** Static logos for popular crypto, stock, and forex tickers (getKnownAssetLogo).
   - **Lines 410-488:** Web logo lookup and fallback resolver (fetchAssetLogo).
   - **Lines 489-533:** Main dispatch function fetchAssetData() routing by AssetCategory.
-  - **Lines 534-648:** TEFAS fund data fetcher (\_fetchTefasFund()) via AppHttpClient.
-  - **Lines 649-755:** BIST stock price & historical chart fetcher (\_fetchBistStock(), \_fetchYahooChart()).
-  - **Lines 756-851:** Currency / Forex rate fetcher (\_fetchCurrency(), \_fetchYahooForex()).
-  - **Lines 852-1082:** Commodities & precious metals fetcher (\_fetchCommodity(), Truncgil API / Gold price parsers).
-  - **Lines 1083-1301:** Cryptocurrency live prices & history fetchers via Binance & Yahoo Finance (\_fetchCrypto(), \_fetchYahooCrypto()).
-  - **Lines 1302-1373:** Historical price interpolation helpers (\_findClosestPrice, \_calcChange, \_currencyName).
+  - **Lines 534-648:** TEFAS fund data fetcher (_fetchTefasFund()) via AppHttpClient.
+  - **Lines 649-755:** BIST stock price & historical chart fetcher (_fetchBistStock(), _fetchYahooChart()).
+  - **Lines 756-851:** Currency / Forex rate fetcher (_fetchCurrency(), _fetchYahooForex()).
+  - **Lines 852-1082:** Commodities & precious metals fetcher (_fetchCommodity(), Truncgil API / Gold price parsers).
+  - **Lines 1083-1301:** Cryptocurrency live prices & history fetchers via Binance & Yahoo Finance (_fetchCrypto(), _fetchYahooCrypto()).
+  - **Lines 1302-1373:** Historical price interpolation helpers (_findClosestPrice, _calcChange, _currencyName).
 - **File:** `lib/services/storage_service.dart`
   - **Lines 1-13:** Imports and StorageService class declaration with storage key constants.
   - **Lines 14-36:** App settings persistence (loadSettings() defaulting to brut, saveSettings()) using SharedPreferences.
@@ -255,23 +261,23 @@
   - **Lines 28-108:** build() method: Card container, ink response, layout shell, and value calculation setups.
   - **Lines 109-350:** LayoutBuilder adaptive header: 2-row layout on mobile (<520px) vs 1-row layout on desktop, logo, symbol/category Wrap, name, and action buttons.
   - **Lines 351-405:** Desktop 1-row layout, status button, and value/profit widgets with FittedBox scaling.
-  - **Lines 406-472:** \_buildSmallStat() - Helper widget for compact secondary metric rows, and scrollable horizontal period list.
+  - **Lines 406-472:** _buildSmallStat() - Helper widget for compact secondary metric rows, and scrollable horizontal period list.
 - **File:** `lib/widgets/asset_logo.dart`
   - **Lines 1-30:** Imports, constants, and AssetLogo widget declaration.
-  - **Lines 31-94:** \_AssetLogoState lifecycle, SVG icon detection, and logo resolution dispatch (\_resolveLogo()).
+  - **Lines 31-94:** _AssetLogoState lifecycle, SVG icon detection, and logo resolution dispatch (_resolveLogo()).
   - **Lines 95-119:** build() method: Image network loader with cached network image, fallback category icon, or initials avatar.
   - **Lines 120-227:** buildGoldCard() - Vector gold ingot badge for gold and precious metal assets.
 - **File:** `lib/widgets/asset_symbol_autocomplete.dart`
   - **Lines 1-33:** Imports (including math library) and AssetSymbolAutocomplete declaration with controllers and callbacks.
-  - **Lines 34-71:** \_AssetSymbolAutocompleteState declaration, focus node listeners, and lifecycle hooks (initState, dispose).
-  - **Lines 72-151:** Event handling (\_onFocusChanged, \_onControllerChanged), debounced search invocation (\_performSearch).
-  - **Lines 152-358:** Custom floating dropdown overlay builder (\_showOverlay(), CompositedTransformTarget, suggestions list clamped to screen width).
-  - **Lines 359-364:** Overlay dismissal helper (\_hideOverlay()).
+  - **Lines 34-71:** _AssetSymbolAutocompleteState declaration, focus node listeners, and lifecycle hooks (initState, dispose).
+  - **Lines 72-151:** Event handling (_onFocusChanged, _onControllerChanged), debounced search invocation (_performSearch).
+  - **Lines 152-358:** Custom floating dropdown overlay builder (_showOverlay(), CompositedTransformTarget, suggestions list clamped to screen width).
+  - **Lines 359-364:** Overlay dismissal helper (_hideOverlay()).
   - **Lines 365-399:** build() method: Text form field wrapped in CompositedTransformTarget with clear icon and search indicator.
 - **File:** `lib/widgets/category_distribution_bar.dart`
   - **Lines 1-33:** Imports, CategoryDistributionBar declaration, and color palette definition.
   - **Lines 34-160:** build() method: Multi-segmented horizontal progress bar, compact responsive legend badges with percentages and monetary values.
-  - **Lines 161-173:** \_AllocationDisplayItem private helper data class.
+  - **Lines 161-173:** _AllocationDisplayItem private helper data class.
 - **File:** `lib/widgets/emtia_vector_icon.dart`
   - **Lines 1-15:** Imports and EmtiaVectorIcon declaration.
   - **Lines 16-36:** Custom metallic gold bar vector drawing widget.
@@ -281,10 +287,10 @@
 - **File:** `lib/widgets/period_performance_badge.dart`
   - **Lines 1-157:** Imports, PeriodPerformanceRow declaration, and period metric collection logic.
   - **Lines 158-205:** build() method: Responsive layout builder with horizontal scrolling on mobile/narrow screens and expanded layout on wide screens.
-  - **Lines 206-303:** \_buildMetricTile() - Metric pill rendering change percentage and monetary amount with profit/loss styling.
+  - **Lines 206-303:** _buildMetricTile() - Metric pill rendering change percentage and monetary amount with profit/loss styling.
 - **File:** `lib/widgets/portfolio_card.dart`
   - **Lines 1-31:** Imports, PortfolioCard declaration, and callbacks (onTap, onDelete, onEdit).
-  - **Lines 32-150:** \_PortfolioCardState and build() header: portfolio name, description, visibility toggle, popup menu.
+  - **Lines 32-150:** _PortfolioCardState and build() header: portfolio name, description, visibility toggle, popup menu.
   - **Lines 151-260:** Total portfolio value, cost, profit/loss banner, and period return badges.
   - **Lines 261-340:** Category distribution bar (clamped to 4 items on cards) and asset allocation summary within card.
   - **Lines 341-418:** Footer action area: asset count badge, fund count, and quick transaction trigger button.

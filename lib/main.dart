@@ -914,48 +914,69 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceLight,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppTheme.borderSubtle),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
+              minWidth: constraints.maxWidth,
             ),
-            child: const Icon(
-              Icons.folder_off_outlined,
-              size: 52,
-              color: AppTheme.textMuted,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceLight,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.borderSubtle),
+                      ),
+                      child: const Icon(
+                        Icons.folder_off_outlined,
+                        size: 52,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Henüz Portföy Yok',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Aşağıdaki butondan yeni bir portföy oluşturabilirsin.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textMuted,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: () => _showAddPortfolioDialog(context),
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Yeni Portföy Oluştur'),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 18),
-          const Text(
-            'Portföy Bulunamadı',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Arama filtrenizi temizleyebilir veya yeni bir portföy oluşturabilirsiniz.',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textMuted,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-            onPressed: () => _showAddPortfolioDialog(context),
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Yeni Portföy Oluştur'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

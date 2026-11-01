@@ -12,6 +12,7 @@ import '../services/inflation_service.dart';
 import '../services/market_data_service.dart';
 import '../services/storage_service.dart';
 import '../utils/fifo_calculator.dart';
+import '../features/auth_gate/services/auth_gate_service.dart';
 
 class PortfolioProvider extends ChangeNotifier {
   final StorageService _storageService = StorageService();
@@ -204,8 +205,11 @@ class PortfolioProvider extends ChangeNotifier {
       notifyListeners();
       final userCred = await _authService.signInWithGoogle();
       if (userCred?.user != null) {
+        final user = userCred!.user!;
+        await _firestoreService.markUserApproved(user);
+        await AuthGateService.instance.unlockByGoogleUser(user.uid);
         await syncWithCloud();
-        _startRealtimeSubscriptions(userCred!.user!.uid);
+        _startRealtimeSubscriptions(user.uid);
       }
     } catch (e) {
       _syncError = e.toString();
@@ -219,6 +223,7 @@ class PortfolioProvider extends ChangeNotifier {
       _cancelRealtimeSubscriptions();
       _syncError = null;
       await _authService.signOut();
+      await AuthGateService.instance.clearGoogleApproval();
       notifyListeners();
     } catch (e) {
       _syncError = e.toString();
@@ -230,6 +235,10 @@ class PortfolioProvider extends ChangeNotifier {
   Future<void> syncWithCloud() async {
     final user = _authService.currentUser;
     if (user == null || !_firestoreService.isFirebaseAvailable) return;
+
+    // Veritabanında kullanıcıyı onaylı olarak kaydet ve kapıyı aç
+    await _firestoreService.markUserApproved(user);
+    await AuthGateService.instance.unlockByGoogleUser(user.uid);
 
     _isSyncing = true;
     _syncError = null;

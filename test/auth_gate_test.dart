@@ -98,6 +98,32 @@ void main() {
       final tokenAfterLock = prefs.getString('site_gate_auth_token');
       expect(tokenAfterLock, isNull);
     });
+
+    test('unlockByGoogleUser unlocks and persists approved Google UID without asking password', () async {
+      final service = AuthGateService.instance;
+      await service.lock();
+      expect(service.isUnlocked, isFalse);
+
+      const testUid = 'google_user_test_uid_98765';
+      await service.unlockByGoogleUser(testUid);
+
+      expect(service.isUnlocked, isTrue);
+      expect(service.approvedGoogleUid, equals(testUid));
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('site_gate_approved_google_uid'), equals(testUid));
+
+      // Simulate app restart
+      await service.initialize();
+      expect(service.isUnlocked, isTrue);
+      expect(service.approvedGoogleUid, equals(testUid));
+
+      // Sign out / clear Google approval
+      await service.clearGoogleApproval();
+      expect(service.isUnlocked, isFalse);
+      expect(service.approvedGoogleUid, isNull);
+      expect(prefs.getString('site_gate_approved_google_uid'), isNull);
+    });
   });
 }
 
