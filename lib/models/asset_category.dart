@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import '../widgets/emtia_vector_icon.dart';
 
 enum AssetCategory {
@@ -63,15 +64,15 @@ enum AssetCategory {
   Color get color {
     switch (this) {
       case AssetCategory.fon:
-        return const Color(0xFF6366F1); // Indigo
+        return AppColors.accentLight; // Vibrant Blue (0xFF3A86FF)
       case AssetCategory.hisse:
-        return const Color(0xFF06B6D4); // Cyan
+        return AppColors.cityInner; // Light Cyan / Sky (0xFF48BFE3)
       case AssetCategory.doviz:
-        return const Color(0xFF10B981); // Emerald
+        return AppColors.success; // Emerald / Mint (0xFF06D6A0)
       case AssetCategory.emtia:
-        return const Color(0xFFF59E0B); // Amber
+        return AppColors.warning; // Warm Amber / Gold (0xFFF9A826)
       case AssetCategory.kripto:
-        return const Color(0xFFF7931A); // Bitcoin Orange
+        return const Color(0xFFFB923C); // Bitcoin / Orange
     }
   }
 

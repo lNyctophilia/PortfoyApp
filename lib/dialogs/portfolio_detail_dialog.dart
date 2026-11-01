@@ -1198,7 +1198,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                     IconButton(
                       icon: const Icon(Icons.undo_rounded, size: 18),
                       tooltip: 'Geri Al',
-                      color: const Color(0xFFF59E0B),
+                      color: AppTheme.warning,
                       visualDensity: VisualDensity.compact,
                       padding: const EdgeInsets.all(6),
                       constraints: const BoxConstraints(),
@@ -1329,7 +1329,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
               IconButton(
                 icon: const Icon(Icons.undo_rounded, size: 20),
                 tooltip: 'İşlemi Geri Al (Varlık & K/Z iade edilir)',
-                color: const Color(0xFFF59E0B),
+                color: AppTheme.warning,
                 onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
               ),
               IconButton(
@@ -1370,7 +1370,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF59E0B),
+              backgroundColor: AppTheme.warning,
               foregroundColor: Colors.black,
             ),
             onPressed: () {

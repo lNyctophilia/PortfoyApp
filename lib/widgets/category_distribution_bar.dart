@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/portfolio.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 
@@ -16,18 +17,18 @@ class CategoryDistributionBar extends StatelessWidget {
   });
 
   static const List<Color> _palette = [
-    Color(0xFF6366F1), // Indigo
-    Color(0xFF06B6D4), // Cyan
-    Color(0xFF10B981), // Emerald
-    Color(0xFFF59E0B), // Amber
-    Color(0xFFEC4899), // Pink
-    Color(0xFF8B5CF6), // Purple
-    Color(0xFF3B82F6), // Blue
-    Color(0xFF14B8A6), // Teal
-    Color(0xFFF97316), // Orange
-    Color(0xFFE11D48), // Rose
-    Color(0xFF84CC16), // Lime
-    Color(0xFF0284C7), // Sky
+    AppColors.accentLight, // 0xFF3A86FF
+    AppColors.cityInner,   // 0xFF48BFE3
+    AppColors.success,     // 0xFF06D6A0
+    AppColors.warning,     // 0xFFF9A826
+    AppColors.danger,      // 0xFFEF476F
+    Color(0xFF8B5CF6),     // Purple
+    Color(0xFF14B8A6),     // Teal
+    Color(0xFFFB923C),     // Orange
+    Color(0xFF60A5FA),     // Light Blue
+    Color(0xFFF472B6),     // Pink
+    Color(0xFFA3E635),     // Lime
+    Color(0xFF38BDF8),     // Sky
   ];
 
   @override
@@ -75,7 +76,7 @@ class CategoryDistributionBar extends StatelessWidget {
           label: '+${remaining.length} Diğer',
           percentage: remainingPct,
           value: remainingVal,
-          color: const Color(0xFF94A3B8),
+          color: AppColors.textSecondary,
         ),
       );
     }

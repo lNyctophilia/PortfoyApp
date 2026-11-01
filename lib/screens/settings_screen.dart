@@ -122,7 +122,7 @@ class SettingsScreen extends StatelessWidget {
                         provider: provider,
                         mode: ReturnCalculationMode.brut,
                         icon: Icons.pie_chart_outline_rounded,
-                        iconColor: const Color(0xFF38BDF8),
+                        iconColor: AppTheme.primary,
                         title: 'Brüt Getiri',
                         subtitle:
                             'Stopaj vergisi ve enflasyon kesintisi yapılmaksızın tam brüt kârı ve yalın getiri oranını gösterir.',
@@ -150,7 +150,7 @@ class SettingsScreen extends StatelessWidget {
                         provider: provider,
                         mode: ReturnCalculationMode.reel,
                         icon: Icons.auto_graph_rounded,
-                        iconColor: const Color(0xFFF59E0B),
+                        iconColor: AppTheme.warning,
                         title: 'Reel Getiri',
                         subtitle:
                             'Enflasyona (TÜFE) göre yüzdelik kâr/zarar getiri oranınızı gösterir.',
@@ -216,11 +216,11 @@ class SettingsScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF59E0B)
+                                  color: AppTheme.warning
                                       .withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: const Color(0xFFF59E0B)
+                                    color: AppTheme.warning
                                         .withValues(alpha: 0.25),
                                   ),
                                 ),
@@ -232,14 +232,14 @@ class SettingsScreen extends StatelessWidget {
                                         height: 18,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: Color(0xFFF59E0B),
+                                          color: AppTheme.warning,
                                         ),
                                       )
                                     else
                                       const Icon(
                                         Icons.cloud_done_rounded,
                                         size: 20,
-                                        color: Color(0xFFF59E0B),
+                                        color: AppTheme.warning,
                                       ),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -270,7 +270,7 @@ class SettingsScreen extends StatelessWidget {
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w600,
-                                                  color: Color(0xFFF59E0B),
+                                                  color: AppTheme.warning,
                                                 ),
                                               ),
                                             ],
@@ -304,7 +304,7 @@ class SettingsScreen extends StatelessWidget {
                                       icon: const Icon(
                                         Icons.refresh_rounded,
                                         size: 20,
-                                        color: Color(0xFFF59E0B),
+                                        color: AppTheme.warning,
                                       ),
                                       tooltip:
                                           'TÜFE Verilerini İnternetten Yenile',
@@ -931,10 +931,10 @@ class SettingsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+        color: AppTheme.warning.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+          color: AppTheme.warning.withValues(alpha: 0.35),
         ),
       ),
       child: Text(
@@ -942,7 +942,7 @@ class SettingsScreen extends StatelessWidget {
         style: const TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: Color(0xFFF59E0B),
+          color: AppTheme.warning,
         ),
       ),
     );

@@ -144,10 +144,10 @@ class _PortfolioCardState extends State<PortfolioCard> {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.amber.withValues(alpha: 0.15),
+                                color: AppTheme.warning.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.amber.withValues(alpha: 0.3),
+                                  color: AppTheme.warning.withValues(alpha: 0.3),
                                 ),
                               ),
                               child: const Row(
@@ -156,7 +156,7 @@ class _PortfolioCardState extends State<PortfolioCard> {
                                   Icon(
                                     Icons.visibility_off_rounded,
                                     size: 11,
-                                    color: Colors.amber,
+                                    color: AppTheme.warning,
                                   ),
                                   SizedBox(width: 3),
                                   Text(
@@ -164,7 +164,7 @@ class _PortfolioCardState extends State<PortfolioCard> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.amber,
+                                      color: AppTheme.warning,
                                     ),
                                   ),
                                 ],
@@ -206,7 +206,7 @@ class _PortfolioCardState extends State<PortfolioCard> {
                                           : Icons.visibility_outlined,
                                       size: 16,
                                       color: p.isVisible
-                                          ? Colors.amber
+                                          ? AppTheme.warning
                                           : AppTheme.profit,
                                     ),
                                     const SizedBox(width: 8),

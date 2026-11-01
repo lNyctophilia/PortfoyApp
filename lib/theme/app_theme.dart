@@ -1,33 +1,29 @@
 import 'package:flutter/material.dart';
+import 'app_colors.dart';
 
 class AppTheme {
-  // Brand & Icon Colors:
-  // 1. Arka Plan: Color(0xFF0A1128)
-  // 2. Foreground: Color(0xFFFFFFFF)
-  // 3. Ekstra Renk (Açık Mavi): Color(0xFF3A86FF)
+  // Brand & Palette Constants (Koyu Lacivert Apple Teması)
+  static const Color background = AppColors.background;
+  static const Color surface = AppColors.surface;
+  static const Color surfaceLight = AppColors.card;
+  static const Color surfaceElevated = AppColors.cardLight;
+  static const Color border = AppColors.accent;
+  static const Color borderSubtle = AppColors.divider;
 
-  // Palette
-  static const Color background = Color(0xFF0B0F19);
-  static const Color surface = Color(0xFF111827);
-  static const Color surfaceLight = Color(0xFF1F2937);
-  static const Color surfaceElevated = Color(0xFF283548);
-  static const Color border = Color(0xFF374151);
-  static const Color borderSubtle = Color(0xFF1F293D);
+  static const Color primary = AppColors.accentLight; // 0xFF3A86FF
+  static const Color primaryLight = Color(0xFF60A5FA);
+  static const Color secondary = AppColors.cityInner; // 0xFF48BFE3
 
-  static const Color primary = Color(0xFF6366F1); // Indigo
-  static const Color primaryLight = Color(0xFF818CF8);
-  static const Color secondary = Color(0xFF06B6D4); // Cyan
+  static const Color profit = AppColors.success; // 0xFF06D6A0
+  static const Color profitBg = AppColors.profitBg;
+  static const Color loss = AppColors.danger; // 0xFFEF476F
+  static const Color lossBg = AppColors.lossBg;
+  static const Color warning = AppColors.warning; // 0xFFF9A826
+  static const Color warningBg = AppColors.warningBg;
 
-  static const Color profit = Color(0xFF10B981); // Emerald Green
-  static const Color profitBg = Color(0x1A10B981);
-  static const Color loss = Color(0xFFF43F5E); // Rose Red
-  static const Color lossBg = Color(0x1AF43F5E);
-  static const Color warning = Color(0xFFF59E0B); // Amber Warning
-  static const Color warningBg = Color(0x1AF59E0B);
-
-  static const Color textPrimary = Color(0xFFF9FAFB);
-  static const Color textSecondary = Color(0xFF9CA3AF);
-  static const Color textMuted = Color(0xFF6B7280);
+  static const Color textPrimary = AppColors.textPrimary; // 0xFFFFFFFF
+  static const Color textSecondary = AppColors.textSecondary; // 0xFF8899AA
+  static const Color textMuted = AppColors.textHint; // 0xFF556677
 
   static ThemeData get darkTheme {
     return ThemeData(
@@ -83,7 +79,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
-          foregroundColor: Colors.white,
+          foregroundColor: textPrimary,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(

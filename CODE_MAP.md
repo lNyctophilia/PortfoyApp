@@ -1,14 +1,14 @@
 # Code Map Index
 
 - **File:** `desktop/src/main.cpp`
-  - **Lines 1-85:** Win32 WebView2 Desktop wrapper entry point, window styles, DWM rounded corners and immersive dark mode definitions.
-  - **Lines 86-170:** WebView2 controller initialization, local cache isolation (%LOCALAPPDATA%\PortfoyApp\WebView2Data), dark background setup, navigation to https://lnyctophilia.github.io/PortfoyApp/.
-  - **Lines 171-240:** WndProc message handler: window resizing, min/max dimensions (800x600), shortcuts (F5, Ctrl+R, F11, Alt+Left/Right).
-  - **Lines 241-316:** WinMain application entry point: single-instance mutex check, class registration with IDI_APPICON, window centering (1280x820 default), message loop.
+  - **Lines 1-100:** Win32 WebView2 Desktop wrapper entry point, window styles, DWM rounded corners, immersive dark mode definitions, ClearCacheAndReload helper.
+  - **Lines 101-215:** WebView2 controller initialization, local cache isolation (%LOCALAPPDATA%\PortfoyApp\WebView2Data), WebMessage handler (clear_cache_and_reload), dark background setup, navigation to https://lnyctophilia.github.io/PortfoyApp/.
+  - **Lines 216-285:** WndProc message handler: window resizing, min/max dimensions (800x600), shortcuts (F5, Shift+F5, Ctrl+R, F11, Alt+Left/Right).
+  - **Lines 286-363:** WinMain application entry point: single-instance mutex check, class registration with IDI_APPICON, window centering (1280x820 default), message loop.
 - **File:** `scripts/build_desktop.bat`
   - **Lines 1-56:** MSVC build script for the Windows desktop WebView2 wrapper, copies binary and assets to `build/desktop/`.
 - **File:** `scripts/deploy_web.ps1`
-  - **Lines 1-104:** Automated release compilation, gate security generation, docs/ output preparation, and GitHub Pages push script.
+  - **Lines 1-114:** Automated release compilation, gate security generation, UTF-8 BOM-free version.json, mainJsPath cache-buster injection, docs/ output preparation, and GitHub Pages push script.
 - **File:** `scripts/set_gate_password.bat`
   - **Lines 1-11:** Windows batch launcher for set_gate_password.ps1, ensures correct working directory and prevents CMD window from closing prematurely.
 - **File:** `scripts/set_gate_password.ps1`
@@ -85,7 +85,7 @@
 - **File:** `lib/features/app_update/services/platform/update_platform_stub.dart`
   - **Lines 1-3:** Non-web platform stub implementation for triggerHardReload.
 - **File:** `lib/features/app_update/services/platform/update_platform_web.dart`
-  - **Lines 1-19:** Web implementation using dart:js_interop to invoke performHardAppUpdate and purge CacheStorage/ServiceWorkers.
+  - **Lines 1-22:** Web implementation using dart:js_interop to invoke performHardAppUpdate and purge CacheStorage/ServiceWorkers with fallback timeout.
 - **File:** `lib/features/app_update/widgets/app_update_action.dart`
   - **Lines 1-30:** AppUpdateAction declaration, state variables, and lifecycle.
   - **Lines 31-105:** _checkUpdates() method handling check triggers, snackbar feedback, and dialog invocation.
@@ -235,10 +235,10 @@
   - **Lines 59-80:** Inflation cache persistence (loadInflationCache(), saveInflationCache()).
   - **Lines 81-107:** Portfolios persistence (loadPortfolios(), savePortfolios()) supporting cross-platform web localStorage.
 - **File:** `lib/theme/app_colors.dart`
-  - **Lines 1-33:** Class AppColors declaring Apple-minimalist theme palette constants (background, surface, card, cardLight, accent, text, semantic status).
+  - **Lines 1-46:** Class AppColors declaring Apple-minimalist theme palette constants (background, surface, card, cardLight, accent, text, semantic status, and aliases).
 - **File:** `lib/theme/app_theme.dart`
-  - **Lines 1-31:** Imports, icon/brand color notes, and AppTheme color palette constants (background, surface, profit, loss, text, borders).
-  - **Lines 32-136:** AppTheme.darkTheme - Material 3 dark theme configuration (Card, AppBar, InputDecoration, Button, Dialog, SnackBar themes).
+  - **Lines 1-27:** Imports and AppTheme color palette referencing AppColors (background, surface, profit, loss, text, borders).
+  - **Lines 28-132:** AppTheme.darkTheme - Material 3 dark theme configuration (Card, AppBar, InputDecoration, Button, Dialog, SnackBar themes).
 - **File:** `lib/utils/fifo_calculator.dart`
   - **Lines 1-5:** Imports and file documentation.
   - **Lines 6-35:** AssetLot model representing individual purchase lots, remaining quantity, and holding days.

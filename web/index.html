@@ -43,6 +43,55 @@
 
   <script>
     // ------------------------------------------------------------------------
+    // FLUTTER BUILDCONFIG INTERCEPTOR (MAIN.DART.JS CACHE-BUSTING)
+    // ------------------------------------------------------------------------
+    window._flutter = window._flutter || {};
+    (function() {
+      let _realBuildConfig = null;
+      Object.defineProperty(window._flutter, 'buildConfig', {
+        get: function() { return _realBuildConfig; },
+        set: function(val) {
+          try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeV = urlParams.get('_v') || localStorage.getItem('app_installed_version') || Date.now().toString();
+            if (val && Array.isArray(val.builds)) {
+              val.builds.forEach(function(b) {
+                if (b && b.mainJsPath && !b.mainJsPath.includes('?v=')) {
+                  b.mainJsPath = b.mainJsPath + '?v=' + encodeURIComponent(activeV);
+                }
+              });
+            }
+          } catch (_) {}
+          _realBuildConfig = val;
+        },
+        configurable: true,
+        enumerable: true
+      });
+    })();
+
+    // ------------------------------------------------------------------------
+    // ÖNBELLEK VE SERVICE WORKER TEMİZLEME YARDIMCILARI
+    // ------------------------------------------------------------------------
+    async function clearAllClientCaches() {
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+          console.log('[AutoUpdate] CacheStorage temizlendi.');
+        }
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const reg of registrations) {
+            await reg.unregister();
+          }
+          console.log('[AutoUpdate] Service Worker kaldırıldı.');
+        }
+      } catch (err) {
+        console.warn('[AutoUpdate] Önbellek silme hatası:', err);
+      }
+    }
+
+    // ------------------------------------------------------------------------
     // OTOMATİK SESSİZ GÜNCELLEME & ÖNBELLEK TEMİZLEME (NO POPUP HARD CACHE CLEAR)
     // ------------------------------------------------------------------------
     async function checkAppVersionAndHardClearCache() {
@@ -57,36 +106,25 @@
 
         if (response.ok) {
           const info = await response.json();
-          const serverVersion = info.version || info.build_time;
-          const cachedVersion = localStorage.getItem('app_installed_version');
-          const lastReloaded = sessionStorage.getItem('last_reloaded_version');
+          const serverVersion = (info.version || info.build_time || '').trim();
+          const cachedVersion = (localStorage.getItem('app_installed_version') || '').trim();
 
           if (serverVersion && cachedVersion && cachedVersion !== serverVersion) {
-            if (lastReloaded !== serverVersion) {
-              console.log('[AutoUpdate] Yeni sürüm mevcut:', serverVersion, '(Mevcut:', cachedVersion, ') - Önbellek temizleniyor...');
-              localStorage.setItem('app_installed_version', serverVersion);
-              sessionStorage.setItem('last_reloaded_version', serverVersion);
+            console.log('[AutoUpdate] Yeni sürüm tespit edildi:', serverVersion, '(Mevcut:', cachedVersion, ') - Önbellek temizleniyor...');
+            await clearAllClientCaches();
+            localStorage.setItem('app_installed_version', serverVersion);
+            sessionStorage.removeItem('last_reloaded_version');
 
-              // 1. CacheStorage önbelleğini (PWA / Flutter) tamamen temizle
-              if ('caches' in window) {
-                const keys = await caches.keys();
-                await Promise.all(keys.map(k => caches.delete(k)));
-                console.log('[AutoUpdate] CacheStorage temizlendi.');
-              }
-
-              // 2. Eski Service Worker'ları kayıttan kaldır
-              if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (const registration of registrations) {
-                  await registration.unregister();
-                }
-                console.log('[AutoUpdate] Eski Service Worker unregister edildi.');
-              }
-
-              // 3. Popup göstermeden sessizce sert yenileme yap
-              window.location.reload(true);
+            if (window.chrome && window.chrome.webview && typeof window.chrome.webview.postMessage === 'function') {
+              window.chrome.webview.postMessage('clear_cache_and_reload');
               return;
             }
+
+            const url = new URL(window.location.href);
+            url.searchParams.set('_v', encodeURIComponent(serverVersion));
+            url.searchParams.set('_t', Date.now().toString());
+            window.location.replace(url.toString());
+            return;
           } else if (serverVersion && !cachedVersion) {
             localStorage.setItem('app_installed_version', serverVersion);
           }
@@ -95,9 +133,6 @@
         console.warn('[AutoUpdate] Versiyon kontrol uyarısı:', e);
       }
     }
-
-    // Uygulama açılışında anında kontrol et
-    checkAppVersionAndHardClearCache();
 
     // PWA veya tarayıcı sekmesi arka plandan öne geldiğinde kontrol et
     document.addEventListener('visibilitychange', function() {
@@ -120,31 +155,34 @@
     // MANUEL GÜNCELLEME VE ÖNBELLEK TEMİZLEYEREK YENİLEME (DART ÇAĞRISI)
     // ------------------------------------------------------------------------
     window.performHardAppUpdate = async function(targetVersion) {
+      console.log('[AppUpdate] Manuel güncelleme başlatıldı. Hedef:', targetVersion);
+
+      const v = (targetVersion || '').trim() || Date.now().toString();
+
       try {
-        console.log('[AppUpdate] Manuel güncelleme başlatıldı. Hedef:', targetVersion);
-        if (targetVersion) {
-          localStorage.setItem('app_installed_version', targetVersion);
-          sessionStorage.setItem('last_reloaded_version', targetVersion);
+        localStorage.setItem('app_installed_version', v);
+        sessionStorage.removeItem('last_reloaded_version');
+      } catch (_) {}
+
+      // 1. Desktop WebView2 desteği (varsa yerel disk/bellek önbelleğini temizlet)
+      try {
+        if (window.chrome && window.chrome.webview && typeof window.chrome.webview.postMessage === 'function') {
+          window.chrome.webview.postMessage('clear_cache_and_reload');
+          return;
         }
-        if ('caches' in window) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map(k => caches.delete(k)));
-          console.log('[AppUpdate] CacheStorage temizlendi.');
-        }
-        if ('serviceWorker' in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          for (const registration of registrations) {
-            await registration.unregister();
-          }
-          console.log('[AppUpdate] Service Worker kaldırıldı.');
-        }
-      } catch (err) {
-        console.warn('[AppUpdate] Önbellek silme hatası:', err);
+      } catch (e) {
+        console.warn('[AppUpdate] WebView2 mesaj hatası:', e);
       }
+
+      // 2. Tarayıcı önbelleklerini temizle
+      await clearAllClientCaches();
+
+      // 3. Sert URL yenilemesi
       try {
         const url = new URL(window.location.href);
-        url.searchParams.set('_v', Date.now().toString());
-        window.location.href = url.toString();
+        url.searchParams.set('_v', encodeURIComponent(v));
+        url.searchParams.set('_t', Date.now().toString());
+        window.location.replace(url.toString());
       } catch (e) {
         window.location.reload(true);
       }
@@ -152,6 +190,56 @@
   </script>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    (async function() {
+      let activeVersion = '';
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryV = urlParams.get('_v');
+        if (queryV) {
+          activeVersion = queryV;
+          localStorage.setItem('app_installed_version', queryV);
+        } else {
+          // version.json dosyasını no-cache olarak hızlıca sorgula
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 2000);
+          const res = await fetch('version.json?_t=' + Date.now(), {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            },
+            signal: ctrl.signal
+          });
+          clearTimeout(timer);
+          if (res.ok) {
+            const data = await res.json();
+            const serverVersion = (data.version || data.build_time || '').trim();
+            const cachedVersion = (localStorage.getItem('app_installed_version') || '').trim();
+            if (serverVersion) {
+              if (cachedVersion && cachedVersion !== serverVersion) {
+                console.log('[Bootstrap] Yeni sürüm (' + serverVersion + ') tespit edildi. Önbellek siliniyor...');
+                await clearAllClientCaches();
+              }
+              activeVersion = serverVersion;
+              localStorage.setItem('app_installed_version', serverVersion);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[Bootstrap] Versiyon sorgulama uyarısı:', e);
+      }
+
+      if (!activeVersion) {
+        activeVersion = localStorage.getItem('app_installed_version') || Date.now().toString();
+      }
+
+      // flutter_bootstrap.js dosyasını versiyon query parametresiyle dinamik ekle
+      const script = document.createElement('script');
+      script.src = 'flutter_bootstrap.js?v=' + encodeURIComponent(activeVersion);
+      script.async = true;
+      document.body.appendChild(script);
+    })();
+  </script>
 </body>
 </html>

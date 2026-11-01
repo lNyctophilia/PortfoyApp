@@ -70,6 +70,34 @@ void ResizeWebView() {
     }
 }
 
+void ClearCacheAndReload() {
+    if (g_webView == nullptr) return;
+
+    ComPtr<ICoreWebView2_13> webView13;
+    if (SUCCEEDED(g_webView.As(&webView13))) {
+        ComPtr<ICoreWebView2Profile> profile;
+        if (SUCCEEDED(webView13->get_Profile(&profile))) {
+            ComPtr<ICoreWebView2Profile2> profile2;
+            if (SUCCEEDED(profile.As(&profile2))) {
+                profile2->ClearBrowsingDataAll(
+                    Callback<ICoreWebView2ClearBrowsingDataCompletedHandler>(
+                        [](HRESULT) -> HRESULT {
+                            if (g_webView != nullptr) {
+                                g_webView->Navigate(g_szTargetUrl);
+                            }
+                            return S_OK;
+                        }
+                    ).Get()
+                );
+                return;
+            }
+        }
+    }
+
+    // Fallback if ClearBrowsingDataAll is not supported
+    g_webView->Reload();
+}
+
 void InitWebView(HWND hWnd) {
     // Get Local AppData path for isolated user data directory
     WCHAR localAppData[MAX_PATH];
@@ -129,6 +157,25 @@ void InitWebView(HWND hWnd) {
                             ResizeWebView();
                             g_controller->put_IsVisible(TRUE);
 
+                            // Register message handler for Web -> Native communication (hard reload & cache clear)
+                            EventRegistrationToken webMessageToken;
+                            g_webView->add_WebMessageReceived(
+                                Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+                                    [](ICoreWebView2* sender, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
+                                        LPWSTR messageRaw = nullptr;
+                                        if (SUCCEEDED(args->TryGetWebMessageAsString(&messageRaw)) && messageRaw != nullptr) {
+                                            std::wstring msg(messageRaw);
+                                            CoTaskMemFree(messageRaw);
+                                            if (msg == L"clear_cache_and_reload" || msg == L"hard_reload") {
+                                                ClearCacheAndReload();
+                                            }
+                                        }
+                                        return S_OK;
+                                    }
+                                ).Get(),
+                                &webMessageToken
+                            );
+
                             // Navigate to PortfoyApp hosted site
                             g_webView->Navigate(g_szTargetUrl);
 
@@ -177,8 +224,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
         if (wParam == VK_F5 || (ctrlPressed && wParam == 'R')) {
             if (g_webView != nullptr) {
-                if (shiftPressed) {
-                    g_webView->Navigate(g_szTargetUrl);
+                if (shiftPressed || ctrlPressed) {
+                    ClearCacheAndReload();
                 } else {
                     g_webView->Reload();
                 }

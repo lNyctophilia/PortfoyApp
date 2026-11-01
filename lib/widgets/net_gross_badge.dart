@@ -32,17 +32,17 @@ class NetGrossBadge extends StatelessWidget {
 
     switch (effectiveMode) {
       case ReturnCalculationMode.brut:
-        color = const Color(0xFF38BDF8); // Açık Mavi
+        color = AppTheme.primary; // 0xFF3A86FF
         label = 'BRÜT';
         tooltip = 'Stopaj vergisi ve enflasyon düşülmemiş brüt tutar';
         break;
       case ReturnCalculationMode.net:
-        color = AppTheme.profit; // Zümrüt Yeşili
+        color = AppTheme.profit; // 0xFF06D6A0
         label = 'NET';
         tooltip = 'Stopaj vergisi düşülmüş net tutar';
         break;
       case ReturnCalculationMode.reel:
-        color = const Color(0xFFF59E0B); // Amber / Altın
+        color = AppTheme.warning; // 0xFFF9A826
         label = 'REEL';
         tooltip = 'TÜFE enflasyonundan arındırılmış reel getiri';
         break;

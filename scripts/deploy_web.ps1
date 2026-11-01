@@ -31,9 +31,9 @@ class AppVersion {
   static const String current = '$versionStr';
 }
 "@
-Set-Content -Path $versionDartPath -Value $dartContent -Encoding utf8
+[System.IO.File]::WriteAllText($versionDartPath, $dartContent, (New-Object System.Text.UTF8Encoding($false)))
 
-# 3. web/version.json olustur / guncelle
+# 3. web/version.json olustur / guncelle (UTF-8 without BOM)
 Write-Host "[2/5] web/version.json guncelleniyor..." -ForegroundColor Green
 $webDir = Join-Path $projectRoot "web"
 if (-not (Test-Path $webDir)) {
@@ -45,7 +45,7 @@ $versionJsonObj = @{
     timestamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 }
 $jsonContent = $versionJsonObj | ConvertTo-Json -Compress
-Set-Content -Path (Join-Path $webDir "version.json") -Value $jsonContent -Encoding utf8
+[System.IO.File]::WriteAllText((Join-Path $webDir "version.json"), $jsonContent, (New-Object System.Text.UTF8Encoding($false)))
 
 # 3.5. Site erisim guvenligi (gate_security_config.dart) guncelle
 Write-Host "[*] Site erisim guvenligi yapilandirmasi hazirlaniyor..." -ForegroundColor Green
@@ -76,10 +76,20 @@ if (Test-Path $docsDir) {
 $buildWebDir = Join-Path $projectRoot "build/web"
 Copy-Item -Path "$buildWebDir/*" -Destination $docsDir -Recurse -Force
 
+# flutter_bootstrap.js icindeki mainJsPath'e versiyon cache-buster ekle
+$bootstrapPath = Join-Path $docsDir "flutter_bootstrap.js"
+if (Test-Path $bootstrapPath) {
+    $bootstrapContent = [System.IO.File]::ReadAllText($bootstrapPath, [System.Text.Encoding]::UTF8)
+    $encodedVersion = [System.Uri]::EscapeDataString($versionStr)
+    $bootstrapContent = $bootstrapContent.Replace('"mainJsPath":"main.dart.js"', "`"mainJsPath`":`"main.dart.js?v=$encodedVersion`"")
+    [System.IO.File]::WriteAllText($bootstrapPath, $bootstrapContent, (New-Object System.Text.UTF8Encoding($false)))
+    Write-Host "[OK] flutter_bootstrap.js mainJsPath cache-buster ($versionStr) eklendi." -ForegroundColor Green
+}
+
 # GitHub Pages icin .nojekyll ve 404.html (SPA Fallback) olustur
 New-Item -ItemType File -Path (Join-Path $docsDir ".nojekyll") -Force | Out-Null
 Copy-Item -Path (Join-Path $docsDir "index.html") -Destination (Join-Path $docsDir "404.html") -Force
-Copy-Item -Path (Join-Path $webDir "version.json") -Destination (Join-Path $docsDir "version.json") -Force
+[System.IO.File]::WriteAllText((Join-Path $docsDir "version.json"), $jsonContent, (New-Object System.Text.UTF8Encoding($false)))
 
 Write-Host "[OK] docs/ klasoru basariyla hazirlandi (.nojekyll ve 404.html dahil)." -ForegroundColor Green
 Write-Host ""

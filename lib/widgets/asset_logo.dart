@@ -125,7 +125,7 @@ class _AssetLogoState extends State<AssetLogo> {
           color: const Color(0xFFD69A00),
           borderRadius: BorderRadius.circular(widget.borderRadius),
           border: Border.all(
-            color: const Color(0xFFF59E0B).withValues(alpha: 0.5),
+            color: AppTheme.warning.withValues(alpha: 0.5),
             width: 1.2,
           ),
           boxShadow: [
