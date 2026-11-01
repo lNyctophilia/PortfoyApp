@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import '../core/network/app_http_client.dart';
 import '../models/asset_category.dart';
 import 'market_data_service.dart';
 
@@ -20,8 +20,6 @@ class AssetSuggestion {
 }
 
 class AssetCatalogService {
-  static final HttpClient _client = HttpClient()
-    ..badCertificateCallback = (cert, host, port) => true;
 
   // -------------------------------------------------------------
   // 1. POPÜLER TEFAS FONLARI KATALOĞU (100+ Fon)
@@ -316,24 +314,19 @@ class AssetCatalogService {
     if (cleanUpper.length == 3 &&
         !results.any((r) => r.symbol.toUpperCase() == cleanUpper)) {
       try {
-        final req = await _client.postUrl(
-            Uri.parse('https://www.tefas.gov.tr/api/funds/fonFiyatBilgiGetir'));
-        req.headers.set('User-Agent',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-        req.headers.set('Content-Type', 'application/json');
-        req.headers.set('Origin', 'https://www.tefas.gov.tr');
-        req.headers.set(
-            'Referer', 'https://www.tefas.gov.tr/tr/fon-detayli-analiz/');
         final payload = jsonEncode({
           'fonKodu': cleanUpper,
           'dil': 'TR',
           'periyod': 5,
         });
-        req.add(utf8.encode(payload));
-        final resp = await req.close().timeout(const Duration(seconds: 3));
-        if (resp.statusCode == 200) {
-          final body = await resp.transform(utf8.decoder).join();
-          final data = jsonDecode(body) as Map<String, dynamic>;
+        final resp = await AppHttpClient.post(
+          'https://www.tefas.gov.tr/api/funds/fonFiyatBilgiGetir',
+          headers: {'Content-Type': 'application/json'},
+          body: payload,
+          timeout: const Duration(seconds: 4),
+        );
+        if (resp != null && resp.statusCode == 200) {
+          final data = jsonDecode(resp.body) as Map<String, dynamic>;
           final list = data['resultList'] as List<dynamic>?;
           if (list != null && list.isNotEmpty) {
             final latest = list.last as Map<String, dynamic>;
@@ -387,18 +380,11 @@ class AssetCatalogService {
     // 2. Canlı TradingView BIST ve Global Arama
     if (q.isNotEmpty && q.length >= 2) {
       try {
-        final url = Uri.parse(
-            'https://symbol-search.tradingview.com/symbol_search/v3/?text=${Uri.encodeComponent(q)}&exchange=BIST');
-        final req = await _client.getUrl(url).timeout(const Duration(seconds: 3));
-        req.headers.set('User-Agent',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-        req.headers.set('Origin', 'https://www.tradingview.com');
-        req.headers.set('Referer', 'https://www.tradingview.com/');
-
-        final resp = await req.close().timeout(const Duration(seconds: 3));
-        if (resp.statusCode == 200) {
-          final body = await resp.transform(utf8.decoder).join();
-          final data = jsonDecode(body) as Map<String, dynamic>;
+        final url =
+            'https://symbol-search.tradingview.com/symbol_search/v3/?text=${Uri.encodeComponent(q)}&exchange=BIST';
+        final resp = await AppHttpClient.get(url, timeout: const Duration(seconds: 4));
+        if (resp != null && resp.statusCode == 200) {
+          final data = jsonDecode(resp.body) as Map<String, dynamic>;
           final list = data['symbols'] as List<dynamic>? ?? [];
 
           for (final item in list) {
@@ -431,15 +417,11 @@ class AssetCatalogService {
       // Global hisseler için TradingView genel arama
       if (results.length < 5) {
         try {
-          final url = Uri.parse(
-              'https://symbol-search.tradingview.com/symbol_search/v3/?text=${Uri.encodeComponent(q)}');
-          final req = await _client.getUrl(url).timeout(const Duration(seconds: 3));
-          req.headers.set('User-Agent', 'Mozilla/5.0');
-          req.headers.set('Origin', 'https://www.tradingview.com');
-          final resp = await req.close().timeout(const Duration(seconds: 3));
-          if (resp.statusCode == 200) {
-            final body = await resp.transform(utf8.decoder).join();
-            final data = jsonDecode(body) as Map<String, dynamic>;
+          final url =
+              'https://symbol-search.tradingview.com/symbol_search/v3/?text=${Uri.encodeComponent(q)}';
+          final resp = await AppHttpClient.get(url, timeout: const Duration(seconds: 4));
+          if (resp != null && resp.statusCode == 200) {
+            final data = jsonDecode(resp.body) as Map<String, dynamic>;
             final list = data['symbols'] as List<dynamic>? ?? [];
 
             for (final item in list) {
@@ -504,17 +486,11 @@ class AssetCatalogService {
     // TradingView kripto araması
     if (q.isNotEmpty && q.length >= 2 && results.length < 8) {
       try {
-        final url = Uri.parse(
-            'https://symbol-search.tradingview.com/symbol_search/v3/?text=${Uri.encodeComponent(q)}&search_type=crypto');
-        final req = await _client.getUrl(url).timeout(const Duration(seconds: 3));
-        req.headers.set('User-Agent',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-        req.headers.set('Origin', 'https://www.tradingview.com');
-        req.headers.set('Referer', 'https://www.tradingview.com/');
-        final resp = await req.close().timeout(const Duration(seconds: 3));
-        if (resp.statusCode == 200) {
-          final body = await resp.transform(utf8.decoder).join();
-          final data = jsonDecode(body) as Map<String, dynamic>;
+        final url =
+            'https://symbol-search.tradingview.com/symbol_search/v3/?text=${Uri.encodeComponent(q)}&search_type=crypto';
+        final resp = await AppHttpClient.get(url, timeout: const Duration(seconds: 4));
+        if (resp != null && resp.statusCode == 200) {
+          final data = jsonDecode(resp.body) as Map<String, dynamic>;
           final list = data['symbols'] as List<dynamic>? ?? [];
 
           for (final item in list) {

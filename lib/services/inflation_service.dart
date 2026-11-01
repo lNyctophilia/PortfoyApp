@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math' as math;
+import '../core/network/app_http_client.dart';
 import 'storage_service.dart';
 
 class InflationInfo {
@@ -94,9 +94,6 @@ class PeriodInflationData {
 }
 
 class InflationService {
-  static final HttpClient _client = HttpClient()
-    ..badCertificateCallback = (cert, host, port) => true;
-
   static const String _tcmbApiUrl =
       'https://appg.tcmb.gov.tr/KIMENFH/enflasyon/hesapla';
 
@@ -242,17 +239,6 @@ class InflationService {
 
     // TCMB Enflasyon API'sine istek gönder
     try {
-      final request = await _client
-          .postUrl(Uri.parse(_tcmbApiUrl))
-          .timeout(const Duration(seconds: 4));
-
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
-      request.headers.set(HttpHeaders.acceptHeader, 'application/json');
-      request.headers.set(
-        HttpHeaders.userAgentHeader,
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      );
-
       final payload = jsonEncode({
         'baslangicYil': startYear.toString(),
         'baslangicAy': startMonth.toString(),
@@ -261,16 +247,15 @@ class InflationService {
         'malSepeti': '100',
       });
 
-      final bytes = utf8.encode(payload);
-      request.contentLength = bytes.length;
-      request.add(bytes);
+      final response = await AppHttpClient.post(
+        _tcmbApiUrl,
+        headers: {'Content-Type': 'application/json'},
+        body: payload,
+        timeout: const Duration(seconds: 4),
+      );
 
-      final response =
-          await request.close().timeout(const Duration(seconds: 4));
-
-      if (response.statusCode == 200) {
-        final body = await response.transform(utf8.decoder).join();
-        final data = jsonDecode(body) as Map<String, dynamic>;
+      if (response != null && response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
 
         final rawDegisim = data['toplamDegisim'];
         double degisim = 0.0;

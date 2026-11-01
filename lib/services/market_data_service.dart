@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import '../core/network/app_http_client.dart';
 import '../models/asset_category.dart';
 import 'storage_service.dart';
 
@@ -93,9 +93,6 @@ class MarketAssetInfo {
 }
 
 class MarketDataService {
-  static final HttpClient _client = HttpClient()
-    ..badCertificateCallback = (cert, host, port) => true;
-
   static final Map<String, String> _logoCache = {};
   static final StorageService _storageService = StorageService();
   static bool _logoCacheLoaded = false;
@@ -425,20 +422,13 @@ class MarketDataService {
     if (_logoCache.containsKey(clean)) return _logoCache[clean];
 
     try {
-      final url = Uri.parse(
-          'https://symbol-search.tradingview.com/symbol_search/v3/?text=$clean');
-      final request =
-          await _client.getUrl(url).timeout(const Duration(seconds: 3));
-      request.headers.set(HttpHeaders.userAgentHeader,
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
-      request.headers.set('Origin', 'https://www.tradingview.com');
-      request.headers.set('Referer', 'https://www.tradingview.com/');
+      final url =
+          'https://symbol-search.tradingview.com/symbol_search/v3/?text=$clean';
+      final response =
+          await AppHttpClient.get(url, timeout: const Duration(seconds: 4));
+      if (response == null || response.statusCode != 200) return null;
 
-      final response = await request.close().timeout(const Duration(seconds: 3));
-      if (response.statusCode != 200) return null;
-
-      final body = await response.transform(utf8.decoder).join();
-      final data = jsonDecode(body) as Map<String, dynamic>;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
       final list = data['symbols'] as List<dynamic>?;
       if (list == null || list.isEmpty) return null;
 
@@ -541,31 +531,24 @@ class MarketDataService {
     String fundCode,
     DateTime? purchaseDate,
   ) async {
-    final request = await _client.postUrl(
-      Uri.parse('https://www.tefas.gov.tr/api/funds/fonFiyatBilgiGetir'),
-    );
-    request.headers.set(HttpHeaders.userAgentHeader,
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
-    request.headers.set(HttpHeaders.acceptHeader, 'application/json, text/plain, */*');
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
-    request.headers.set('Origin', 'https://www.tefas.gov.tr');
-    request.headers.set('Referer', 'https://www.tefas.gov.tr/tr/fon-detayli-analiz/');
-
     final payload = jsonEncode({
       'fonKodu': fundCode,
       'dil': 'TR',
       'periyod': 60, // 5 yıllık geçmiş
     });
 
-    final bytes = utf8.encode(payload);
-    request.contentLength = bytes.length;
-    request.add(bytes);
+    final response = await AppHttpClient.post(
+      'https://www.tefas.gov.tr/api/funds/fonFiyatBilgiGetir',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: payload,
+      timeout: const Duration(seconds: 5),
+    );
 
-    final response = await request.close();
-    if (response.statusCode != 200) return null;
+    if (response == null || response.statusCode != 200) return null;
 
-    final body = await response.transform(utf8.decoder).join();
-    final data = jsonDecode(body) as Map<String, dynamic>;
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
     final list = data['resultList'] as List<dynamic>?;
     if (list == null || list.isEmpty) return null;
 
@@ -692,19 +675,13 @@ class MarketDataService {
     DateTime? purchaseDate,
   }) async {
     try {
-      final url = Uri.parse(
-          'https://query1.finance.yahoo.com/v8/finance/chart/$yahooTicker?interval=1d&range=5y');
+      final url =
+          'https://query1.finance.yahoo.com/v8/finance/chart/$yahooTicker?interval=1d&range=5y';
+      final response =
+          await AppHttpClient.get(url, timeout: const Duration(seconds: 5));
+      if (response == null || response.statusCode != 200) return null;
 
-      final request = await _client.getUrl(url);
-      request.headers.set(HttpHeaders.userAgentHeader,
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
-      request.headers.set(HttpHeaders.acceptHeader, 'application/json');
-
-      final response = await request.close();
-      if (response.statusCode != 200) return null;
-
-      final body = await response.transform(utf8.decoder).join();
-      final data = jsonDecode(body) as Map<String, dynamic>;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
       final result = (data['chart']?['result'] as List<dynamic>?)?.firstOrNull;
       if (result == null) return null;
 
@@ -794,16 +771,13 @@ class MarketDataService {
     DateTime? purchaseDate,
   ) async {
     try {
-      final url = Uri.parse(
-          'https://query1.finance.yahoo.com/v8/finance/chart/$yahooSym?interval=1d&range=5y');
-      final request = await _client.getUrl(url);
-      request.headers.set(HttpHeaders.userAgentHeader,
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
-      final response = await request.close();
-      if (response.statusCode != 200) return null;
+      final url =
+          'https://query1.finance.yahoo.com/v8/finance/chart/$yahooSym?interval=1d&range=5y';
+      final response =
+          await AppHttpClient.get(url, timeout: const Duration(seconds: 5));
+      if (response == null || response.statusCode != 200) return null;
 
-      final body = await response.transform(utf8.decoder).join();
-      final data = jsonDecode(body) as Map<String, dynamic>;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
       final result = (data['chart']?['result'] as List<dynamic>?)?.firstOrNull;
       if (result == null) return null;
 
@@ -982,15 +956,12 @@ class MarketDataService {
       final isOns = itemKey == 'ons';
       final commoditySym = isSilver ? 'SI=F' : 'GC=F';
 
-      final futuresUrl = Uri.parse(
-          'https://query1.finance.yahoo.com/v8/finance/chart/$commoditySym?interval=1d&range=5y');
-      final reqFutures = await _client.getUrl(futuresUrl);
-      reqFutures.headers.set(HttpHeaders.userAgentHeader, 'Mozilla/5.0');
-      final respFutures = await reqFutures.close();
-      if (respFutures.statusCode != 200) return {};
+      final futuresUrl =
+          'https://query1.finance.yahoo.com/v8/finance/chart/$commoditySym?interval=1d&range=5y';
+      final respFutures = await AppHttpClient.get(futuresUrl, timeout: const Duration(seconds: 5));
+      if (respFutures == null || respFutures.statusCode != 200) return {};
 
-      final bodyFutures = await respFutures.transform(utf8.decoder).join();
-      final dataFutures = jsonDecode(bodyFutures) as Map<String, dynamic>;
+      final dataFutures = jsonDecode(respFutures.body) as Map<String, dynamic>;
       final resFutures = (dataFutures['chart']?['result'] as List<dynamic>?)?.firstOrNull;
       if (resFutures == null) return {};
 
@@ -1010,15 +981,12 @@ class MarketDataService {
       }
 
       // Gram bazlı TL hesabı için USD/TRY kuru geçmişi
-      final usdUrl = Uri.parse(
-          'https://query1.finance.yahoo.com/v8/finance/chart/USDTRY=X?interval=1d&range=5y');
-      final reqUsd = await _client.getUrl(usdUrl);
-      reqUsd.headers.set(HttpHeaders.userAgentHeader, 'Mozilla/5.0');
-      final respUsd = await reqUsd.close();
-      if (respUsd.statusCode != 200) return {};
+      final usdUrl =
+          'https://query1.finance.yahoo.com/v8/finance/chart/USDTRY=X?interval=1d&range=5y';
+      final respUsd = await AppHttpClient.get(usdUrl, timeout: const Duration(seconds: 5));
+      if (respUsd == null || respUsd.statusCode != 200) return {};
 
-      final bodyUsd = await respUsd.transform(utf8.decoder).join();
-      final dataUsd = jsonDecode(bodyUsd) as Map<String, dynamic>;
+      final dataUsd = jsonDecode(respUsd.body) as Map<String, dynamic>;
       final resUsd = (dataUsd['chart']?['result'] as List<dynamic>?)?.firstOrNull;
       if (resUsd == null) return {};
 
@@ -1064,13 +1032,13 @@ class MarketDataService {
     String? fallbackName,
   }) async {
     try {
-      final request = await _client.getUrl(Uri.parse('https://finans.truncgil.com/today.json'));
-      request.headers.set(HttpHeaders.userAgentHeader, 'Mozilla/5.0');
-      final response = await request.close();
-      if (response.statusCode != 200) return null;
+      final response = await AppHttpClient.get(
+        'https://finans.truncgil.com/today.json',
+        timeout: const Duration(seconds: 4),
+      );
+      if (response == null || response.statusCode != 200) return null;
 
-      final body = await response.transform(utf8.decoder).join();
-      final data = jsonDecode(body) as Map<String, dynamic>;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
 
       final item = data[key] as Map<String, dynamic>?;
       if (item == null) return null;
@@ -1148,15 +1116,12 @@ class MarketDataService {
     try {
       final pair = '${sym}TRY';
       final tickerUri =
-          Uri.parse('https://api.binance.com/api/v3/ticker/24hr?symbol=$pair');
-      final tickerReq =
-          await _client.getUrl(tickerUri).timeout(const Duration(seconds: 4));
-      tickerReq.headers.set(HttpHeaders.userAgentHeader, 'Mozilla/5.0');
-      final tickerResp = await tickerReq.close();
+          'https://api.binance.com/api/v3/ticker/24hr?symbol=$pair';
+      final tickerResp =
+          await AppHttpClient.get(tickerUri, timeout: const Duration(seconds: 4));
 
-      if (tickerResp.statusCode == 200) {
-        final tickerBody = await tickerResp.transform(utf8.decoder).join();
-        final tickerData = jsonDecode(tickerBody) as Map<String, dynamic>;
+      if (tickerResp != null && tickerResp.statusCode == 200) {
+        final tickerData = jsonDecode(tickerResp.body) as Map<String, dynamic>;
         final currentPrice =
             double.tryParse(tickerData['lastPrice']?.toString() ?? '') ?? 0.0;
         final dailyChange = double.tryParse(
@@ -1166,16 +1131,12 @@ class MarketDataService {
         if (currentPrice > 0) {
           final priceHistory = <DateTime, double>{};
           try {
-            final klinesUri = Uri.parse(
-                'https://api.binance.com/api/v3/klines?symbol=$pair&interval=1d&limit=1000');
-            final klinesReq =
-                await _client.getUrl(klinesUri).timeout(const Duration(seconds: 4));
-            klinesReq.headers.set(HttpHeaders.userAgentHeader, 'Mozilla/5.0');
-            final klinesResp = await klinesReq.close();
-            if (klinesResp.statusCode == 200) {
-              final klinesBody =
-                  await klinesResp.transform(utf8.decoder).join();
-              final klinesList = jsonDecode(klinesBody) as List<dynamic>;
+            final klinesUri =
+                'https://api.binance.com/api/v3/klines?symbol=$pair&interval=1d&limit=1000';
+            final klinesResp =
+                await AppHttpClient.get(klinesUri, timeout: const Duration(seconds: 4));
+            if (klinesResp != null && klinesResp.statusCode == 200) {
+              final klinesList = jsonDecode(klinesResp.body) as List<dynamic>;
               for (final item in klinesList) {
                 if (item is List && item.length >= 5) {
                   final ts = item[0] as num?;
@@ -1237,16 +1198,13 @@ class MarketDataService {
   ) async {
     try {
       final yahooSym = '$sym-USD';
-      final url = Uri.parse(
-          'https://query1.finance.yahoo.com/v8/finance/chart/$yahooSym?interval=1d&range=5y');
-      final request =
-          await _client.getUrl(url).timeout(const Duration(seconds: 4));
-      request.headers.set(HttpHeaders.userAgentHeader, 'Mozilla/5.0');
-      final response = await request.close();
-      if (response.statusCode != 200) return null;
+      final url =
+          'https://query1.finance.yahoo.com/v8/finance/chart/$yahooSym?interval=1d&range=5y';
+      final response =
+          await AppHttpClient.get(url, timeout: const Duration(seconds: 4));
+      if (response == null || response.statusCode != 200) return null;
 
-      final body = await response.transform(utf8.decoder).join();
-      final data = jsonDecode(body) as Map<String, dynamic>;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
       final result = (data['chart']?['result'] as List<dynamic>?)?.firstOrNull;
       if (result == null) return null;
 
@@ -1269,15 +1227,12 @@ class MarketDataService {
       // USDTRY kuru
       double usdTryRate = 40.0;
       try {
-        final usdUrl = Uri.parse(
-            'https://query1.finance.yahoo.com/v8/finance/chart/USDTRY=X?interval=1d&range=5d');
-        final usdReq =
-            await _client.getUrl(usdUrl).timeout(const Duration(seconds: 3));
-        usdReq.headers.set(HttpHeaders.userAgentHeader, 'Mozilla/5.0');
-        final usdResp = await usdReq.close();
-        if (usdResp.statusCode == 200) {
-          final usdBody = await usdResp.transform(utf8.decoder).join();
-          final usdData = jsonDecode(usdBody) as Map<String, dynamic>;
+        final usdUrl =
+            'https://query1.finance.yahoo.com/v8/finance/chart/USDTRY=X?interval=1d&range=5d';
+        final usdResp =
+            await AppHttpClient.get(usdUrl, timeout: const Duration(seconds: 3));
+        if (usdResp != null && usdResp.statusCode == 200) {
+          final usdData = jsonDecode(usdResp.body) as Map<String, dynamic>;
           final usdRes =
               (usdData['chart']?['result'] as List<dynamic>?)?.firstOrNull;
           final rate =
