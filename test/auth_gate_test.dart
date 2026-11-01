@@ -124,6 +124,19 @@ void main() {
       expect(service.approvedGoogleUid, isNull);
       expect(prefs.getString('site_gate_approved_google_uid'), isNull);
     });
+
+    test('initialize recognizes already-approved Google user from previous session', () async {
+      final service = AuthGateService.instance;
+      await service.lock();
+      expect(service.isUnlocked, isFalse);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('site_gate_approved_google_uid', 'existing_google_uid_123');
+
+      await service.initialize();
+      expect(service.isUnlocked, isTrue);
+      expect(service.approvedGoogleUid, equals('existing_google_uid_123'));
+    });
   });
 }
 

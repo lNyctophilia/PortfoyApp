@@ -96,13 +96,19 @@
 - **File:** `lib/features/auth_gate/screens/auth_gate_screen.dart`
   - **Lines 1-43:** Apple-minimalist fullscreen responsive gate screen centering AuthGateCard with LayoutBuilder and constraints.
 - **File:** `lib/features/auth_gate/services/auth_gate_service.dart`
-  - **Lines 1-42:** Imports, AuthGateService singleton declaration, and session/approval state variables.
-  - **Lines 43-108:** initialize() - Verifies stored session token from SharedPreferences, Google account cached approval, and Firestore database approval.
-  - **Lines 109-138:** _attachAuthListener() - Real-time listener automatically unlocking gate when Google authentication settles.
-  - **Lines 139-153:** unlockByGoogleUser() - Persists Google approval locally and unlocks gate.
-  - **Lines 154-178:** clearGoogleApproval() - Clears Google approval on sign-out and locks if no password session exists.
-  - **Lines 179-240:** verifyAndUnlock() - Multi-round cryptographic verification, anti-brute-force lockout delays, session token storage, and Google account auto-approval linking.
-  - **Lines 241-260:** lock() & dispose() - Revokes session token and Google approval from SharedPreferences and re-engages gate protection.
+  - **Lines 1-43:** Imports, AuthGateService singleton declaration, and session/approval state variables.
+  - **Lines 44-126:** initialize() - Verifies stored session token from SharedPreferences and GateStoragePlatform (Web localStorage), Google account cached approval, and restores Firebase Auth session asynchronously from IndexedDB.
+  - **Lines 127-160:** _attachAuthListener() - Real-time listener automatically unlocking gate when Google authentication settles.
+  - **Lines 161-175:** unlockByGoogleUser() - Persists Google approval locally and unlocks gate.
+  - **Lines 176-202:** clearGoogleApproval() - Clears Google approval on sign-out and locks if no password session exists.
+  - **Lines 203-267:** verifyAndUnlock() - Multi-round cryptographic verification, anti-brute-force lockout delays, session token storage across SharedPreferences and GateStoragePlatform, and Google account auto-approval linking.
+  - **Lines 268-287:** lock() & dispose() - Revokes session token and Google approval from all storage layers and re-engages gate protection.
+- **File:** `lib/features/auth_gate/services/platform/gate_storage_platform.dart`
+  - **Lines 1-13:** Cross-platform storage fallback interface ensuring direct persistent storage on Web.
+- **File:** `lib/features/auth_gate/services/platform/gate_storage_stub.dart`
+  - **Lines 1-5:** Non-web platform stub implementation for Web storage helpers.
+- **File:** `lib/features/auth_gate/services/platform/gate_storage_web.dart`
+  - **Lines 1-62:** Direct Web localStorage implementation using dart:js_interop with unquoting and dual flutter-prefixed compatibility.
 - **File:** `lib/features/auth_gate/utils/gate_crypto_utils.dart`
   - **Lines 1-28:** GateCryptoUtils class declaration and multi-round HMAC-SHA256 key stretching (computeHash).
   - **Lines 29-37:** generateSessionToken() - Derives persistent browser authorization session token.

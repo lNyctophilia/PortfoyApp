@@ -6,6 +6,7 @@ import '../../../services/auth_service.dart';
 import '../../../services/firestore_service.dart';
 import '../constants/gate_security_config.dart';
 import '../utils/gate_crypto_utils.dart';
+import 'platform/gate_storage_platform.dart';
 
 /// Singleton service managing site access lock, authentication state, Google approval, and session persistence.
 class AuthGateService extends ChangeNotifier {
@@ -52,8 +53,9 @@ class AuthGateService extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // 1. Şifre oturum belirteci geçerli mi?
-      final storedToken = prefs.getString(_storageKeyAuthToken);
+      // 1. Şifre oturum belirteci geçerli mi? (SharedPreferences + Doğrudan Web LocalStorage)
+      final storedToken = prefs.getString(_storageKeyAuthToken) ??
+          GateStoragePlatform.getString(_storageKeyAuthToken);
       if (storedToken != null && storedToken.isNotEmpty) {
         final expectedToken = GateCryptoUtils.generateSessionToken(
           configHash: GateSecurityConfig.hash,
@@ -62,14 +64,19 @@ class AuthGateService extends ChangeNotifier {
 
         if (GateCryptoUtils.secureCompare(storedToken, expectedToken)) {
           _isUnlocked = true;
+          // İki depolama katmanını da güncel ve senkron tut
+          await prefs.setString(_storageKeyAuthToken, storedToken);
+          GateStoragePlatform.setString(_storageKeyAuthToken, storedToken);
         } else {
           // Token geçersiz veya şifre güncellenmiş
           await prefs.remove(_storageKeyAuthToken);
+          GateStoragePlatform.removeString(_storageKeyAuthToken);
         }
       }
 
       // 2. Bu cihazda daha önce onaylanmış Google hesabı var mı?
-      final storedGoogleUid = prefs.getString(_storageKeyApprovedGoogleUid);
+      final storedGoogleUid = prefs.getString(_storageKeyApprovedGoogleUid) ??
+          GateStoragePlatform.getString(_storageKeyApprovedGoogleUid);
       if (storedGoogleUid != null && storedGoogleUid.isNotEmpty) {
         _approvedGoogleUid = storedGoogleUid;
         _isUnlocked = true;
@@ -80,20 +87,30 @@ class AuthGateService extends ChangeNotifier {
         User? user = AuthService().currentUser;
         if (user == null) {
           try {
+            // Firebase Auth Web'de oturumu IndexedDB'den asenkron yükler.
+            // İlk boş (null) olayı atlayıp kullanıcının yüklenmesini bekler.
             user = await AuthService()
                 .authStateChanges
+                .where((u) => u != null)
                 .first
-                .timeout(const Duration(milliseconds: 1200), onTimeout: () => null);
+                .timeout(const Duration(milliseconds: 1500), onTimeout: () => null);
           } catch (_) {}
         }
 
         if (user != null) {
-          final isApproved = await FirestoreService().isUserApproved(user.uid);
-          if (isApproved) {
+          final isLocallyApproved = storedGoogleUid == user.uid;
+          if (isLocallyApproved) {
             _approvedGoogleUid = user.uid;
             _isUnlocked = true;
-            await prefs.setString(_storageKeyApprovedGoogleUid, user.uid);
-            await FirestoreService().markUserApproved(user);
+          } else {
+            final isApproved = await FirestoreService().isUserApproved(user.uid);
+            if (isApproved) {
+              _approvedGoogleUid = user.uid;
+              _isUnlocked = true;
+              await prefs.setString(_storageKeyApprovedGoogleUid, user.uid);
+              GateStoragePlatform.setString(_storageKeyApprovedGoogleUid, user.uid);
+              await FirestoreService().markUserApproved(user);
+            }
           }
         }
       }
@@ -114,12 +131,14 @@ class AuthGateService extends ChangeNotifier {
       if (user != null) {
         try {
           final prefs = await SharedPreferences.getInstance();
-          final storedGoogleUid = prefs.getString(_storageKeyApprovedGoogleUid);
+          final storedGoogleUid = prefs.getString(_storageKeyApprovedGoogleUid) ??
+              GateStoragePlatform.getString(_storageKeyApprovedGoogleUid);
 
           if (storedGoogleUid == user.uid) {
             _approvedGoogleUid = user.uid;
             _isUnlocked = true;
             notifyListeners();
+            return;
           }
 
           final isApproved = await FirestoreService().isUserApproved(user.uid);
@@ -127,6 +146,7 @@ class AuthGateService extends ChangeNotifier {
             _approvedGoogleUid = user.uid;
             _isUnlocked = true;
             await prefs.setString(_storageKeyApprovedGoogleUid, user.uid);
+            GateStoragePlatform.setString(_storageKeyApprovedGoogleUid, user.uid);
             await FirestoreService().markUserApproved(user);
             notifyListeners();
           }
@@ -147,6 +167,7 @@ class AuthGateService extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_storageKeyApprovedGoogleUid, uid);
+      GateStoragePlatform.setString(_storageKeyApprovedGoogleUid, uid);
     } catch (_) {}
 
     notifyListeners();
@@ -158,8 +179,10 @@ class AuthGateService extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKeyApprovedGoogleUid);
+      GateStoragePlatform.removeString(_storageKeyApprovedGoogleUid);
 
-      final storedToken = prefs.getString(_storageKeyAuthToken);
+      final storedToken = prefs.getString(_storageKeyAuthToken) ??
+          GateStoragePlatform.getString(_storageKeyAuthToken);
       bool hasValidPasswordToken = false;
       if (storedToken != null && storedToken.isNotEmpty) {
         final expectedToken = GateCryptoUtils.generateSessionToken(
@@ -216,11 +239,13 @@ class AuthGateService extends ChangeNotifier {
           salt: GateSecurityConfig.salt,
         );
         await prefs.setString(_storageKeyAuthToken, token);
+        GateStoragePlatform.setString(_storageKeyAuthToken, token);
 
         final currentUser = AuthService().currentUser;
         if (currentUser != null) {
           await FirestoreService().markUserApproved(currentUser);
           await prefs.setString(_storageKeyApprovedGoogleUid, currentUser.uid);
+          GateStoragePlatform.setString(_storageKeyApprovedGoogleUid, currentUser.uid);
           _approvedGoogleUid = currentUser.uid;
         }
       } catch (_) {}
@@ -245,6 +270,8 @@ class AuthGateService extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKeyAuthToken);
       await prefs.remove(_storageKeyApprovedGoogleUid);
+      GateStoragePlatform.removeString(_storageKeyAuthToken);
+      GateStoragePlatform.removeString(_storageKeyApprovedGoogleUid);
     } catch (_) {}
 
     _approvedGoogleUid = null;
