@@ -92,3 +92,4 @@ if ($LASTEXITCODE -eq 0) {
 } else {
     Write-Host "[UYARI] git push sirasinda bir uyari olustu veya degisiklik bulunamadi." -ForegroundColor Yellow
 }
+

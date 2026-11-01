@@ -118536,7 +118536,7 @@ o=A.ad("Uygulama Hakk\u0131nda",a1,a1,a1,B.rs,a1,a1,a1)
 n=A.aH(16)
 m=A.ca(B.a9,1)
 l=A.aH(16)
-return A.b8J(new A.Ei(a3,B.aJ0,B.az1,B.bF,new A.abh(a1,1,1/0,57),a1),B.nV,A.f9(new A.eb(B.Rg,A.b7l(A.c([r,B.Og,new A.bq(B.oh,q,a1),new A.AH(a4,new A.aCo(a2),s,a1,t.Rq),B.Og,new A.bq(B.oh,o,a1),A.b_(a1,A.bd(A.c([A.b_(a1,B.a_o,B.m,a1,a1,new A.aP(B.as,a1,A.ca(B.a9,1),l,a1,a1,B.v),a1,a1,a1,B.dM,a1,a1,a1),B.d8,B.aJq,B.dV,A.ad("versiyon (01.11.2026-04.26)",a1,a1,a1,A.c0(a1,a1,B.ar.bd(0.55),a1,a1,a1,a1,a1,a1,a1,a1,12,a1,a1,B.a0,a1,a1,!0,a1,0.2,a1,a1,a1,a1,a1,a1),a1,a1,a1),B.dW,B.aJn,B.jw,B.aBX,B.d8,B.azS,B.dW,B.aJ1],p),B.l,B.h,B.P),B.m,a1,a1,new A.aP(B.bF,a1,m,n,a1,a1,B.v),a1,a1,a1,B.Ys,a1,a1,1/0),B.aC4],p),B.Yz,a1,!1),a1),a1,a1))},
+return A.b8J(new A.Ei(a3,B.aJ0,B.az1,B.bF,new A.abh(a1,1,1/0,57),a1),B.nV,A.f9(new A.eb(B.Rg,A.b7l(A.c([r,B.Og,new A.bq(B.oh,q,a1),new A.AH(a4,new A.aCo(a2),s,a1,t.Rq),B.Og,new A.bq(B.oh,o,a1),A.b_(a1,A.bd(A.c([A.b_(a1,B.a_o,B.m,a1,a1,new A.aP(B.as,a1,A.ca(B.a9,1),l,a1,a1,B.v),a1,a1,a1,B.dM,a1,a1,a1),B.d8,B.aJq,B.dV,A.ad("versiyon (01.11.2026-04.28)",a1,a1,a1,A.c0(a1,a1,B.ar.bd(0.55),a1,a1,a1,a1,a1,a1,a1,a1,12,a1,a1,B.a0,a1,a1,!0,a1,0.2,a1,a1,a1,a1,a1,a1),a1,a1,a1),B.dW,B.aJn,B.jw,B.aBX,B.d8,B.azS,B.dW,B.aJ1],p),B.l,B.h,B.P),B.m,a1,a1,new A.aP(B.bF,a1,m,n,a1,a1,B.v),a1,a1,a1,B.Ys,a1,a1,1/0),B.aC4],p),B.Yz,a1,!1),a1),a1,a1))},
 Kg(a,b,c,d,e,f,g){var s,r=null,q=e.as===d,p=q?B.an.bd(0.05):B.L,o=c.bd(0.12),n=A.aH(10)
 n=A.b_(r,A.df(b,c,r,22),B.m,r,r,new A.aP(o,r,r,n,r,r,B.v),r,r,r,B.fW,r,r,r)
 o=q?B.T:B.az
