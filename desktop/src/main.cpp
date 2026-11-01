@@ -79,11 +79,20 @@ void ClearCacheAndReload() {
         if (SUCCEEDED(webView13->get_Profile(&profile))) {
             ComPtr<ICoreWebView2Profile2> profile2;
             if (SUCCEEDED(profile.As(&profile2))) {
-                profile2->ClearBrowsingDataAll(
+                // Sadece geçici önbellek ve servis çalışanlarını temizle.
+                // DOM LocalStorage, IndexedDB (Firebase Auth) ve çerezleri KORU!
+                COREWEBVIEW2_BROWSING_DATA_KINDS kinds = static_cast<COREWEBVIEW2_BROWSING_DATA_KINDS>(
+                    COREWEBVIEW2_BROWSING_DATA_KINDS_DISK_CACHE |
+                    COREWEBVIEW2_BROWSING_DATA_KINDS_CACHE_STORAGE |
+                    COREWEBVIEW2_BROWSING_DATA_KINDS_SERVICE_WORKERS |
+                    COREWEBVIEW2_BROWSING_DATA_KINDS_FILE_SYSTEMS
+                );
+                profile2->ClearBrowsingData(
+                    kinds,
                     Callback<ICoreWebView2ClearBrowsingDataCompletedHandler>(
                         [](HRESULT) -> HRESULT {
                             if (g_webView != nullptr) {
-                                g_webView->Navigate(g_szTargetUrl);
+                                g_webView->Reload();
                             }
                             return S_OK;
                         }
@@ -94,7 +103,7 @@ void ClearCacheAndReload() {
         }
     }
 
-    // Fallback if ClearBrowsingDataAll is not supported
+    // Fallback if ClearBrowsingData is not supported
     g_webView->Reload();
 }
 

@@ -1,10 +1,10 @@
 # Code Map Index
 
 - **File:** `desktop/src/main.cpp`
-  - **Lines 1-100:** Win32 WebView2 Desktop wrapper entry point, window styles, DWM rounded corners, immersive dark mode definitions, ClearCacheAndReload helper.
-  - **Lines 101-215:** WebView2 controller initialization, local cache isolation (%LOCALAPPDATA%\PortfoyApp\WebView2Data), WebMessage handler (clear_cache_and_reload), dark background setup, navigation to https://lnyctophilia.github.io/PortfoyApp/.
-  - **Lines 216-285:** WndProc message handler: window resizing, min/max dimensions (800x600), shortcuts (F5, Shift+F5, Ctrl+R, F11, Alt+Left/Right).
-  - **Lines 286-363:** WinMain application entry point: single-instance mutex check, class registration with IDI_APPICON, window centering (1280x820 default), message loop.
+  - **Lines 1-109:** Win32 WebView2 Desktop wrapper entry point, window styles, DWM rounded corners, immersive dark mode definitions, ClearCacheAndReload helper (clears cache only, preserving DOM localStorage, IndexedDB, and cookies).
+  - **Lines 110-224:** WebView2 controller initialization, local cache isolation (%LOCALAPPDATA%\PortfoyApp\WebView2Data), WebMessage handler (clear_cache_and_reload), dark background setup, navigation to https://lnyctophilia.github.io/PortfoyApp/.
+  - **Lines 225-294:** WndProc message handler: window resizing, min/max dimensions (800x600), shortcuts (F5, Shift+F5, Ctrl+R, F11, Alt+Left/Right).
+  - **Lines 295-372:** WinMain application entry point: single-instance mutex check, class registration with IDI_APPICON, window centering (1280x820 default), message loop.
 - **File:** `scripts/build_desktop.bat`
   - **Lines 1-56:** MSVC build script for the Windows desktop WebView2 wrapper, copies binary and assets to `build/desktop/`.
 - **File:** `scripts/deploy_web.ps1`
@@ -14,7 +14,7 @@
 - **File:** `scripts/set_gate_password.ps1`
   - **Lines 1-82:** Interactive PowerShell utility to inspect current password state, safely update gate_secret.json without shell escape bugs, and trigger security hash update.
 - **File:** `scripts/update_gate_security.dart`
-  - **Lines 1-120:** Standalone Dart script calculating 10,000-round HMAC-SHA256 salted hash and generating GateSecurityConfig without leaking plaintext password; auto-detects project root.
+  - **Lines 1-142:** Standalone Dart script calculating 10,000-round HMAC-SHA256 salted hash with persistent salt in gate_secret.json and generating GateSecurityConfig without leaking plaintext password; auto-detects project root.
 - **File:** `firestore.rules`
   - **Lines 1-19:** Firebase Security Rules restricting read/write access to `/users/{userId}/**` for authenticated account owner only.
 - **File:** `lib/core/constants/api_constants.dart`
@@ -159,15 +159,15 @@
   - **Lines 1-52:** Imports, PortfolioProvider declaration, auth/firestore services, and internal state variables (realtime stream subscriptions and isLiveConnected state).
   - **Lines 53-115:** Filtered portfolio getters, auth state getters (currentUser, isSignedIn, isSyncing, lastSyncTime, syncError, isLiveConnected), and category filter accessors.
   - **Lines 116-163:** Grand total aggregate getters across all visible portfolios (cost, value, profit, profit percent for brut/net/reel).
-  - **Lines 164-288:** Auth lifecycle listener, dispose teardown, cloud synchronization with local merge (syncWithCloud() with auto markUserApproved and gate unlocking), Google sign-in/out dispatch, and background Firestore persistence (_persistPortfolios()).
-  - **Lines 289-411:** Realtime Firestore stream handlers (_startRealtimeSubscriptions, _cancelRealtimeSubscriptions, _onPortfoliosSnapshot, _onSettingsSnapshot).
-  - **Lines 412-457:** Data loading (loadData()), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
-  - **Lines 458-505:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
-  - **Lines 506-555:** Missing asset icon resolution & backfill helper (_backfillMissingAssetIcons()).
-  - **Lines 556-609:** Category filtering setter and portfolio CRUD operations (addPortfolio, updatePortfolio, togglePortfolioVisibility, deletePortfolio).
-  - **Lines 610-648:** Direct asset management (addAsset, updateAsset, deleteAsset).
-  - **Lines 649-833:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
-  - **Lines 834-970:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
+  - **Lines 164-292:** Auth lifecycle listener, dispose teardown, cloud synchronization with local merge (syncWithCloud() with auto markUserApproved and gate unlocking), Google sign-in/out dispatch with syncing status tracking, and background Firestore persistence (_persistPortfolios()).
+  - **Lines 293-415:** Realtime Firestore stream handlers (_startRealtimeSubscriptions, _cancelRealtimeSubscriptions, _onPortfoliosSnapshot, _onSettingsSnapshot).
+  - **Lines 416-461:** Data loading (loadData()), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
+  - **Lines 462-509:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
+  - **Lines 510-559:** Missing asset icon resolution & backfill helper (_backfillMissingAssetIcons()).
+  - **Lines 560-613:** Category filtering setter and portfolio CRUD operations (addPortfolio, updatePortfolio, togglePortfolioVisibility, deletePortfolio).
+  - **Lines 614-652:** Direct asset management (addAsset, updateAsset, deleteAsset).
+  - **Lines 653-837:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
+  - **Lines 838-974:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
 - **File:** `lib/screens/settings_screen.dart`
   - **Lines 1-16:** Imports and SettingsScreen declaration.
   - **Lines 17-47:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.

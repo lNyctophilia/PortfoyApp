@@ -7,10 +7,10 @@ class GateSecurityConfig {
   static const bool isEnabled = true;
 
   /// Kriptografik tuz degeri (salt)
-  static const String salt = 'd080a30a1b7af3b3b08fcbd5723663de76d0f40746bddf0ac633e3d7b1e45eeb';
+  static const String salt = '77fa5297d862fc1c233afdafe7ee5c59cf7dff6cc1855c96e069b24472b70f78';
 
   /// 10.000 turlu HMAC-SHA256 ile tuzlanmis sifre ozeti (hash)
-  static const String hash = '416210973dd0f3120bc9fcac39b8923aebc314449d9f542f727b35726054b1d0';
+  static const String hash = 'ab5ad33057ebf4e921bea00fc63477bb6d20483fc04860ea3f890b683aa87884';
 
   /// Esnetme dongu sayisi
   static const int iterations = 10000;

@@ -110,10 +110,14 @@
           const cachedVersion = (localStorage.getItem('app_installed_version') || '').trim();
 
           if (serverVersion && cachedVersion && cachedVersion !== serverVersion) {
+            const lastReloaded = sessionStorage.getItem('last_reloaded_version');
+            if (lastReloaded === serverVersion) {
+              return;
+            }
             console.log('[AutoUpdate] Yeni sürüm tespit edildi:', serverVersion, '(Mevcut:', cachedVersion, ') - Önbellek temizleniyor...');
             await clearAllClientCaches();
             localStorage.setItem('app_installed_version', serverVersion);
-            sessionStorage.removeItem('last_reloaded_version');
+            sessionStorage.setItem('last_reloaded_version', serverVersion);
 
             if (window.chrome && window.chrome.webview && typeof window.chrome.webview.postMessage === 'function') {
               window.chrome.webview.postMessage('clear_cache_and_reload');
@@ -121,7 +125,7 @@
             }
 
             const url = new URL(window.location.href);
-            url.searchParams.set('_v', encodeURIComponent(serverVersion));
+            url.searchParams.set('_v', serverVersion);
             url.searchParams.set('_t', Date.now().toString());
             window.location.replace(url.toString());
             return;
@@ -133,13 +137,6 @@
         console.warn('[AutoUpdate] Versiyon kontrol uyarısı:', e);
       }
     }
-
-    // PWA veya tarayıcı sekmesi arka plandan öne geldiğinde kontrol et
-    document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'visible') {
-        checkAppVersionAndHardClearCache();
-      }
-    });
 
     // Yeni Service Worker kontrolü devraldığında otomatik güncelle
     if ('serviceWorker' in navigator) {
@@ -180,7 +177,7 @@
       // 3. Sert URL yenilemesi
       try {
         const url = new URL(window.location.href);
-        url.searchParams.set('_v', encodeURIComponent(v));
+        url.searchParams.set('_v', v);
         url.searchParams.set('_t', Date.now().toString());
         window.location.replace(url.toString());
       } catch (e) {
@@ -197,8 +194,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         const queryV = urlParams.get('_v');
         if (queryV) {
-          activeVersion = queryV;
-          localStorage.setItem('app_installed_version', queryV);
+          activeVersion = queryV.trim();
+          localStorage.setItem('app_installed_version', activeVersion);
         } else {
           // version.json dosyasını no-cache olarak hızlıca sorgula
           const ctrl = new AbortController();

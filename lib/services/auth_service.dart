@@ -67,7 +67,7 @@ class AuthService {
       return await _auth!.signInWithCredential(credential);
     } on FirebaseAuthException catch (e) {
       debugPrint('Google Sign-In FirebaseAuthException: ${e.code} - ${e.message}');
-      if (e.code == 'popup-closed-by-user') {
+      if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
         // Kullanıcı açılan pencereyi kapattı veya vazgeçti
         return null;
       }

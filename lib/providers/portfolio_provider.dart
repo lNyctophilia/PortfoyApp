@@ -201,6 +201,7 @@ class PortfolioProvider extends ChangeNotifier {
 
   Future<void> signInWithGoogle() async {
     try {
+      _isSyncing = true;
       _syncError = null;
       notifyListeners();
       final userCred = await _authService.signInWithGoogle();
@@ -215,6 +216,9 @@ class PortfolioProvider extends ChangeNotifier {
       _syncError = e.toString();
       notifyListeners();
       rethrow;
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
     }
   }
 

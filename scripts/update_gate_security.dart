@@ -59,10 +59,32 @@ void main() {
     exit(1);
   }
 
-  // 1. Generate cryptographically strong random salt (32 bytes = 64 hex chars)
-  final random = Random.secure();
-  final saltBytes = List<int>.generate(32, (_) => random.nextInt(256));
-  final saltHex = saltBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  // 1. Get or generate persistent cryptographic salt (32 bytes = 64 hex chars)
+  String saltHex = '';
+  try {
+    if (secretFile.existsSync()) {
+      final jsonStr = secretFile.readAsStringSync();
+      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      saltHex = (data['salt'] as String? ?? '').trim();
+    }
+  } catch (_) {}
+
+  if (saltHex.length != 64) {
+    final random = Random.secure();
+    final saltBytes = List<int>.generate(32, (_) => random.nextInt(256));
+    saltHex = saltBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    try {
+      final jsonStr = secretFile.existsSync() ? secretFile.readAsStringSync() : '{}';
+      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      data['salt'] = saltHex;
+      secretFile.writeAsStringSync(
+        '${const JsonEncoder.withIndent('  ').convert(data)}\n',
+      );
+      stdout.writeln('[+] Yeni tuz (salt) üretildi ve gate_secret.json içine kaydedildi.');
+    } catch (_) {}
+  } else {
+    stdout.writeln('[*] Mevcut tuz (salt) korundu (Kullanıcı oturumları sıfırlanmayacak).');
+  }
 
   // 2. Compute multi-round HMAC-SHA256 stretched hash (10,000 iterations)
   const iterations = 10000;
