@@ -47,6 +47,15 @@ $versionJsonObj = @{
 $jsonContent = $versionJsonObj | ConvertTo-Json -Compress
 Set-Content -Path (Join-Path $webDir "version.json") -Value $jsonContent -Encoding utf8
 
+# 3.5. Site erisim guvenligi (gate_security_config.dart) guncelle
+Write-Host "[*] Site erisim guvenligi yapilandirmasi hazirlaniyor..." -ForegroundColor Green
+$gateScriptPath = Join-Path $projectRoot "scripts/update_gate_security.dart"
+dart run $gateScriptPath
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[HATA] Guvenlik yapilandirmasi olusturulamadi!" -ForegroundColor Red
+    exit 1
+}
+
 # 4. Flutter Web Release Build (GitHub Pages base-href ile)
 Write-Host "[3/5] Flutter Web derlemesi baslatiliyor (Release + base-href: /PortfoyApp/)..." -ForegroundColor Green
 flutter build web --release --base-href /PortfoyApp/

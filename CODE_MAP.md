@@ -7,6 +7,12 @@
   - **Lines 241-316:** WinMain application entry point: single-instance mutex check, class registration with IDI_APPICON, window centering (1280x820 default), message loop.
 - **File:** `scripts/build_desktop.bat`
   - **Lines 1-56:** MSVC build script for the Windows desktop WebView2 wrapper, copies binary and assets to `build/desktop/`.
+- **File:** `scripts/deploy_web.ps1`
+  - **Lines 1-104:** Automated release compilation, gate security generation, docs/ output preparation, and GitHub Pages push script.
+- **File:** `scripts/set_gate_password.bat`
+  - **Lines 1-47:** Interactive Windows batch utility to update local gate_secret.json and generate new cryptographic salted hash.
+- **File:** `scripts/update_gate_security.dart`
+  - **Lines 1-105:** Standalone Dart script calculating 10,000-round HMAC-SHA256 salted hash and generating GateSecurityConfig without leaking plaintext password.
 - **File:** `firestore.rules`
   - **Lines 1-19:** Firebase Security Rules restricting read/write access to `/users/{userId}/**` for authenticated account owner only.
 - **File:** `lib/core/constants/api_constants.dart`
@@ -53,15 +59,34 @@
   - **Lines 683-857:** \_buildAssetsTab() - List of portfolio assets, adaptive mobile search/filter row, empty state, and asset management actions.
   - **Lines 858-1219:** \_buildTransactionsTab() - Chronological transaction history cards, transaction badges, details with responsive mobile 2-row layout.
   - **Lines 1220-1337:** Transaction undo/delete confirmations (\_confirmUndoTransaction, \_confirmDeleteTransaction), filter chips, and asset deletion modal (\_confirmDeleteAsset).
+- **File:** `lib/features/auth_gate/constants/gate_security_config.dart`
+  - **Lines 1-17:** GateSecurityConfig declaration containing compiled salted hash, cryptographic salt, and key-stretching iterations (no plaintext password).
+- **File:** `lib/features/auth_gate/screens/auth_gate_screen.dart`
+  - **Lines 1-43:** Apple-minimalist fullscreen responsive gate screen centering AuthGateCard with LayoutBuilder and constraints.
+- **File:** `lib/features/auth_gate/services/auth_gate_service.dart`
+  - **Lines 1-40:** Imports, AuthGateService singleton declaration, and session state variables.
+  - **Lines 41-75:** initialize() - Verifies stored session token from SharedPreferences and restores authenticated session without prompting.
+  - **Lines 76-128:** verifyAndUnlock() - Multi-round cryptographic verification, anti-brute-force lockout delays, and session token storage.
+  - **Lines 129-138:** lock() - Revokes session token from SharedPreferences and re-engages gate protection.
+- **File:** `lib/features/auth_gate/utils/gate_crypto_utils.dart`
+  - **Lines 1-28:** GateCryptoUtils class declaration and multi-round HMAC-SHA256 key stretching (computeHash).
+  - **Lines 29-37:** generateSessionToken() - Derives persistent browser authorization session token.
+  - **Lines 38-50:** secureCompare() - Constant-time string equality checker preventing timing side-channel attacks.
+- **File:** `lib/features/auth_gate/widgets/auth_gate_card.dart`
+  - **Lines 1-46:** Imports, AuthGateCard declaration, controllers, focus node, and lockout countdown timer.
+  - **Lines 47-92:** _submit() method - Password validation, lockout checking, verification dispatch, and responsive error handling.
+  - **Lines 93-275:** build() method - Apple-minimalist surface card, lock icon badge, obscured textfield with reveal toggle, and submit button.
+- **File:** `lib/features/auth_gate/widgets/auth_gate_wrapper.dart`
+  - **Lines 1-74:** AuthGateWrapper stateful widget dynamically rendering PortfolioHomeScreen when authorized or AuthGateScreen when locked.
 - **File:** `lib/firebase_options.dart`
   - **Lines 1-73:** DefaultFirebaseOptions auto-generated and configured mapping platform options for Web, Android, and Windows.
 - **File:** `lib/main.dart`
-  - **Lines 1-35:** Imports, safe Firebase.initializeApp(), and main() entry point.
-  - **Lines 36-62:** PortfoyApp root widget, MultiProvider setup, and MaterialApp configuration.
-  - **Lines 63-185:** PortfolioHomeScreen stateful shell, keyboard shortcut listener (F5 refresh), refresh logic, and dialog triggers.
-  - **Lines 186-552:** PortfolioHomeScreen build() method: Responsive Scaffold with SafeArea, adaptive mobile/desktop header summary cards, quick action buttons, and responsive portfolio GridView.
-  - **Lines 553-622:** \_buildHeaderSummaryCard() - Aggregate portfolio performance & summary card and metric tiles with minHeight constraints.
-  - **Lines 623-668:** \_buildEmptyState() - Placeholder illustration and prompt when no portfolios exist.
+  - **Lines 1-38:** Imports, Firebase.initializeApp(), AuthGateService.initialize(), and main() entry point.
+  - **Lines 39-70:** PortfoyApp root widget, MultiProvider setup, and MaterialApp configuration with AuthGateWrapper home child.
+  - **Lines 71-190:** PortfolioHomeScreen stateful shell, keyboard shortcut listener (F5 refresh), refresh logic, and dialog triggers.
+  - **Lines 191-557:** PortfolioHomeScreen build() method: Responsive Scaffold with SafeArea, adaptive mobile/desktop header summary cards, quick action buttons, and responsive portfolio GridView.
+  - **Lines 558-627:** \_buildHeaderSummaryCard() - Aggregate portfolio performance & summary card and metric tiles with minHeight constraints.
+  - **Lines 628-673:** \_buildEmptyState() - Placeholder illustration and prompt when no portfolios exist.
 - **File:** `lib/models/asset_category.dart`
   - **Lines 1-10:** Enum declaration AssetCategory (hisse, tefas, kripto, emtia, doviz, eurobond, fon).
   - **Lines 11-25:** Getter displayName for localized Turkish category names.
@@ -105,16 +130,17 @@
   - **Lines 508-692:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
   - **Lines 693-822:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
 - **File:** `lib/screens/settings_screen.dart`
-  - **Lines 1-16:** Imports and SettingsScreen declaration.
-  - **Lines 17-53:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
-  - **Lines 54-334:** Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators with Wrap).
-  - **Lines 335-429:** About app section (semi-transparent version subtitle under app name, developer, data source details, disclaimer).
-  - **Lines 430-526:** \_buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators with responsive Wrap header.
-  - **Lines 527-681:** \_buildAccountSection() & \_buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
-  - **Lines 682-876:** \_buildSignedInContent(), user avatar fallback builder, and sync/sign-out actions.
-  - **Lines 877-941:** \_confirmSignOut() - Modal confirmation dialog for Google account sign out.
-  - **Lines 942-956:** \_buildSectionHeader() - Section heading widget with custom typography and accent indicator.
-  - **Lines 957-977:** \_buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
+  - **Lines 1-18:** Imports and SettingsScreen declaration.
+  - **Lines 19-55:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
+  - **Lines 56-336:** Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators with Wrap).
+  - **Lines 337-438:** About app section (semi-transparent version subtitle under app name, developer, data source details, disclaimer).
+  - **Lines 439-535:** \_buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators with responsive Wrap header.
+  - **Lines 536-690:** \_buildAccountSection() & \_buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
+  - **Lines 691-885:** \_buildSignedInContent(), user avatar fallback builder, and sync/sign-out actions.
+  - **Lines 886-950:** \_confirmSignOut() - Modal confirmation dialog for Google account sign out.
+  - **Lines 951-1049:** \_buildSecuritySection() - Site security gate card, lock status indicator, and manual lock trigger button.
+  - **Lines 1050-1064:** \_buildSectionHeader() - Section heading widget with custom typography and accent indicator.
+  - **Lines 1065-1078:** \_buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
 - **File:** `lib/services/asset_catalog_service.dart`
   - **Lines 1-21:** Imports and AssetSuggestion model class.
   - **Lines 22-123:** AssetCatalogService class declaration and static catalog for TEFAS investment funds (\_knownFunds).
@@ -167,7 +193,7 @@
   - **Lines 59-80:** Inflation cache persistence (loadInflationCache(), saveInflationCache()).
   - **Lines 81-107:** Portfolios persistence (loadPortfolios(), savePortfolios()) supporting cross-platform web localStorage.
 - **File:** `lib/theme/app_colors.dart`
-  - **Lines 1-11:** Class AppColors declaring static constants for background, foreground, and extraColorLightBlue colors.
+  - **Lines 1-33:** Class AppColors declaring Apple-minimalist theme palette constants (background, surface, card, cardLight, accent, text, semantic status).
 - **File:** `lib/theme/app_theme.dart`
   - **Lines 1-31:** Imports, icon/brand color notes, and AppTheme color palette constants (background, surface, profit, loss, text, borders).
   - **Lines 32-136:** AppTheme.darkTheme - Material 3 dark theme configuration (Card, AppBar, InputDecoration, Button, Dialog, SnackBar themes).

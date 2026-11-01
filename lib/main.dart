@@ -7,6 +7,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'dialogs/add_edit_portfolio_dialog.dart';
 import 'dialogs/portfolio_detail_dialog.dart';
+import 'features/auth_gate/services/auth_gate_service.dart';
+import 'features/auth_gate/widgets/auth_gate_wrapper.dart';
 import 'providers/portfolio_provider.dart';
 import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
@@ -24,6 +26,7 @@ void main() async {
   } catch (e) {
     debugPrint('Firebase başlatma uyarısı (Henüz yapılandırılmamış olabilir): $e');
   }
+  await AuthGateService.instance.initialize();
   runApp(
     ChangeNotifierProvider(
       create: (_) => PortfolioProvider(),
@@ -58,7 +61,9 @@ class PortfoyApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      home: const PortfolioHomeScreen(),
+      home: const AuthGateWrapper(
+        child: PortfolioHomeScreen(),
+      ),
     );
   }
 }

@@ -114,6 +114,8 @@ app.*.map.json
 # ==========================================
 # Environment Variables & Secrets
 # ==========================================
+gate_secret.json
+gate_config.json
 .env
 .env.*
 *.env
