@@ -12,7 +12,7 @@ Write-Host "====================================================================
 
 # 1. Tarih ve saati dd.MM.yyyy-HH.mm formatinda al
 $buildTime = Get-Date -Format "dd.MM.yyyy-HH.mm"
-$versionStr = "versiyon ($buildTime)"
+$versionStr = "Versiyon ($buildTime)"
 
 Write-Host "[*] Yeni Versiyon Belirlendi: $versionStr" -ForegroundColor Yellow
 Write-Host "[*] Commit Basligi          : $versionStr" -ForegroundColor Yellow

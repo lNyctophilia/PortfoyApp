@@ -375,14 +375,6 @@ class SettingsScreen extends StatelessWidget {
                         letterSpacing: 0.2,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Kişisel Finans ve Portföy Takip Uygulaması',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
                     const SizedBox(height: 18),
                     const SizedBox(
                       width: 140,
