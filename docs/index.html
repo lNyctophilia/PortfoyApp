@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="/PortfoyApp/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="PortfoyApp - Kişisel Finans ve Portföy Takip Uygulaması">
+
+  <!-- Cache Önleme Meta Etiketleri -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- iOS & Android PWA Meta Etiketleri -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PortfoyApp">
+  <meta name="theme-color" content="#0B0F19">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>PortfoyApp</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #0B0F19;
+      color: #F9FAFB;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+  </style>
+
+  <script>
+    // ------------------------------------------------------------------------
+    // OTOMATİK SESSİZ GÜNCELLEME & ÖNBELLEK TEMİZLEME (NO POPUP HARD CACHE CLEAR)
+    // ------------------------------------------------------------------------
+    async function checkAppVersionAndHardClearCache() {
+      try {
+        const response = await fetch('version.json?_t=' + Date.now(), {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+
+        if (response.ok) {
+          const info = await response.json();
+          const serverVersion = info.version || info.build_time;
+          const cachedVersion = localStorage.getItem('app_installed_version');
+          const lastReloaded = sessionStorage.getItem('last_reloaded_version');
+
+          if (serverVersion && cachedVersion && cachedVersion !== serverVersion) {
+            if (lastReloaded !== serverVersion) {
+              console.log('[AutoUpdate] Yeni sürüm mevcut:', serverVersion, '(Mevcut:', cachedVersion, ') - Önbellek temizleniyor...');
+              localStorage.setItem('app_installed_version', serverVersion);
+              sessionStorage.setItem('last_reloaded_version', serverVersion);
+
+              // 1. CacheStorage önbelleğini (PWA / Flutter) tamamen temizle
+              if ('caches' in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map(k => caches.delete(k)));
+                console.log('[AutoUpdate] CacheStorage temizlendi.');
+              }
+
+              // 2. Eski Service Worker'ları kayıttan kaldır
+              if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const registration of registrations) {
+                  await registration.unregister();
+                }
+                console.log('[AutoUpdate] Eski Service Worker unregister edildi.');
+              }
+
+              // 3. Popup göstermeden sessizce sert yenileme yap
+              window.location.reload(true);
+              return;
+            }
+          } else if (serverVersion && !cachedVersion) {
+            localStorage.setItem('app_installed_version', serverVersion);
+          }
+        }
+      } catch (e) {
+        console.warn('[AutoUpdate] Versiyon kontrol uyarısı:', e);
+      }
+    }
+
+    // Uygulama açılışında anında kontrol et
+    checkAppVersionAndHardClearCache();
+
+    // PWA veya tarayıcı sekmesi arka plandan öne geldiğinde kontrol et
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        checkAppVersionAndHardClearCache();
+      }
+    });
+
+    // Yeni Service Worker kontrolü devraldığında otomatik güncelle
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!window._swReloaded) {
+          window._swReloaded = true;
+          window.location.reload();
+        }
+      });
+    }
+  </script>
+</head>
+<body>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../core/constants/app_version.dart';
 import '../models/return_mode.dart';
 import '../providers/portfolio_provider.dart';
 import '../theme/app_theme.dart';
@@ -356,40 +357,23 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'PortfoyApp',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceLight,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: AppTheme.borderSubtle,
-                            ),
-                          ),
-                          child: const Text(
-                            'v1.0.0',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      'PortfoyApp',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      AppVersion.current,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textSecondary.withValues(alpha: 0.55),
+                        letterSpacing: 0.2,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     const Text(

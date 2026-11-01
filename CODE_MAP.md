@@ -1,5 +1,7 @@
 # Code Map Index
 
+- **File:** `lib/core/constants/app_version.dart`
+  - **Lines 1-5:** Class AppVersion with static current version constant.
 - **File:** `lib/dialogs/add_edit_asset_dialog.dart`
   - **Lines 1-55:** Imports, AddEditAssetDialog declaration, and state controllers.
   - **Lines 56-129:** State initialization (initState), teardown (dispose), and numeric formatters.
@@ -90,16 +92,16 @@
   - **Lines 508-692:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
   - **Lines 693-811:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
 - **File:** `lib/screens/settings_screen.dart`
-  - **Lines 1-15:** Imports and SettingsScreen declaration.
-  - **Lines 16-52:** build() method - Shell and responsive constrained list view setup.
-  - **Lines 53-333:** Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators).
-  - **Lines 334-456:** About app section (version, developer, data source details, disclaimer).
-  - **Lines 457-550:** _buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators.
-  - **Lines 551-705:** _buildAccountSection() & _buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
-  - **Lines 706-900:** _buildSignedInContent(), user avatar fallback builder, and sync/sign-out actions.
-  - **Lines 901-965:** _confirmSignOut() - Modal confirmation dialog for Google account sign out.
-  - **Lines 966-980:** _buildSectionHeader() - Section heading widget with custom typography and accent indicator.
-  - **Lines 981-1000:** _buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
+  - **Lines 1-16:** Imports and SettingsScreen declaration.
+  - **Lines 17-53:** build() method - Shell and responsive constrained list view setup.
+  - **Lines 54-334:** Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators).
+  - **Lines 335-440:** About app section (semi-transparent version subtitle under app name, developer, data source details, disclaimer).
+  - **Lines 441-534:** _buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators.
+  - **Lines 535-689:** _buildAccountSection() & _buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
+  - **Lines 690-884:** _buildSignedInContent(), user avatar fallback builder, and sync/sign-out actions.
+  - **Lines 885-949:** _confirmSignOut() - Modal confirmation dialog for Google account sign out.
+  - **Lines 950-964:** _buildSectionHeader() - Section heading widget with custom typography and accent indicator.
+  - **Lines 965-984:** _buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
 - **File:** `lib/services/asset_catalog_service.dart`
   - **Lines 1-21:** Imports and AssetSuggestion model class.
   - **Lines 22-124:** AssetCatalogService class declaration and static catalog for TEFAS investment funds (_knownFunds).
