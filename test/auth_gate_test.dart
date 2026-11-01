@@ -1,6 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:portfoy_app/features/auth_gate/constants/gate_security_config.dart';
 import 'package:portfoy_app/features/auth_gate/utils/gate_crypto_utils.dart';
 import 'package:portfoy_app/features/auth_gate/services/auth_gate_service.dart';
 
@@ -63,8 +64,19 @@ void main() {
       expect(wrongResult, isFalse);
       expect(service.isUnlocked, isFalse);
 
-      // Correct default password
-      final correctResult = await service.verifyAndUnlock('portfoy_guvenli_2026');
+      // Correct password (dynamically loaded from gate_secret.json or default)
+      String correctPass = 'portfoy_guvenli_2026';
+      try {
+        final secretFile = File('gate_secret.json');
+        if (secretFile.existsSync()) {
+          final decoded = jsonDecode(secretFile.readAsStringSync());
+          if (decoded['password'] != null) {
+            correctPass = decoded['password'];
+          }
+        }
+      } catch (_) {}
+
+      final correctResult = await service.verifyAndUnlock(correctPass);
       expect(correctResult, isTrue);
       expect(service.isUnlocked, isTrue);
 

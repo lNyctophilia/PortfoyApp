@@ -18,6 +18,9 @@ class PortfolioProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
   StreamSubscription<User?>? _authSubscription;
+  StreamSubscription<List<Portfolio>>? _portfoliosSubscription;
+  StreamSubscription<Map<String, dynamic>?>? _settingsSubscription;
+  bool _isLiveConnected = false;
   bool _isSyncing = false;
   DateTime? _lastSyncTime;
   String? _syncError;
@@ -45,6 +48,7 @@ class PortfolioProvider extends ChangeNotifier {
   bool get isSyncing => _isSyncing;
   DateTime? get lastSyncTime => _lastSyncTime;
   String? get syncError => _syncError;
+  bool get isLiveConnected => _isLiveConnected && isSignedIn;
 
   double getAssetInflation(String assetId) =>
       _assetInflationRates[assetId] ?? 0.0;
@@ -159,10 +163,12 @@ class PortfolioProvider extends ChangeNotifier {
   }
 
   void _initAuthListener() {
-    _authSubscription = _authService.authStateChanges.listen((user) {
+    _authSubscription = _authService.authStateChanges.listen((user) async {
       if (user != null) {
-        syncWithCloud();
+        await syncWithCloud();
+        _startRealtimeSubscriptions(user.uid);
       } else {
+        _cancelRealtimeSubscriptions();
         notifyListeners();
       }
     });
@@ -171,6 +177,7 @@ class PortfolioProvider extends ChangeNotifier {
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _cancelRealtimeSubscriptions();
     super.dispose();
   }
 
@@ -198,6 +205,7 @@ class PortfolioProvider extends ChangeNotifier {
       final userCred = await _authService.signInWithGoogle();
       if (userCred?.user != null) {
         await syncWithCloud();
+        _startRealtimeSubscriptions(userCred!.user!.uid);
       }
     } catch (e) {
       _syncError = e.toString();
@@ -208,6 +216,7 @@ class PortfolioProvider extends ChangeNotifier {
 
   Future<void> signOut() async {
     try {
+      _cancelRealtimeSubscriptions();
       _syncError = null;
       await _authService.signOut();
       notifyListeners();
@@ -264,11 +273,141 @@ class PortfolioProvider extends ChangeNotifier {
       }
 
       _lastSyncTime = DateTime.now();
+      _isLiveConnected = true;
     } catch (e) {
       debugPrint('Bulut senkronizasyon hatası: $e');
       _syncError = 'Senkronizasyon hatası: $e';
     } finally {
       _isSyncing = false;
+      notifyListeners();
+    }
+  }
+
+  /// Canlı Firestore portföy ve ayar dinleyicilerini başlatır
+  void _startRealtimeSubscriptions(String uid) {
+    _cancelRealtimeSubscriptions();
+
+    _portfoliosSubscription = _firestoreService.portfoliosStream(uid).listen(
+      (cloudPortfolios) {
+        _onPortfoliosSnapshot(cloudPortfolios);
+      },
+      onError: (e) {
+        debugPrint('Canlı portföy akışında hata: $e');
+        _isLiveConnected = false;
+        _syncError = 'Canlı bağlantı hatası: $e';
+        notifyListeners();
+      },
+    );
+
+    _settingsSubscription = _firestoreService.settingsStream(uid).listen(
+      (cloudSettings) {
+        _onSettingsSnapshot(cloudSettings);
+      },
+      onError: (e) {
+        debugPrint('Canlı ayar akışında hata: $e');
+      },
+    );
+
+    _isLiveConnected = true;
+    notifyListeners();
+  }
+
+  /// Canlı Firestore dinleyicilerini durdurur
+  void _cancelRealtimeSubscriptions() {
+    _portfoliosSubscription?.cancel();
+    _portfoliosSubscription = null;
+    _settingsSubscription?.cancel();
+    _settingsSubscription = null;
+    _isLiveConnected = false;
+  }
+
+  /// Buluttan anlık portföy verisi geldiğinde tetiklenir
+  void _onPortfoliosSnapshot(List<Portfolio> cloudPortfolios) {
+    if (_isSyncing) return;
+
+    final mergedPortfolios = <Portfolio>[];
+    for (final cp in cloudPortfolios) {
+      final existingPortfolio = _portfolios.firstWhere(
+        (p) => p.id == cp.id,
+        orElse: () => cp,
+      );
+
+      final updatedAssets = cp.assets.map((asset) {
+        final localAsset = existingPortfolio.assets.firstWhere(
+          (a) => a.id == asset.id,
+          orElse: () => asset,
+        );
+
+        // Fiyat koruması: Buluttan gelen 0 ise ama yerelde piyasa fiyatı çekilmişse koru
+        if (asset.currentPrice <= 0 && localAsset.currentPrice > 0) {
+          return asset.copyWith(
+            currentPrice: localAsset.currentPrice,
+            iconUrl: asset.iconUrl ?? localAsset.iconUrl,
+            dailyChangePercent: localAsset.dailyChangePercent,
+            weeklyChangePercent: localAsset.weeklyChangePercent,
+            monthlyChangePercent: localAsset.monthlyChangePercent,
+            threeMonthlyChangePercent: localAsset.threeMonthlyChangePercent,
+            sixMonthlyChangePercent: localAsset.sixMonthlyChangePercent,
+            yearlyChangePercent: localAsset.yearlyChangePercent,
+          );
+        }
+        return asset;
+      }).toList();
+
+      mergedPortfolios.add(cp.copyWith(assets: updatedAssets));
+    }
+
+    // Portföyleri oluşturulma tarihine göre en yeni en üstte sırala
+    mergedPortfolios.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    _portfolios = mergedPortfolios;
+    _lastSyncTime = DateTime.now();
+    _syncError = null;
+    _isLiveConnected = true;
+
+    _storageService.savePortfolios(_portfolios);
+    _backfillMissingAssetIcons();
+
+    if (_returnMode == ReturnCalculationMode.reel) {
+      refreshInflationData();
+    }
+
+    notifyListeners();
+  }
+
+  /// Buluttan anlık ayar verisi geldiğinde tetiklenir
+  void _onSettingsSnapshot(Map<String, dynamic>? cloudSettings) {
+    if (cloudSettings == null) return;
+    bool changed = false;
+
+    final modeStr = cloudSettings['returnCalculationMode'] as String?;
+    if (modeStr != null) {
+      final newMode = ReturnCalculationMode.values.firstWhere(
+        (e) => e.name == modeStr,
+        orElse: () => _returnMode,
+      );
+      if (newMode != _returnMode) {
+        _returnMode = newMode;
+        changed = true;
+      }
+    }
+
+    if (cloudSettings.containsKey('showNetValuesWithholdingTax')) {
+      final newNet = cloudSettings['showNetValuesWithholdingTax'] as bool;
+      if (newNet != _showNetValues) {
+        _showNetValues = newNet;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      _storageService.saveSettings({
+        'returnCalculationMode': _returnMode.name,
+        'showNetValuesWithholdingTax': _showNetValues,
+      });
+      if (_returnMode == ReturnCalculationMode.reel) {
+        refreshInflationData();
+      }
       notifyListeners();
     }
   }

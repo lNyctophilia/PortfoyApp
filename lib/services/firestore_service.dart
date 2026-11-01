@@ -19,6 +19,39 @@ class FirestoreService {
     }
   }
 
+  /// Kullanıcının Firestore'daki portföylerini gerçek zamanlı dinleyen Stream
+  Stream<List<Portfolio>> portfoliosStream(String uid) {
+    if (!isFirebaseAvailable || _firestore == null) {
+      return const Stream.empty();
+    }
+
+    try {
+      return _firestore!
+          .collection('users')
+          .doc(uid)
+          .collection('portfolios')
+          .snapshots()
+          .map((snapshot) {
+        final List<Portfolio> portfolios = [];
+        for (final doc in snapshot.docs) {
+          try {
+            final data = doc.data();
+            portfolios.add(Portfolio.fromJson(data));
+          } catch (e) {
+            debugPrint('Portföy akışında çözümlenirken hata oluştu (${doc.id}): $e');
+          }
+        }
+        return portfolios;
+      }).handleError((error) {
+        debugPrint('Firestore portfoliosStream Hatası: $error');
+        throw error;
+      });
+    } catch (e) {
+      debugPrint('Firestore portfoliosStream başlatma hatası: $e');
+      return const Stream.empty();
+    }
+  }
+
   /// Kullanıcının Firestore'daki tüm portföylerini çeker.
   Future<List<Portfolio>> loadPortfolios(String uid) async {
     if (!isFirebaseAvailable || _firestore == null) {
@@ -134,6 +167,32 @@ class FirestoreService {
       }, SetOptions(merge: true));
     } catch (e) {
       debugPrint('Firestore deletePortfolio Hatası: $e');
+    }
+  }
+
+  /// Kullanıcının Firestore'daki ayarlarını gerçek zamanlı dinleyen Stream
+  Stream<Map<String, dynamic>?> settingsStream(String uid) {
+    if (!isFirebaseAvailable || _firestore == null) {
+      return const Stream.empty();
+    }
+
+    try {
+      return _firestore!
+          .collection('users')
+          .doc(uid)
+          .snapshots()
+          .map((snapshot) {
+        if (snapshot.exists && snapshot.data() != null) {
+          return snapshot.data()!['settings'] as Map<String, dynamic>?;
+        }
+        return null;
+      }).handleError((error) {
+        debugPrint('Firestore settingsStream Hatası: $error');
+        throw error;
+      });
+    } catch (e) {
+      debugPrint('Firestore settingsStream başlatma hatası: $e');
+      return const Stream.empty();
     }
   }
 

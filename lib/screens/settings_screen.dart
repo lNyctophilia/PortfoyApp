@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_version.dart';
+import '../features/app_update/widgets/app_update_action.dart';
 import '../features/auth_gate/services/auth_gate_service.dart';
 import '../models/return_mode.dart';
 import '../providers/portfolio_provider.dart';
@@ -381,6 +382,8 @@ class SettingsScreen extends StatelessWidget {
                         letterSpacing: 0.2,
                       ),
                     ),
+                    const SizedBox(height: 14),
+                    const AppUpdateAction(),
                     const SizedBox(height: 18),
                     const SizedBox(
                       width: 140,
@@ -750,16 +753,22 @@ class SettingsScreen extends StatelessWidget {
                           ),
                         ),
                       ] else ...[
-                        const Icon(
-                          Icons.check_circle_rounded,
+                        Icon(
+                          provider.isLiveConnected
+                              ? Icons.sensors_rounded
+                              : Icons.check_circle_rounded,
                           size: 13,
                           color: AppTheme.profit,
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          provider.lastSyncTime != null
-                              ? 'Bulutla senkronize (${DateFormat('HH:mm').format(provider.lastSyncTime!)})'
-                              : 'Bulut eşitlemesi aktif',
+                          provider.isLiveConnected
+                              ? (provider.lastSyncTime != null
+                                  ? 'Canlı senkronize (${DateFormat('HH:mm:ss').format(provider.lastSyncTime!)})'
+                                  : 'Canlı bağlantı aktif')
+                              : (provider.lastSyncTime != null
+                                  ? 'Bulutla senkronize (${DateFormat('HH:mm').format(provider.lastSyncTime!)})'
+                                  : 'Bulut eşitlemesi aktif'),
                           style: const TextStyle(
                             fontSize: 11.5,
                             color: AppTheme.profit,

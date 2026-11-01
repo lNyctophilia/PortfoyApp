@@ -59,6 +59,23 @@
   - **Lines 683-857:** \_buildAssetsTab() - List of portfolio assets, adaptive mobile search/filter row, empty state, and asset management actions.
   - **Lines 858-1219:** \_buildTransactionsTab() - Chronological transaction history cards, transaction badges, details with responsive mobile 2-row layout.
   - **Lines 1220-1337:** Transaction undo/delete confirmations (\_confirmUndoTransaction, \_confirmDeleteTransaction), filter chips, and asset deletion modal (\_confirmDeleteAsset).
+- **File:** `lib/features/app_update/models/update_info.dart`
+  - **Lines 1-19:** UpdateInfo data class representing version check result, server version, build time, and error status.
+- **File:** `lib/features/app_update/services/app_update_service.dart`
+  - **Lines 1-45:** AppUpdateService singleton declaration and checkForUpdates() checking version.json with cache-busting.
+  - **Lines 46-75:** Dual-source fallbacks (local base path, GitHub Pages, and AppHttpClient CORS proxy).
+  - **Lines 76-140:** JSON parsing, version normalization, comparison helpers, and applyUpdate() dispatcher.
+- **File:** `lib/features/app_update/services/platform/update_platform_interface.dart`
+  - **Lines 1-8:** Conditional export interface routing hard reload and cache purging to Web or Stub.
+- **File:** `lib/features/app_update/services/platform/update_platform_stub.dart`
+  - **Lines 1-3:** Non-web platform stub implementation for triggerHardReload.
+- **File:** `lib/features/app_update/services/platform/update_platform_web.dart`
+  - **Lines 1-19:** Web implementation using dart:js_interop to invoke performHardAppUpdate and purge CacheStorage/ServiceWorkers.
+- **File:** `lib/features/app_update/widgets/app_update_action.dart`
+  - **Lines 1-30:** AppUpdateAction declaration, state variables, and lifecycle.
+  - **Lines 31-105:** _checkUpdates() method handling check triggers, snackbar feedback, and dialog invocation.
+  - **Lines 106-285:** _showUpdateModal() Apple-minimalist confirmation dialog displaying current vs new version and update trigger.
+  - **Lines 286-378:** build() method rendering checking spinner, update-ready badge, or "Güncellemeleri Denetle" button.
 - **File:** `lib/features/auth_gate/constants/gate_security_config.dart`
   - **Lines 1-17:** GateSecurityConfig declaration containing compiled salted hash, cryptographic salt, and key-stretching iterations (no plaintext password).
 - **File:** `lib/features/auth_gate/screens/auth_gate_screen.dart`
@@ -118,29 +135,30 @@
   - **Lines 1-6:** Enum declaration ReturnCalculationMode (brut, net, reel).
   - **Lines 7-63:** Extension ReturnCalculationModeExtension with labels, badgeText, title, shortDescription, and detailedDescription.
 - **File:** `lib/providers/portfolio_provider.dart`
-  - **Lines 1-48:** Imports, PortfolioProvider declaration, auth/firestore services, and internal state variables.
-  - **Lines 49-110:** Filtered portfolio getters, auth state getters (currentUser, isSignedIn, isSyncing, lastSyncTime), and category filter accessors.
-  - **Lines 111-158:** Grand total aggregate getters across all visible portfolios (cost, value, profit, profit percent for brut/net/reel).
-  - **Lines 159-270:** Auth lifecycle listener, dispose teardown, cloud synchronization with local merge (syncWithCloud()), Google sign-in/out dispatch, and background Firestore persistence (\_persistPortfolios()).
-  - **Lines 271-316:** Data loading (loadData()), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
-  - **Lines 317-364:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
-  - **Lines 365-414:** Missing asset icon resolution & backfill helper (\_backfillMissingAssetIcons()).
-  - **Lines 415-468:** Category filtering setter and portfolio CRUD operations (addPortfolio, updatePortfolio, togglePortfolioVisibility, deletePortfolio).
-  - **Lines 469-507:** Direct asset management (addAsset, updateAsset, deleteAsset).
-  - **Lines 508-692:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
-  - **Lines 693-822:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
+  - **Lines 1-51:** Imports, PortfolioProvider declaration, auth/firestore services, and internal state variables (realtime stream subscriptions and isLiveConnected state).
+  - **Lines 52-114:** Filtered portfolio getters, auth state getters (currentUser, isSignedIn, isSyncing, lastSyncTime, syncError, isLiveConnected), and category filter accessors.
+  - **Lines 115-162:** Grand total aggregate getters across all visible portfolios (cost, value, profit, profit percent for brut/net/reel).
+  - **Lines 163-287:** Auth lifecycle listener, dispose teardown, cloud synchronization with local merge (syncWithCloud()), Google sign-in/out dispatch, and background Firestore persistence (\_persistPortfolios()).
+  - **Lines 288-410:** Realtime Firestore stream handlers (\_startRealtimeSubscriptions, \_cancelRealtimeSubscriptions, \_onPortfoliosSnapshot, \_onSettingsSnapshot).
+  - **Lines 411-456:** Data loading (loadData()), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
+  - **Lines 457-504:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
+  - **Lines 505-554:** Missing asset icon resolution & backfill helper (\_backfillMissingAssetIcons()).
+  - **Lines 555-608:** Category filtering setter and portfolio CRUD operations (addPortfolio, updatePortfolio, togglePortfolioVisibility, deletePortfolio).
+  - **Lines 609-647:** Direct asset management (addAsset, updateAsset, deleteAsset).
+  - **Lines 648-832:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
+  - **Lines 833-961:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
 - **File:** `lib/screens/settings_screen.dart`
-  - **Lines 1-18:** Imports and SettingsScreen declaration.
-  - **Lines 19-55:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
-  - **Lines 56-336:** Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators with Wrap).
-  - **Lines 337-438:** About app section (semi-transparent version subtitle under app name, developer, data source details, disclaimer).
-  - **Lines 439-535:** \_buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators with responsive Wrap header.
-  - **Lines 536-690:** \_buildAccountSection() & \_buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
-  - **Lines 691-885:** \_buildSignedInContent(), user avatar fallback builder, and sync/sign-out actions.
-  - **Lines 886-950:** \_confirmSignOut() - Modal confirmation dialog for Google account sign out.
-  - **Lines 951-1049:** \_buildSecuritySection() - Site security gate card, lock status indicator, and manual lock trigger button.
-  - **Lines 1050-1064:** \_buildSectionHeader() - Section heading widget with custom typography and accent indicator.
-  - **Lines 1065-1078:** \_buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
+  - **Lines 1-19:** Imports (including AppUpdateAction) and SettingsScreen declaration.
+  - **Lines 20-56:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
+  - **Lines 57-337:** Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators with Wrap).
+  - **Lines 338-441:** About app section with version, AppUpdateAction trigger, developer, and copyright info.
+  - **Lines 442-538:** \_buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators with responsive Wrap header.
+  - **Lines 539-693:** \_buildAccountSection() & \_buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
+  - **Lines 694-894:** \_buildSignedInContent(), user avatar fallback builder, live sync badge with sensor icon, and sync/sign-out actions.
+  - **Lines 895-959:** \_confirmSignOut() - Modal confirmation dialog for Google account sign out.
+  - **Lines 960-1058:** \_buildSecuritySection() - Site security gate card, lock status indicator, and manual lock trigger button.
+  - **Lines 1059-1073:** \_buildSectionHeader() - Section heading widget with custom typography and accent indicator.
+  - **Lines 1074-1087:** \_buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
 - **File:** `lib/services/asset_catalog_service.dart`
   - **Lines 1-21:** Imports and AssetSuggestion model class.
   - **Lines 22-123:** AssetCatalogService class declaration and static catalog for TEFAS investment funds (\_knownFunds).
@@ -160,10 +178,12 @@
   - **Lines 91-117:** signOut() - Clean teardown of GoogleSignIn (guarded for non-web) and FirebaseAuth sessions.
 - **File:** `lib/services/firestore_service.dart`
   - **Lines 1-22:** Imports, FirestoreService singleton declaration, and Firebase availability check.
-  - **Lines 23-55:** loadPortfolios() - Fetches all portfolio documents for user UID.
-  - **Lines 56-107:** savePortfolios() - Batch upsert of portfolios, deletion pruning, and error rethrow.
-  - **Lines 108-146:** Single portfolio CRUD helpers (saveSinglePortfolio, deletePortfolio).
-  - **Lines 147-169:** Cloud settings persistence (saveSettings, loadSettings).
+  - **Lines 23-54:** portfoliosStream() - Realtime Firestore listener stream for portfolio collection changes.
+  - **Lines 55-87:** loadPortfolios() - One-shot fetch for all portfolio documents for user UID.
+  - **Lines 88-138:** savePortfolios() - Batch upsert of portfolios, deletion pruning, and error rethrow.
+  - **Lines 139-172:** Single portfolio CRUD helpers (saveSinglePortfolio, deletePortfolio).
+  - **Lines 173-198:** settingsStream() - Realtime Firestore listener stream for user configuration and display modes.
+  - **Lines 199-228:** Cloud settings persistence (saveSettings, loadSettings).
 - **File:** `lib/services/inflation_service.dart`
   - **Lines 1-50:** Imports and InflationInfo data class with JSON serialization.
   - **Lines 51-95:** PeriodInflationData data model representing 1-month, 3-month, 6-month, 1-year, and 5-year CPI rates.
