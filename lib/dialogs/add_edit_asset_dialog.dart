@@ -12,11 +12,13 @@ import '../widgets/asset_symbol_autocomplete.dart';
 class AddEditAssetDialog extends StatefulWidget {
   final PortfolioAsset? asset;
   final Function(PortfolioAsset asset) onSave;
+  final bool isFullScreen;
 
   const AddEditAssetDialog({
     super.key,
     this.asset,
     required this.onSave,
+    this.isFullScreen = false,
   });
 
   @override
@@ -396,21 +398,33 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.asset != null;
 
-    final pPrice = _parseVal(_purchasePriceController.text);
-    final qty = _parseVal(_quantityController.text);
-    final cPrice = _currentPriceController.text.trim().isEmpty
-        ? pPrice
-        : _parseVal(_currentPriceController.text);
-
-    final totalCost = pPrice * qty;
-    final currentValue = cPrice * qty;
-    final totalProfit = currentValue - totalCost;
-    final profitPercent =
-        totalCost > 0 ? (totalProfit / totalCost) * 100 : 0.0;
-    final isProfit = totalProfit >= 0;
-    final hasData = totalCost > 0;
 
     final isMobile = MediaQuery.sizeOf(context).width < 600;
+
+        if (widget.isFullScreen) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.close_rounded),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            isEditing ? 'Varlığı Düzenle' : 'Yeni Varlık Ekle',
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          ),
+        ),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: _buildFormContent(context, isEditing, isMobile: true),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Dialog(
       insetPadding: EdgeInsets.symmetric(
@@ -434,7 +448,20 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  _buildDesktopHeader(context, isEditing),
+                  const SizedBox(height: 16),
+                  _buildFormContent(context, isEditing, isMobile: isMobile),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader(BuildContext context, bool isEditing) {
+    return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
@@ -461,10 +488,28 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                         color: AppTheme.textMuted,
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 16),
+                  );
+  }
 
-                  // Kategori Seçici (Segmented tabs)
+  Widget _buildFormContent(BuildContext context, bool isEditing, {required bool isMobile}) {
+    final pPrice = _parseVal(_purchasePriceController.text);
+    final qty = _parseVal(_quantityController.text);
+    final cPrice = _currentPriceController.text.trim().isEmpty
+        ? pPrice
+        : _parseVal(_currentPriceController.text);
+
+    final totalCost = pPrice * qty;
+    final currentValue = cPrice * qty;
+    final totalProfit = currentValue - totalCost;
+    final profitPercent =
+        totalCost > 0 ? (totalProfit / totalCost) * 100 : 0.0;
+    final isProfit = totalProfit >= 0;
+    final hasData = totalCost > 0;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Kategori Seçici (Segmented tabs)
                   const Text(
                     'Varlık Kategorisi',
                     style: TextStyle(
@@ -1138,12 +1183,7 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      ],
     );
   }
 }

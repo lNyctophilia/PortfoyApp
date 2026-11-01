@@ -10,9 +10,11 @@
 - **File:** `scripts/deploy_web.ps1`
   - **Lines 1-104:** Automated release compilation, gate security generation, docs/ output preparation, and GitHub Pages push script.
 - **File:** `scripts/set_gate_password.bat`
-  - **Lines 1-47:** Interactive Windows batch utility to update local gate_secret.json and generate new cryptographic salted hash.
+  - **Lines 1-11:** Windows batch launcher for set_gate_password.ps1, ensures correct working directory and prevents CMD window from closing prematurely.
+- **File:** `scripts/set_gate_password.ps1`
+  - **Lines 1-82:** Interactive PowerShell utility to inspect current password state, safely update gate_secret.json without shell escape bugs, and trigger security hash update.
 - **File:** `scripts/update_gate_security.dart`
-  - **Lines 1-105:** Standalone Dart script calculating 10,000-round HMAC-SHA256 salted hash and generating GateSecurityConfig without leaking plaintext password.
+  - **Lines 1-120:** Standalone Dart script calculating 10,000-round HMAC-SHA256 salted hash and generating GateSecurityConfig without leaking plaintext password; auto-detects project root.
 - **File:** `firestore.rules`
   - **Lines 1-19:** Firebase Security Rules restricting read/write access to `/users/{userId}/**` for authenticated account owner only.
 - **File:** `lib/core/constants/api_constants.dart`
@@ -21,44 +23,57 @@
   - **Lines 1-5:** Class AppVersion with static current version constant.
 - **File:** `lib/core/network/app_http_client.dart`
   - **Lines 1-59:** AppHttpClient class providing cross-platform GET and POST requests routed through the Cloudflare Worker CORS proxy on web.
+- **File:** `lib/core/navigation/adaptive_navigation.dart`
+  - **Lines 1-25:** Imports, AdaptiveNavigation helper class declaration, isMobile check (<720px breakpoint).
+  - **Lines 26-60:** openPortfolioDetail - Responsive router pushing full-screen Scaffold on phone or modal Dialog on desktop.
+  - **Lines 61-110:** openAddTransaction - Responsive router pushing full-screen Form Scaffold on phone or modal Dialog on desktop.
+  - **Lines 111-140:** openAssetStatus - Responsive router opening full-screen status page on phone or modal Dialog on desktop.
+  - **Lines 141-165:** openAddEditAsset - Responsive router opening full-screen asset editor on phone or modal Dialog on desktop.
+  - **Lines 166-186:** openAddEditPortfolio - Responsive router opening sleek bottom sheet on phone or modal Dialog on desktop.
 - **File:** `lib/dialogs/add_edit_asset_dialog.dart`
-  - **Lines 1-55:** Imports, AddEditAssetDialog declaration, and state controllers.
-  - **Lines 56-129:** State initialization (initState), teardown (dispose), and numeric formatters.
-  - **Lines 130-189:** \_buildReadonlyPeriodBadge() - Readonly badges for asset historical period performance.
-  - **Lines 190-352:** Market data fetching, suggestion selection, debounce logic, and date picking.
-  - **Lines 353-395:** \_submit() form validation and asset creation/update dispatch to provider.
-  - **Lines 396-630:** build() method: Responsive Dialog shell, mobile scrollable category selection, and symbol autocomplete with LayoutBuilder adaptive row/column.
-  - **Lines 631-825:** Asset quantity, purchase price, current price, and date input fields.
-  - **Lines 826-1149:** Withholding tax (stopaj) configuration, summary preview, historical period performance scrollable/expanded badges, and action buttons.
+  - **Lines 1-58:** Imports, AddEditAssetDialog declaration with isFullScreen flag, and state controllers.
+  - **Lines 59-132:** State initialization (initState), teardown (dispose), and numeric formatters.
+  - **Lines 133-192:** _buildReadonlyPeriodBadge() - Readonly badges for asset historical period performance.
+  - **Lines 193-355:** Market data fetching, suggestion selection, debounce logic, and date picking.
+  - **Lines 356-398:** _submit() form validation and asset creation/update dispatch to provider.
+  - **Lines 399-470:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop.
+  - **Lines 471-492:** _buildDesktopHeader() - PC header with title, icon, and close button.
+  - **Lines 493-1189:** _buildFormContent() - Category selection, symbol autocomplete, quantity, price, stopaj, summary preview, historical period performance badges, and actions.
 - **File:** `lib/dialogs/add_edit_portfolio_dialog.dart`
-  - **Lines 1-24:** Imports, AddEditPortfolioDialog declaration, and state setup.
-  - **Lines 25-46:** Lifecycle methods (initState, dispose) and form submission logic (\_submit).
-  - **Lines 47-132:** Dialog UI: build() method with responsive mobile/desktop inset padding, form fields (name, description), and action buttons (cancel, save).
+  - **Lines 1-28:** Imports, AddEditPortfolioDialog declaration with isBottomSheet flag, and state setup.
+  - **Lines 29-50:** Lifecycle methods (initState, dispose) and form submission logic (_submit).
+  - **Lines 51-122:** _buildFormFields() - Input fields (name, description), validation, and action buttons.
+  - **Lines 123-182:** build() method - Adaptive layout rendering as a draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog shell on desktop.
 - **File:** `lib/dialogs/add_transaction_dialog.dart`
-  - **Lines 1-71:** Imports, AddTransactionDialog declaration, and state variables (controllers, modes).
-  - **Lines 72-150:** initState(), dispose(), price/number parsing and formatting helpers.
-  - **Lines 151-265:** Buy (Alis) transaction logic: autocomplete selection, debounced symbol changes, market data fetching.
-  - **Lines 266-400:** Custom calendar picker dialog (\_showCalendarPicker()) and buy date selection (\_pickAlisDate()).
-  - **Lines 401-460:** \_buildReadonlyPeriodBadge() - Read-only badges for period performance.
-  - **Lines 461-578:** Sell (Satis) transaction logic: asset selection from portfolio, historical price lookup, and date picker.
-  - **Lines 579-668:** \_saveTransaction() - FIFO validation, cost estimation, transaction persistence, and asset updating.
-  - **Lines 669-915:** build() method: Dialog shell with responsive padding, tab switcher (Alis / Satis), responsive mobile constraints, and actions.
-  - **Lines 916-1483:** \_buildAlisForm() - Form fields for purchasing assets (horizontal scrollable category bar, symbol/name LayoutBuilder, quantity, price, stopaj, period badges).
-  - **Lines 1484-1960:** \_buildSatisForm() - Form fields for selling assets (dropdown, symbol/name LayoutBuilder, quantity, sale price, realized profit/loss preview).
+  - **Lines 1-75:** Imports, AddTransactionDialog declaration with isFullScreen flag, initialAsset, initialType, and state variables.
+  - **Lines 76-155:** initState(), dispose(), price/number parsing and formatting helpers.
+  - **Lines 156-270:** Buy (Alis) transaction logic: autocomplete selection, debounced symbol changes, market data fetching.
+  - **Lines 271-405:** Custom calendar picker dialog (_showCalendarPicker()) and buy date selection (_pickAlisDate()).
+  - **Lines 406-465:** _buildReadonlyPeriodBadge() - Read-only badges for period performance.
+  - **Lines 466-583:** Sell (Satis) transaction logic: asset selection from portfolio, historical price lookup, and date picker.
+  - **Lines 584-674:** _saveTransaction() - FIFO validation, cost estimation, transaction persistence, and asset updating.
+  - **Lines 675-768:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop.
+  - **Lines 769-792:** _buildDesktopHeader() - PC header row with icon, title, subtitle, and close button.
+  - **Lines 793-970:** _buildFormContent() - Form switcher (Alis/Satis tabs) and actions.
+  - **Lines 971-1538:** _buildAlisForm() - Form fields for purchasing assets.
+  - **Lines 1539-2015:** _buildSatisForm() - Form fields for selling assets.
 - **File:** `lib/dialogs/asset_status_dialog.dart`
-  - **Lines 1-33:** Imports, AssetStatusDialog declaration, and state setup.
-  - **Lines 34-370:** build() method: Responsive Dialog shell, header with asset summary, total value, profit/loss banner, horizontal scrollable metrics bar, and tab selector.
-  - **Lines 371-524:** Metric items, dividers, and tab buttons (\_buildMetricItem, \_buildDivider, \_buildTabButton).
-  - **Lines 525-704:** \_buildLotsTab() - Detailed list of open/closed purchase lots with holding durations, costs, returns, and responsive 2x2 grid on mobile.
-  - **Lines 705-913:** \_buildSalesTab() - Realized sales history, sell prices, capital gains, withholding taxes, and responsive 2x2 grid on mobile.
-  - **Lines 914-1004:** Helper widgets (\_buildLotStatusBadge, \_buildSubStat, \_formatQty).
+  - **Lines 1-35:** Imports, AssetStatusDialog declaration with isFullScreen flag, and state setup.
+  - **Lines 36-165:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar and Add Transaction action on mobile or responsive Dialog shell on desktop.
+  - **Lines 166-410:** Header metrics, profit/loss banner, horizontal scrollable metrics bar, and tab selector.
+  - **Lines 411-564:** Metric items, dividers, and tab buttons (_buildMetricItem, _buildDivider, _buildTabButton).
+  - **Lines 565-744:** _buildLotsTab() - Detailed list of open/closed purchase lots with holding durations, costs, returns.
+  - **Lines 745-953:** _buildSalesTab() - Realized sales history, sell prices, capital gains, withholding taxes.
+  - **Lines 954-1247:** Helper widgets and sub-stats.
 - **File:** `lib/dialogs/portfolio_detail_dialog.dart`
-  - **Lines 1-32:** Imports, PortfolioDetailDialog declaration, and state setup.
-  - **Lines 33-636:** build() method: Responsive Dialog shell with adaptive mobile/desktop header summary metrics, refresh trigger, category breakdown, tab bar, and action buttons.
-  - **Lines 637-682:** \_buildTabButton() - Tab switch button between Assets and Transactions.
-  - **Lines 683-857:** \_buildAssetsTab() - List of portfolio assets, adaptive mobile search/filter row, empty state, and asset management actions.
-  - **Lines 858-1219:** \_buildTransactionsTab() - Chronological transaction history cards, transaction badges, details with responsive mobile 2-row layout.
-  - **Lines 1220-1337:** Transaction undo/delete confirmations (\_confirmUndoTransaction, \_confirmDeleteTransaction), filter chips, and asset deletion modal (\_confirmDeleteAsset).
+  - **Lines 1-35:** Imports, PortfolioDetailDialog declaration with isFullScreen flag, and state setup.
+  - **Lines 36-235:** build() method - Adaptive screen shell: full-screen Scaffold with AppBar, back arrow, and RefreshIndicator on mobile vs responsive Dialog shell with desktop header and constraints on desktop.
+  - **Lines 236-357:** _buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, update prices trigger, edit button, and close icon.
+  - **Lines 358-765:** _buildDetailContent() - Core content: aggregate metric cards, historical period performance, category allocation distribution bar, tab bar switcher, and AdaptiveNavigation triggers.
+  - **Lines 766-810:** _buildTabButton() - Tab switch button between Assets and Transactions.
+  - **Lines 811-985:** _buildAssetsTab() - List of portfolio assets, adaptive search/filter row, empty state, and AdaptiveNavigation asset management actions.
+  - **Lines 986-1346:** _buildTransactionsTab() - Chronological transaction history cards, transaction badges, details with responsive layout.
+  - **Lines 1347-1464:** Transaction undo/delete confirmations (_confirmUndoTransaction, _confirmDeleteTransaction), filter chips, and asset deletion modal (_confirmDeleteAsset).
 - **File:** `lib/features/app_update/models/update_info.dart`
   - **Lines 1-19:** UpdateInfo data class representing version check result, server version, build time, and error status.
 - **File:** `lib/features/app_update/services/app_update_service.dart`
@@ -98,12 +113,15 @@
 - **File:** `lib/firebase_options.dart`
   - **Lines 1-73:** DefaultFirebaseOptions auto-generated and configured mapping platform options for Web, Android, and Windows.
 - **File:** `lib/main.dart`
-  - **Lines 1-38:** Imports, Firebase.initializeApp(), AuthGateService.initialize(), and main() entry point.
-  - **Lines 39-70:** PortfoyApp root widget, MultiProvider setup, and MaterialApp configuration with AuthGateWrapper home child.
-  - **Lines 71-190:** PortfolioHomeScreen stateful shell, keyboard shortcut listener (F5 refresh), refresh logic, and dialog triggers.
-  - **Lines 191-557:** PortfolioHomeScreen build() method: Responsive Scaffold with SafeArea, adaptive mobile/desktop header summary cards, quick action buttons, and responsive portfolio GridView.
-  - **Lines 558-627:** \_buildHeaderSummaryCard() - Aggregate portfolio performance & summary card and metric tiles with minHeight constraints.
-  - **Lines 628-673:** \_buildEmptyState() - Placeholder illustration and prompt when no portfolios exist.
+  - **Lines 1-40:** Imports, Firebase.initializeApp(), AuthGateService.initialize(), and main() entry point.
+  - **Lines 41-72:** PortfoyApp root widget, MultiProvider setup, and MaterialApp configuration with AuthGateWrapper home child.
+  - **Lines 73-194:** PortfolioHomeScreen stateful shell, keyboard shortcut listener (F5 refresh), refresh logic, and dialog triggers.
+  - **Lines 195-212:** build() method: Responsive branch rendering _buildMobileView (<720px) or _buildDesktopView (>=720px).
+  - **Lines 213-548:** _buildDesktopView() - Full desktop PC layout with aggregate stats top bar, action buttons, and multi-column portfolio GridView using AdaptiveNavigation.
+  - **Lines 549-650:** _buildMobileView() - Dedicated mobile layout with mobile AppBar, NetGrossBadge, pull-to-refresh (RefreshIndicator), mobile summary card, thumb-friendly list of portfolio cards, and FloatingActionButton.
+  - **Lines 651-785:** _buildMobileSummaryCard() - Apple-minimalist summary card for smartphones.
+  - **Lines 786-855:** _buildHeaderSummaryCard() - Desktop aggregate portfolio performance metric tiles.
+  - **Lines 856-961:** _buildEmptyState() - Placeholder illustration and prompt when no portfolios exist.
 - **File:** `lib/models/asset_category.dart`
   - **Lines 1-10:** Enum declaration AssetCategory (hisse, tefas, kripto, emtia, doviz, eurobond, fon).
   - **Lines 11-25:** Getter displayName for localized Turkish category names.
@@ -148,17 +166,16 @@
   - **Lines 648-832:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
   - **Lines 833-961:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
 - **File:** `lib/screens/settings_screen.dart`
-  - **Lines 1-19:** Imports (including AppUpdateAction) and SettingsScreen declaration.
-  - **Lines 20-56:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
-  - **Lines 57-337:** Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators with Wrap).
-  - **Lines 338-441:** About app section with version, AppUpdateAction trigger, developer, and copyright info.
-  - **Lines 442-538:** \_buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators with responsive Wrap header.
-  - **Lines 539-693:** \_buildAccountSection() & \_buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
-  - **Lines 694-894:** \_buildSignedInContent(), user avatar fallback builder, live sync badge with sensor icon, and sync/sign-out actions.
-  - **Lines 895-959:** \_confirmSignOut() - Modal confirmation dialog for Google account sign out.
-  - **Lines 960-1058:** \_buildSecuritySection() - Site security gate card, lock status indicator, and manual lock trigger button.
-  - **Lines 1059-1073:** \_buildSectionHeader() - Section heading widget with custom typography and accent indicator.
-  - **Lines 1074-1087:** \_buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
+  - **Lines 1-17:** Imports and SettingsScreen declaration.
+  - **Lines 18-54:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
+  - **Lines 55-330:** Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators with Wrap).
+  - **Lines 331-430:** About app section with version, AppUpdateAction trigger, developer, and copyright info.
+  - **Lines 431-525:** \_buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators with responsive Wrap header.
+  - **Lines 526-678:** \_buildAccountSection() & \_buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
+  - **Lines 679-890:** \_buildSignedInContent(), user avatar fallback builder, live sync badge with sensor icon, and sync/sign-out actions.
+  - **Lines 891-949:** \_confirmSignOut() - Modal confirmation dialog for Google account sign out.
+  - **Lines 950-964:** \_buildSectionHeader() - Section heading widget with custom typography and accent indicator.
+  - **Lines 965-986:** \_buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
 - **File:** `lib/services/asset_catalog_service.dart`
   - **Lines 1-21:** Imports and AssetSuggestion model class.
   - **Lines 22-123:** AssetCatalogService class declaration and static catalog for TEFAS investment funds (\_knownFunds).

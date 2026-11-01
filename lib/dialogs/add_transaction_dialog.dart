@@ -14,12 +14,18 @@ import '../widgets/asset_symbol_autocomplete.dart';
 
 class AddTransactionDialog extends StatefulWidget {
   final Portfolio portfolio;
+  final PortfolioAsset? initialAsset;
+  final TransactionType initialType;
   final Function(PortfolioTransaction transaction, bool updateHoldings) onSave;
+  final bool isFullScreen;
 
   const AddTransactionDialog({
     super.key,
     required this.portfolio,
+    this.initialAsset,
+    this.initialType = TransactionType.alis,
     required this.onSave,
+    this.isFullScreen = false,
   });
 
   @override
@@ -100,7 +106,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _satisQuantityController.addListener(() => setState(() {}));
     _satisPriceController.addListener(() => setState(() {}));
 
-    if (widget.portfolio.assets.isNotEmpty) {
+    _selectedType = widget.initialType;
+    if (widget.initialAsset != null) {
+      _selectExistingAsset(widget.initialAsset!);
+    } else if (widget.portfolio.assets.isNotEmpty) {
       _selectExistingAsset(widget.portfolio.assets.first);
     }
   }
@@ -667,9 +676,42 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isAlis = _selectedType == TransactionType.alis;
-
+        final isAlis = _selectedType == TransactionType.alis;
     final isMobile = MediaQuery.sizeOf(context).width < 600;
+
+    if (widget.isFullScreen) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.close_rounded),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isAlis ? 'Alış İşlemi Ekle' : 'Satış İşlemi Ekle',
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+              ),
+              Text(
+                widget.portfolio.name,
+                style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+              ),
+            ],
+          ),
+        ),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: _buildFormContent(context, isAlis, isMobile: true),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Dialog(
       insetPadding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 20, vertical: isMobile ? 10 : 16),
@@ -684,7 +726,20 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // BAŞLIK
+                  _buildDesktopHeader(context, isAlis),
+                  const SizedBox(height: 18),
+                  _buildFormContent(context, isAlis, isMobile: isMobile),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader(BuildContext context, bool isAlis) {
+    return // BAŞLIK
                   Row(
                     children: [
                       Container(
@@ -732,10 +787,15 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 18),
+                  );
+  }
 
-                  // ÜST SEKME: ALIŞ (SOLDA) / SATIŞ (SAĞDA)
+  Widget _buildFormContent(BuildContext context, bool isAlis, {required bool isMobile}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ÜST SEKME: ALIŞ (SOLDA) / SATIŞ (SAĞDA)
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -907,12 +967,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      ],
     );
   }
 

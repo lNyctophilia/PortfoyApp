@@ -5,14 +5,14 @@ import 'firebase_options.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'dialogs/add_edit_portfolio_dialog.dart';
-import 'dialogs/portfolio_detail_dialog.dart';
 import 'features/auth_gate/services/auth_gate_service.dart';
 import 'features/auth_gate/widgets/auth_gate_wrapper.dart';
 import 'providers/portfolio_provider.dart';
 import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
 import 'utils/formatters.dart';
+import 'models/portfolio.dart';
+import 'core/navigation/adaptive_navigation.dart';
 import 'models/return_mode.dart';
 import 'widgets/net_gross_badge.dart';
 import 'widgets/portfolio_card.dart';
@@ -153,13 +153,11 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
 
   void _showAddPortfolioDialog(BuildContext context) {
     final provider = context.read<PortfolioProvider>();
-    showDialog(
-      context: context,
-      builder: (_) => AddEditPortfolioDialog(
-        onSave: (name, description) {
-          provider.addPortfolio(name: name, description: description);
-        },
-      ),
+    AdaptiveNavigation.openAddEditPortfolio(
+      context,
+      onSave: (name, description) {
+        provider.addPortfolio(name: name, description: description);
+      },
     );
   }
 
@@ -196,7 +194,21 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
     final portfolios = provider.portfolios;
     final isProfit = provider.displayGrandTotalProfit >= 0;
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
+    final isMobile = MediaQuery.sizeOf(context).width < 720;
 
+    if (isMobile) {
+      return _buildMobileView(context, provider, portfolios, isProfit, profitColor);
+    }
+    return _buildDesktopView(context, provider, portfolios, isProfit, profitColor);
+  }
+
+  Widget _buildDesktopView(
+    BuildContext context,
+    PortfolioProvider provider,
+    List<Portfolio> portfolios,
+    bool isProfit,
+    Color profitColor,
+  ) {
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -495,26 +507,22 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                               return PortfolioCard(
                                 portfolio: portfolio,
                                 onTap: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (_) => PortfolioDetailDialog(
-                                      portfolioId: portfolio.id,
-                                    ),
+                                  AdaptiveNavigation.openPortfolioDetail(
+                                    context,
+                                    portfolio.id,
                                   );
                                 },
                                 onEdit: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (_) => AddEditPortfolioDialog(
-                                      portfolio: portfolio,
-                                      onSave: (name, description) {
-                                        provider.updatePortfolio(
-                                          id: portfolio.id,
-                                          name: name,
-                                          description: description,
-                                        );
-                                      },
-                                    ),
+                                  AdaptiveNavigation.openAddEditPortfolio(
+                                    context,
+                                    portfolio: portfolio,
+                                    onSave: (name, description) {
+                                      provider.updatePortfolio(
+                                        id: portfolio.id,
+                                        name: name,
+                                        description: description,
+                                      );
+                                    },
                                   );
                                 },
                                 onDelete: () => _confirmDeletePortfolio(
@@ -533,6 +541,286 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
           ),
         ],
       ),
+      ),
+    );
+  }
+
+  Widget _buildMobileView(
+    BuildContext context,
+    PortfolioProvider provider,
+    List<Portfolio> portfolios,
+    bool isProfit,
+    Color profitColor,
+  ) {
+    final mode = provider.returnMode;
+    final hasStopaj = provider.grandTotalWithholdingTax > 0;
+
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: const Text(
+          'Portföylerim',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
+            letterSpacing: -0.3,
+          ),
+        ),
+        actions: [
+          if (hasStopaj || mode == ReturnCalculationMode.reel)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: NetGrossBadge(mode: mode),
+            ),
+          IconButton(
+            tooltip: 'Yenile',
+            onPressed: provider.isRefreshing ? null : () => _refreshAllData(),
+            icon: provider.isRefreshing
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh_rounded, size: 20),
+            color: AppTheme.textSecondary,
+          ),
+          IconButton(
+            tooltip: 'Ayarlar',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const SettingsScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.settings_outlined, size: 20),
+            color: AppTheme.textSecondary,
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () => _refreshAllData(showFeedback: false),
+          child: provider.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : portfolios.isEmpty
+                  ? _buildEmptyState(context)
+                  : ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      children: [
+                        _buildMobileSummaryCard(provider, isProfit, profitColor, mode),
+                        const SizedBox(height: 18),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Portföyler (${portfolios.length})',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textMuted,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        ...portfolios.map((portfolio) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: PortfolioCard(
+                              portfolio: portfolio,
+                              onTap: () {
+                                AdaptiveNavigation.openPortfolioDetail(
+                                  context,
+                                  portfolio.id,
+                                );
+                              },
+                              onEdit: () {
+                                AdaptiveNavigation.openAddEditPortfolio(
+                                  context,
+                                  portfolio: portfolio,
+                                  onSave: (name, description) {
+                                    provider.updatePortfolio(
+                                      id: portfolio.id,
+                                      name: name,
+                                      description: description,
+                                    );
+                                  },
+                                );
+                              },
+                              onDelete: () => _confirmDeletePortfolio(
+                                context,
+                                portfolio.id,
+                                portfolio.name,
+                              ),
+                              onToggleVisibility: () {
+                                provider.togglePortfolioVisibility(portfolio.id);
+                              },
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 80),
+                      ],
+                    ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddPortfolioDialog(context),
+        icon: const Icon(Icons.add_rounded, size: 20),
+        label: const Text(
+          'Yeni Portföy',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileSummaryCard(
+    PortfolioProvider provider,
+    bool isProfit,
+    Color profitColor,
+    ReturnCalculationMode mode,
+  ) {
+    final hasRealizedStopaj = provider.grandTotalRealizedWithholdingTax > 0;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Toplam Varlık Değeri',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textMuted,
+                ),
+              ),
+              if (provider.grandTotalWithholdingTax > 0 || mode == ReturnCalculationMode.reel)
+                NetGrossBadge(mode: mode),
+            ],
+          ),
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              Formatters.currency(provider.displayGrandTotalValue),
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.textPrimary,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isProfit ? AppTheme.profitBg : AppTheme.lossBg,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: profitColor.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isProfit ? Icons.arrow_outward_rounded : Icons.arrow_downward_rounded,
+                  color: profitColor,
+                  size: 15,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${Formatters.currency(provider.displayGrandTotalProfit)} (${Formatters.percent(provider.displayGrandTotalProfitPercent)})',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: profitColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(color: AppTheme.borderSubtle, height: 1),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Toplam Maliyet',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      Formatters.currency(provider.grandTotalCost),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 28,
+                color: AppTheme.borderSubtle,
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Gerçekleşen K/Z',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      Formatters.currency(
+                        (hasRealizedStopaj && mode != ReturnCalculationMode.brut)
+                            ? provider.grandTotalNetRealizedProfit
+                            : provider.grandTotalRealizedProfit,
+                      ),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: provider.grandTotalNetRealizedProfit >= 0
+                            ? AppTheme.profit
+                            : AppTheme.loss,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

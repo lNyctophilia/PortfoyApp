@@ -12,15 +12,18 @@ import '../widgets/category_distribution_bar.dart';
 import '../models/return_mode.dart';
 import '../widgets/net_gross_badge.dart';
 import '../widgets/period_performance_badge.dart';
+import '../core/navigation/adaptive_navigation.dart';
 import 'add_edit_asset_dialog.dart';
-import 'add_edit_portfolio_dialog.dart';
 import 'add_transaction_dialog.dart';
 import 'asset_status_dialog.dart';
 class PortfolioDetailDialog extends StatefulWidget {
   final String portfolioId;
+  final bool isFullScreen;
+
   const PortfolioDetailDialog({
     super.key,
     required this.portfolioId,
+    this.isFullScreen = false,
   });
   @override
   State<PortfolioDetailDialog> createState() => _PortfolioDetailDialogState();
@@ -34,6 +37,24 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     final provider = context.watch<PortfolioProvider>();
     final portfolio = provider.getPortfolioById(widget.portfolioId);
     if (portfolio == null) {
+      if (widget.isFullScreen) {
+        return Scaffold(
+          backgroundColor: AppTheme.background,
+          appBar: AppBar(
+            title: const Text('Portföy bulunamadı'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+          body: Center(
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Geri Dön'),
+            ),
+          ),
+        );
+      }
       return Dialog(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -72,6 +93,100 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     final isMobile = size.width < 720;
     final dialogWidth = isMobile ? size.width * 0.96 : (size.width * 0.94).clamp(650.0, 1100.0);
     final dialogHeight = isMobile ? size.height * 0.95 : (size.height * 0.90).clamp(520.0, 880.0);
+    if (widget.isFullScreen) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                portfolio.name,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (portfolio.description.isNotEmpty)
+                Text(
+                  portfolio.description,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textMuted,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'Fiyatları Güncelle',
+              onPressed: provider.isRefreshing
+                  ? null
+                  : () => provider.refreshPortfolioPrices(portfolio.id),
+              icon: provider.isRefreshing
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded, size: 20),
+              color: AppTheme.textSecondary,
+            ),
+            IconButton(
+              tooltip: 'Portföyü Düzenle',
+              onPressed: () {
+                AdaptiveNavigation.openAddEditPortfolio(
+                  context,
+                  portfolio: portfolio,
+                  onSave: (name, desc) {
+                    provider.updatePortfolio(
+                      id: portfolio.id,
+                      name: name,
+                      description: desc,
+                    );
+                  },
+                );
+              },
+              icon: const Icon(Icons.edit_outlined, size: 20),
+              color: AppTheme.textSecondary,
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
+        body: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: () => provider.refreshPortfolioPrices(portfolio.id),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: _buildDetailContent(
+                context,
+                portfolio,
+                provider,
+                filteredAssets,
+                mode,
+                inflationRates,
+                displayValue,
+                displayProfit,
+                displayProfitPercent,
+                showNetValues,
+                isProfit,
+                profitColor,
+                true,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Dialog(
       insetPadding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 20, vertical: isMobile ? 8 : 16),
       child: SizedBox(
@@ -80,8 +195,43 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ÜST BAÅLIK & İÅLEM BUTONLARI
-            Padding(
+            _buildDesktopHeader(context, portfolio, provider, isMobile),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(left: isMobile ? 14 : 24, right: 8, bottom: isMobile ? 14 : 20),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(right: isMobile ? 8 : 16),
+                  child: _buildDetailContent(
+                    context,
+                    portfolio,
+                    provider,
+                    filteredAssets,
+                    mode,
+                    inflationRates,
+                    displayValue,
+                    displayProfit,
+                    displayProfitPercent,
+                    showNetValues,
+                    isProfit,
+                    profitColor,
+                    isMobile,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader(
+    BuildContext context,
+    Portfolio portfolio,
+    PortfolioProvider provider,
+    bool isMobile,
+  ) {
+    return Padding(
               padding: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 14 : 24, isMobile ? 14 : 24, 14),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -145,19 +295,17 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                     IconButton(
                       tooltip: 'Portföyü Düzenle',
                       onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => AddEditPortfolioDialog(
-                            portfolio: portfolio,
-                            onSave: (name, desc) {
-                              provider.updatePortfolio(
-                                id: portfolio.id,
-                                name: name,
-                                description: desc,
-                              );
-                            },
-                          ),
-                        );
+                        AdaptiveNavigation.openAddEditPortfolio(
+      context,
+      portfolio: portfolio,
+      onSave: (name, desc) {
+        provider.updatePortfolio(
+          id: portfolio.id,
+          name: name,
+          description: desc,
+        );
+      },
+    );
                       },
                       icon: const Icon(Icons.edit_outlined, size: 20),
                       color: AppTheme.textSecondary,
@@ -179,19 +327,17 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                     const SizedBox(width: 8),
                     OutlinedButton.icon(
                       onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => AddEditPortfolioDialog(
-                            portfolio: portfolio,
-                            onSave: (name, desc) {
-                              provider.updatePortfolio(
-                                id: portfolio.id,
-                                name: name,
-                                description: desc,
-                              );
-                            },
-                          ),
-                        );
+                        AdaptiveNavigation.openAddEditPortfolio(
+      context,
+      portfolio: portfolio,
+      onSave: (name, desc) {
+        provider.updatePortfolio(
+          id: portfolio.id,
+          name: name,
+          description: desc,
+        );
+      },
+    );
                       },
                       icon: const Icon(Icons.edit_outlined, size: 16),
                       label: const Text('Portföyü Düzenle'),
@@ -205,15 +351,27 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   ),
                 ],
               ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(left: isMobile ? 14 : 24, right: 8, bottom: isMobile ? 14 : 20),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.only(right: isMobile ? 8 : 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+            );
+  }
+
+  Widget _buildDetailContent(
+    BuildContext context,
+    Portfolio portfolio,
+    PortfolioProvider provider,
+    List<PortfolioAsset> filteredAssets,
+    ReturnCalculationMode mode,
+    dynamic inflationRates,
+    double displayValue,
+    double displayProfit,
+    double displayProfitPercent,
+    bool showNetValues,
+    bool isProfit,
+    Color profitColor,
+    bool isMobile,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
                       // ÖZET KARTLARI (DEÄER, KAZANÇ, TARİHSEL VERİLER)
                       Container(
                         padding: const EdgeInsets.all(18),
@@ -537,19 +695,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                   horizontal: 16, vertical: 12),
                             ),
                             onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (_) => AddTransactionDialog(
-                                  portfolio: portfolio,
-                                  onSave: (tx, updateHoldings) {
-                                    provider.addTransaction(
-                                      portfolio.id,
-                                      tx,
-                                      updateHoldings: updateHoldings,
-                                    );
-                                  },
-                                ),
-                              );
+                              AdaptiveNavigation.openAddTransaction(context, portfolio: portfolio);
                             },
                             icon: const Icon(Icons.swap_horiz_rounded, size: 18),
                             label: const Text(
@@ -595,19 +741,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                     horizontal: 16, vertical: 12),
                               ),
                               onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (_) => AddTransactionDialog(
-                                    portfolio: portfolio,
-                                    onSave: (tx, updateHoldings) {
-                                      provider.addTransaction(
-                                        portfolio.id,
-                                        tx,
-                                        updateHoldings: updateHoldings,
-                                      );
-                                    },
-                                  ),
-                                );
+                                AdaptiveNavigation.openAddTransaction(context, portfolio: portfolio);
                               },
                               icon: const Icon(Icons.swap_horiz_rounded, size: 18),
                               label: const Text(
@@ -623,17 +757,10 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                       _selectedTab == 0
                           ? _buildAssetsTab(portfolio, filteredAssets, provider, isMobile)
                           : _buildTransactionsTab(portfolio, provider, isMobile),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
+
   Widget _buildTabButton({
     required int index,
     required IconData icon,

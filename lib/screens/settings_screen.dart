@@ -5,10 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_version.dart';
 import '../features/app_update/widgets/app_update_action.dart';
-import '../features/auth_gate/services/auth_gate_service.dart';
 import '../models/return_mode.dart';
 import '../providers/portfolio_provider.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 import '../widgets/net_gross_badge.dart';
@@ -330,12 +328,7 @@ class SettingsScreen extends StatelessWidget {
 
               const SizedBox(height: 28),
 
-              // BÖLÜM 3: SİTE ERİŞİM GÜVENLİĞİ
-              _buildSecuritySection(context),
-
-              const SizedBox(height: 28),
-
-              // BÖLÜM 4: UYGULAMA HAKKINDA
+              // BÖLÜM 3: UYGULAMA HAKKINDA
               _buildSectionHeader('Uygulama Hakkında'),
 
               Container(
@@ -951,100 +944,6 @@ class SettingsScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSecuritySection(BuildContext context) {
-    final gateService = AuthGateService.instance;
-    final isEnabled = gateService.isGateEnabled;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader('Erişim Güvenliği'),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.borderSubtle),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: isEnabled
-                          ? AppColors.accentLight.withValues(alpha: 0.12)
-                          : AppTheme.surfaceLight,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      isEnabled ? Icons.lock_outline_rounded : Icons.lock_open_rounded,
-                      color: isEnabled ? AppColors.accentLight : AppTheme.textMuted,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Site Erişim Kilidi',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          isEnabled
-                              ? 'Bu tarayıcı/cihaz başarıyla doğrulandı'
-                              : 'Erişim kilidi yapılandırılmadı',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isEnabled ? AppColors.success : AppTheme.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              if (isEnabled) ...[
-                const SizedBox(height: 16),
-                const Divider(color: AppTheme.borderSubtle, height: 1),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      Navigator.of(context).pop();
-                      await gateService.lock();
-                    },
-                    icon: const Icon(Icons.lock_rounded, size: 18),
-                    label: const Text('Bu Cihazda Uygulamayı Kilitle'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.textSecondary,
-                      side: const BorderSide(color: AppTheme.borderSubtle),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
     );
   }
 

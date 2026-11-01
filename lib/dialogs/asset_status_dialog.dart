@@ -1,3 +1,4 @@
+import '../core/navigation/adaptive_navigation.dart';
 import 'package:flutter/material.dart';
 import '../models/asset_category.dart';
 import '../models/portfolio.dart';
@@ -8,7 +9,6 @@ import '../utils/formatters.dart';
 import '../widgets/asset_logo.dart';
 import '../models/return_mode.dart';
 import '../widgets/net_gross_badge.dart';
-import 'add_transaction_dialog.dart';
 import '../providers/portfolio_provider.dart';
 
 class AssetStatusDialog extends StatefulWidget {
@@ -16,11 +16,14 @@ class AssetStatusDialog extends StatefulWidget {
   final PortfolioAsset asset;
   final PortfolioProvider provider;
 
+  final bool isFullScreen;
+
   const AssetStatusDialog({
     super.key,
     required this.portfolio,
     required this.asset,
     required this.provider,
+    this.isFullScreen = false,
   });
 
   @override
@@ -70,6 +73,256 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     final isProfit = displayProfit >= 0;
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
+        if (widget.isFullScreen) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Row(
+            children: [
+              AssetLogo(
+                iconUrl: currentAsset.iconUrl,
+                symbol: currentAsset.symbol,
+                name: currentAsset.name,
+                category: currentAsset.category,
+                size: 32,
+                iconSize: 16,
+                borderRadius: 8,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      currentAsset.symbol,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      currentAsset.name,
+                      style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton.icon(
+              onPressed: () {
+                AdaptiveNavigation.openAddTransaction(
+                  context,
+                  portfolio: currentPortfolio,
+                  initialAsset: currentAsset,
+                );
+              },
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('İşlem Ekle'),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // ÖZET İSTATİSTİK KARTLARI
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceLight,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.borderSubtle),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: [
+                      _buildMetricItem(
+                        'Kalan Miktar',
+                      '${_formatQty(fifoResult.remainingQuantity)} Adet',
+                      icon: Icons.inventory_2_outlined,
+                    ),
+                    _buildDivider(),
+                    _buildMetricItem(
+                      'Ort. Kalan Maliyet',
+                      Formatters.currency(fifoResult.averageRemainingCost),
+                      icon: Icons.price_change_outlined,
+                    ),
+                    _buildDivider(),
+                    _buildMetricItem(
+                      'Güncel Fiyat',
+                      Formatters.currency(displayCurrentPrice),
+                      icon: Icons.show_chart_rounded,
+                      badge: (hasStopaj || mode == ReturnCalculationMode.reel)
+                          ? NetGrossBadge(mode: mode, fontSize: 8.5)
+                          : null,
+                    ),
+                    _buildDivider(),
+                    _buildMetricItem(
+                      'Kalan Kâr / Zarar',
+                      '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
+                      valueColor: profitColor,
+                      icon: Icons.insights_rounded,
+                      badge: (hasStopaj || mode == ReturnCalculationMode.reel)
+                          ? NetGrossBadge(mode: mode, fontSize: 8.5)
+                          : null,
+                    ),
+                    if (fifoResult.totalRealizedProfit != 0) ...[
+                      _buildDivider(),
+                      Builder(
+                        builder: (context) {
+                          final hasRealizedStopaj = currentAsset.category ==
+                                  AssetCategory.fon &&
+                              fifoResult.totalRealizedProfit > 0 &&
+                              currentAsset.effectiveWithholdingTaxRate > 0;
+                          final netRealized = fifoResult.totalRealizedProfit -
+                              fifoResult.totalRealizedProfit *
+                                  (currentAsset.effectiveWithholdingTaxRate / 100);
+                          final displayRealized =
+                              (hasRealizedStopaj && showNetValues)
+                                  ? netRealized
+                                  : fifoResult.totalRealizedProfit;
+
+                          return _buildMetricItem(
+                            'Gerçekleşen Kâr',
+                            Formatters.currency(displayRealized),
+                            valueColor: fifoResult.totalRealizedProfit >= 0
+                                ? AppTheme.profit
+                                : AppTheme.loss,
+                            icon: Icons.monetization_on_outlined,
+                            badge: hasRealizedStopaj
+                                ? NetGrossBadge(
+                                    isNet: showNetValues, fontSize: 8.5)
+                                : null,
+                          );
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+                ),
+              ),
+            ),
+
+            // TAB BUTONLARI (Alış Lotları / Satışlar)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 20, vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildTabButton(
+                      0,
+                      isMobile ? 'Alış Lotları' : 'Alış Lotları & Maliyetler',
+                      fifoResult.allLots.length,
+                      Icons.history_rounded,
+                      isMobile: isMobile,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildTabButton(
+                      1,
+                      isMobile ? 'Satış Geçmişi' : 'Satış & Gerçekleşen Kâr',
+                      fifoResult.saleRecords.length,
+                      Icons.sell_outlined,
+                      isMobile: isMobile,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // İÇERİK LİSTESİ
+            Expanded(
+              child: _selectedTab == 0
+                  ? _buildLotsTab(fifoResult, currentAsset, isMobile)
+                  : _buildSalesTab(fifoResult, currentAsset, isMobile),
+            ),
+
+            // ALT AKSİYON ÇUBUÄU
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
+              decoration: const BoxDecoration(
+                color: AppTheme.surfaceLight,
+                border: Border(
+                  top: BorderSide(color: AppTheme.borderSubtle),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 15,
+                    color: AppTheme.textMuted,
+                  ),
+                  const SizedBox(width: 6),
+                  const Expanded(
+                    child: Text(
+                      'Satış yapıldığında ilk alınan lotlardan otomatik düşülür (FIFO).',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      AdaptiveNavigation.openAddTransaction(
+      context,
+      portfolio: currentPortfolio,
+      initialAsset: currentAsset,
+    );
+                    },
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('İşlem Ekle'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      side: const BorderSide(color: AppTheme.primaryLight),
+                      foregroundColor: AppTheme.primaryLight,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.surface,
+                      foregroundColor: AppTheme.textPrimary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: const BorderSide(color: AppTheme.borderSubtle),
+                      ),
+                    ),
+                    child: const Text('Kapat'),
+                  ),
+                ],
+              ),
+            ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Dialog(
       insetPadding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 20, vertical: isMobile ? 8 : 16),
       child: Container(
@@ -82,7 +335,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
         ),
         child: Column(
           children: [
-            // ÜST BAÅLIK VE KAPAT BUTONU
             Padding(
               padding: const EdgeInsets.fromLTRB(22, 20, 20, 14),
               child: Row(
@@ -177,7 +429,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
               ),
             ),
             const Divider(color: AppTheme.borderSubtle, height: 1),
-
             // ÖZET İSTATİSTİK KARTLARI
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
@@ -326,19 +577,11 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   OutlinedButton.icon(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      showDialog(
-                        context: context,
-                        builder: (_) => AddTransactionDialog(
-                          portfolio: currentPortfolio,
-                          onSave: (tx, updateHoldings) {
-                            widget.provider.addTransaction(
-                              currentPortfolio.id,
-                              tx,
-                              updateHoldings: updateHoldings,
-                            );
-                          },
-                        ),
-                      );
+                      AdaptiveNavigation.openAddTransaction(
+      context,
+      portfolio: currentPortfolio,
+      initialAsset: currentAsset,
+    );
                     },
                     icon: const Icon(Icons.add, size: 16),
                     label: const Text('İşlem Ekle'),

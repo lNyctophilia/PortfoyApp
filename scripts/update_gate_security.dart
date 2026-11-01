@@ -8,7 +8,22 @@ void main() {
   stdout.writeln('   PortfoyApp Gate Security Config Generator');
   stdout.writeln('====================================================');
 
-  final projectRoot = Directory.current.path;
+  // Guvenilir sekilde proje kok dizinini bul
+  String projectRoot = Directory.current.path;
+  if (!File('$projectRoot/pubspec.yaml').existsSync()) {
+    final parentPath = Directory.current.parent.path;
+    if (File('$parentPath/pubspec.yaml').existsSync()) {
+      projectRoot = parentPath;
+    } else {
+      try {
+        final scriptDir = File(Platform.script.toFilePath()).parent;
+        if (File('${scriptDir.parent.path}/pubspec.yaml').existsSync()) {
+          projectRoot = scriptDir.parent.path;
+        }
+      } catch (_) {}
+    }
+  }
+
   final secretFilePath = '$projectRoot/gate_secret.json';
   final secretFile = File(secretFilePath);
 
