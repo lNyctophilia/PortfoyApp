@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 import '../models/asset_category.dart';
 import '../models/portfolio.dart';
 import '../models/portfolio_asset.dart';
@@ -11,6 +15,12 @@ import '../utils/fifo_calculator.dart';
 
 class PortfolioProvider extends ChangeNotifier {
   final StorageService _storageService = StorageService();
+  final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
+  StreamSubscription<User?>? _authSubscription;
+  bool _isSyncing = false;
+  DateTime? _lastSyncTime;
+  String? _syncError;
 
   List<Portfolio> _portfolios = [];
   bool _isLoading = true;
@@ -30,6 +40,11 @@ class PortfolioProvider extends ChangeNotifier {
   double get latestAnnualInflation => _latestAnnualInflation;
   PeriodInflationData? get periodInflation => _periodInflation;
   bool get isLoadingInflation => _isLoadingInflation;
+  User? get currentUser => _authService.currentUser;
+  bool get isSignedIn => _authService.isSignedIn;
+  bool get isSyncing => _isSyncing;
+  DateTime? get lastSyncTime => _lastSyncTime;
+  String? get syncError => _syncError;
 
   double getAssetInflation(String assetId) =>
       _assetInflationRates[assetId] ?? 0.0;
@@ -139,7 +154,112 @@ class PortfolioProvider extends ChangeNotifier {
       visiblePortfolios.fold(0, (sum, p) => sum + p.fundCount);
 
   PortfolioProvider() {
+    _initAuthListener();
     loadData();
+  }
+
+  void _initAuthListener() {
+    _authSubscription = _authService.authStateChanges.listen((user) {
+      if (user != null) {
+        syncWithCloud();
+      } else {
+        notifyListeners();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _persistPortfolios() async {
+    await _storageService.savePortfolios(_portfolios);
+    final user = _authService.currentUser;
+    if (user != null && _firestoreService.isFirebaseAvailable) {
+      _firestoreService.savePortfolios(user.uid, _portfolios).then((_) {
+        _lastSyncTime = DateTime.now();
+        notifyListeners();
+      }).catchError((e) {
+        debugPrint('Bulut senkronizasyon hatası: $e');
+      });
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    try {
+      _syncError = null;
+      notifyListeners();
+      final userCred = await _authService.signInWithGoogle();
+      if (userCred?.user != null) {
+        await syncWithCloud();
+      }
+    } catch (e) {
+      _syncError = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> signOut() async {
+    try {
+      _syncError = null;
+      await _authService.signOut();
+      notifyListeners();
+    } catch (e) {
+      _syncError = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> syncWithCloud() async {
+    final user = _authService.currentUser;
+    if (user == null || !_firestoreService.isFirebaseAvailable) return;
+
+    _isSyncing = true;
+    _syncError = null;
+    notifyListeners();
+
+    try {
+      final cloudPortfolios = await _firestoreService.loadPortfolios(user.uid);
+
+      if (cloudPortfolios.isNotEmpty) {
+        _portfolios = cloudPortfolios;
+        await _storageService.savePortfolios(_portfolios);
+        _backfillMissingAssetIcons();
+      } else if (_portfolios.isNotEmpty) {
+        await _firestoreService.savePortfolios(user.uid, _portfolios);
+      }
+
+      final cloudSettings = await _firestoreService.loadSettings(user.uid);
+      if (cloudSettings != null) {
+        final modeStr = cloudSettings['returnCalculationMode'] as String?;
+        if (modeStr != null) {
+          _returnMode = ReturnCalculationMode.values.firstWhere(
+            (e) => e.name == modeStr,
+            orElse: () => _returnMode,
+          );
+        }
+        if (cloudSettings.containsKey('showNetValuesWithholdingTax')) {
+          _showNetValues = cloudSettings['showNetValuesWithholdingTax'] as bool;
+        }
+      } else {
+        await _firestoreService.saveSettings(user.uid, {
+          'returnCalculationMode': _returnMode.name,
+          'showNetValuesWithholdingTax': _showNetValues,
+        });
+      }
+
+      _lastSyncTime = DateTime.now();
+    } catch (e) {
+      debugPrint('Bulut senkronizasyon hatası: $e');
+      _syncError = 'Senkronizasyon hatası: $e';
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
+    }
   }
 
   Future<void> loadData() async {
@@ -180,8 +300,15 @@ class PortfolioProvider extends ChangeNotifier {
     await _storageService.saveSettings({
       'returnCalculationMode': _returnMode.name,
       'showNetValuesWithholdingTax': _showNetValues,
-
     });
+
+    final user = _authService.currentUser;
+    if (user != null && _firestoreService.isFirebaseAvailable) {
+      _firestoreService.saveSettings(user.uid, {
+        'returnCalculationMode': _returnMode.name,
+        'showNetValuesWithholdingTax': _showNetValues,
+      });
+    }
 
     if (_returnMode == ReturnCalculationMode.reel) {
       await refreshInflationData();
@@ -280,7 +407,7 @@ class PortfolioProvider extends ChangeNotifier {
 
     if (hasChanges) {
       _portfolios = updatedPortfolios;
-      _storageService.savePortfolios(_portfolios);
+      _persistPortfolios();
     }
   }
 
@@ -303,7 +430,7 @@ class PortfolioProvider extends ChangeNotifier {
     );
 
     _portfolios.insert(0, newPortfolio);
-    await _storageService.savePortfolios(_portfolios);
+    await _persistPortfolios();
     notifyListeners();
   }
 
@@ -318,7 +445,7 @@ class PortfolioProvider extends ChangeNotifier {
         name: name,
         description: description,
       );
-      await _storageService.savePortfolios(_portfolios);
+      await _persistPortfolios();
       notifyListeners();
     }
   }
@@ -329,14 +456,14 @@ class PortfolioProvider extends ChangeNotifier {
       _portfolios[index] = _portfolios[index].copyWith(
         isVisible: !_portfolios[index].isVisible,
       );
-      await _storageService.savePortfolios(_portfolios);
+      await _persistPortfolios();
       notifyListeners();
     }
   }
 
   Future<void> deletePortfolio(String id) async {
     _portfolios.removeWhere((p) => p.id == id);
-    await _storageService.savePortfolios(_portfolios);
+    await _persistPortfolios();
     notifyListeners();
   }
 
@@ -346,7 +473,7 @@ class PortfolioProvider extends ChangeNotifier {
       final updatedAssets = List<PortfolioAsset>.from(_portfolios[index].assets)
         ..add(asset);
       _portfolios[index] = _portfolios[index].copyWith(assets: updatedAssets);
-      await _storageService.savePortfolios(_portfolios);
+      await _persistPortfolios();
       notifyListeners();
       refreshPortfolioPrices(portfolioId);
     }
@@ -360,7 +487,7 @@ class PortfolioProvider extends ChangeNotifier {
       if (aIndex != -1) {
         assets[aIndex] = updatedAsset;
         _portfolios[pIndex] = _portfolios[pIndex].copyWith(assets: assets);
-        await _storageService.savePortfolios(_portfolios);
+        await _persistPortfolios();
         notifyListeners();
         refreshPortfolioPrices(portfolioId);
       }
@@ -373,7 +500,7 @@ class PortfolioProvider extends ChangeNotifier {
       final assets = List<PortfolioAsset>.from(_portfolios[pIndex].assets)
         ..removeWhere((a) => a.id == assetId);
       _portfolios[pIndex] = _portfolios[pIndex].copyWith(assets: assets);
-      await _storageService.savePortfolios(_portfolios);
+      await _persistPortfolios();
       notifyListeners();
       refreshPortfolioPrices(portfolioId);
     }
@@ -478,7 +605,7 @@ class PortfolioProvider extends ChangeNotifier {
       transactions: updatedTransactions,
       assets: updatedAssets,
     );
-    await _storageService.savePortfolios(_portfolios);
+    await _persistPortfolios();
     notifyListeners();
     refreshPortfolioPrices(portfolioId);
   }
@@ -559,7 +686,7 @@ class PortfolioProvider extends ChangeNotifier {
       transactions: updatedTransactions,
       assets: updatedAssets,
     );
-    await _storageService.savePortfolios(_portfolios);
+    await _persistPortfolios();
     notifyListeners();
     refreshPortfolioPrices(portfolioId);
   }
@@ -614,7 +741,7 @@ class PortfolioProvider extends ChangeNotifier {
       }
 
       _portfolios = updatedPortfolios;
-      await _storageService.savePortfolios(_portfolios);
+      await _persistPortfolios();
     } catch (_) {
     } finally {
       _isRefreshing = false;
@@ -666,7 +793,7 @@ class PortfolioProvider extends ChangeNotifier {
       }
 
       _portfolios[pIndex] = portfolio.copyWith(assets: updatedAssets);
-      await _storageService.savePortfolios(_portfolios);
+      await _persistPortfolios();
     } catch (_) {
     } finally {
       _isRefreshing = false;

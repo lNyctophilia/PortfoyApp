@@ -32,6 +32,17 @@ class PortfolioCard extends StatefulWidget {
 class _PortfolioCardState extends State<PortfolioCard> {
   bool _isHovered = false;
 
+  void _setHovered(bool value) {
+    if (_isHovered == value) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _isHovered != value) {
+        setState(() {
+          _isHovered = value;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = widget.portfolio;
@@ -46,8 +57,8 @@ class _PortfolioCardState extends State<PortfolioCard> {
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,

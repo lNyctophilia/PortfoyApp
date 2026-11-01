@@ -107,7 +107,7 @@ class AssetItemTile extends StatelessWidget {
       child: Column(
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Varlık Logosu / İkonu
               AssetLogo(
@@ -128,12 +128,15 @@ class AssetItemTile extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          asset.symbol,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
+                        Flexible(
+                          child: Text(
+                            asset.symbol,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -232,47 +235,50 @@ class AssetItemTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 16),
 
               // Değer ve Kâr/Zarar
               Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (hasStopaj || mode == ReturnCalculationMode.reel) ...[
+                          NetGrossBadge(mode: mode),
+                          const SizedBox(width: 5),
+                        ],
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              Formatters.currency(displayValue),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerRight,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (hasStopaj || mode == ReturnCalculationMode.reel) ...[
-                            NetGrossBadge(mode: mode),
-                            const SizedBox(width: 5),
-                          ],
-                          Text(
-                            Formatters.currency(displayValue),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isProfit ? AppTheme.profitBg : AppTheme.lossBg,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerRight,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isProfit ? AppTheme.profitBg : AppTheme.lossBg,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                         child: Text(
                           mode == ReturnCalculationMode.reel
                               ? '${Formatters.currency(displayProfit)} (${Formatters.percent(displayPercent)}) • TÜFE: %${Formatters.percent(inflationRate)}'
@@ -288,7 +294,7 @@ class AssetItemTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 10),
 
               // Düzenle & Sil butonları
               Row(
@@ -298,50 +304,64 @@ class AssetItemTile extends StatelessWidget {
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     tooltip: 'Varlığı Düzenle',
                     color: AppTheme.textSecondary,
+                    hoverColor: AppTheme.primaryLight.withValues(alpha: 0.12),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(7),
+                    constraints: const BoxConstraints(),
                     onPressed: onEdit,
                   ),
+                  const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 18),
                     tooltip: 'Varlığı Sil',
                     color: AppTheme.loss,
+                    hoverColor: AppTheme.lossBg,
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(7),
+                    constraints: const BoxConstraints(),
                     onPressed: onDelete,
                   ),
                 ],
               ),
+              const SizedBox(width: 4),
             ],
           ),
 
-          // Dönemsel Değişimler
+          // Dönemsel Değişimler (Mobilde ve dar ekranda yatay kaydırılabilir)
           const Padding(
             padding: EdgeInsets.only(top: 12, bottom: 8),
             child: Divider(color: AppTheme.borderSubtle, height: 1),
           ),
-          Row(
-            children: [
-              _buildSmallStat('1G', statDailyPercent, statDailyProfit, mode),
-              if (asset.hasWeeklyData) ...[
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildSmallStat('1G', statDailyPercent, statDailyProfit, mode),
+                if (asset.hasWeeklyData) ...[
+                  const SizedBox(width: 4),
+                  _buildSmallStat('1H', statWeeklyPercent, statWeeklyProfit, mode),
+                ],
+                if (asset.hasMonthlyData) ...[
+                  const SizedBox(width: 4),
+                  _buildSmallStat('1A', statMonthlyPercent, statMonthlyProfit, mode),
+                ],
+                if (asset.hasThreeMonthlyData) ...[
+                  const SizedBox(width: 4),
+                  _buildSmallStat('3A', statThreeMonthlyPercent, statThreeMonthlyProfit, mode),
+                ],
+                if (asset.hasSixMonthlyData) ...[
+                  const SizedBox(width: 4),
+                  _buildSmallStat('6A', statSixMonthlyPercent, statSixMonthlyProfit, mode),
+                ],
+                if (asset.hasYearlyData) ...[
+                  const SizedBox(width: 4),
+                  _buildSmallStat('1Y', statYearlyPercent, statYearlyProfit, mode),
+                ],
                 const SizedBox(width: 4),
-                _buildSmallStat('1H', statWeeklyPercent, statWeeklyProfit, mode),
+                _buildSmallStat('Ömür', displayPercent, displayProfit, mode),
               ],
-              if (asset.hasMonthlyData) ...[
-                const SizedBox(width: 4),
-                _buildSmallStat('1A', statMonthlyPercent, statMonthlyProfit, mode),
-              ],
-              if (asset.hasThreeMonthlyData) ...[
-                const SizedBox(width: 4),
-                _buildSmallStat('3A', statThreeMonthlyPercent, statThreeMonthlyProfit, mode),
-              ],
-              if (asset.hasSixMonthlyData) ...[
-                const SizedBox(width: 4),
-                _buildSmallStat('6A', statSixMonthlyPercent, statSixMonthlyProfit, mode),
-              ],
-              if (asset.hasYearlyData) ...[
-                const SizedBox(width: 4),
-                _buildSmallStat('1Y', statYearlyPercent, statYearlyProfit, mode),
-              ],
-              const SizedBox(width: 4),
-              _buildSmallStat('Ömür', displayPercent, displayProfit, mode),
-            ],
+            ),
           ),
         ],
       ),

@@ -69,10 +69,11 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     final isProfit = displayProfit >= 0;
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
     final size = MediaQuery.sizeOf(context);
-    final dialogWidth = (size.width * 0.94).clamp(650.0, 1100.0);
-    final dialogHeight = (size.height * 0.90).clamp(520.0, 880.0);
+    final isMobile = size.width < 720;
+    final dialogWidth = isMobile ? size.width * 0.96 : (size.width * 0.94).clamp(650.0, 1100.0);
+    final dialogHeight = isMobile ? size.height * 0.95 : (size.height * 0.90).clamp(520.0, 880.0);
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      insetPadding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 20, vertical: isMobile ? 8 : 16),
       child: SizedBox(
         width: dialogWidth,
         height: dialogHeight,
@@ -170,9 +171,9 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(left: 24, right: 8, bottom: 20),
+                padding: EdgeInsets.only(left: isMobile ? 14 : 24, right: 8, bottom: isMobile ? 14 : 20),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(right: 16),
+                  padding: EdgeInsets.only(right: isMobile ? 8 : 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

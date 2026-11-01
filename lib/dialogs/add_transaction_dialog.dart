@@ -672,7 +672,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     final isAlis = _selectedType == TransactionType.alis;
 
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      insetPadding: EdgeInsets.symmetric(horizontal: MediaQuery.sizeOf(context).width < 600 ? 10 : 20, vertical: MediaQuery.sizeOf(context).width < 600 ? 10 : 16),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640),
         child: Form(
@@ -934,11 +934,15 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           ),
         ),
         const SizedBox(height: 8),
-        Row(
-          children: AssetCategory.values.map((cat) {
-            final isSelected = _alisCategory == cat;
-            return Expanded(
-              child: GestureDetector(
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: AssetCategory.values.map((cat) {
+              final isSelected = _alisCategory == cat;
+              return SizedBox(
+                width: 76,
+                child: GestureDetector(
                 onTap: () {
                   setState(() {
                     _alisDebounceTimer?.cancel();
@@ -994,6 +998,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               ),
             );
           }).toList(),
+          ),
         ),
         const SizedBox(height: 16),
 

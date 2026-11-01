@@ -51,8 +51,9 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     );
 
     final size = MediaQuery.sizeOf(context);
-    final dialogWidth = (size.width * 0.90).clamp(600.0, 840.0);
-    final dialogHeight = (size.height * 0.88).clamp(520.0, 780.0);
+    final isMobile = size.width < 700;
+    final dialogWidth = isMobile ? size.width * 0.96 : (size.width * 0.90).clamp(600.0, 840.0);
+    final dialogHeight = isMobile ? size.height * 0.95 : (size.height * 0.88).clamp(520.0, 780.0);
 
     final mode = widget.provider.returnMode;
     final inflationRate = widget.provider.getAssetInflation(currentAsset.id);
@@ -70,7 +71,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      insetPadding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 20, vertical: isMobile ? 8 : 16),
       child: Container(
         width: dialogWidth,
         height: dialogHeight,
@@ -185,10 +186,13 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: AppTheme.borderSubtle),
                 ),
-                child: Row(
-                  children: [
-                    _buildMetricItem(
-                      'Kalan Miktar',
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: [
+                      _buildMetricItem(
+                        'Kalan Miktar',
                       '${_formatQty(fifoResult.remainingQuantity)} Adet',
                       icon: Icons.inventory_2_outlined,
                     ),
@@ -249,6 +253,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                       ),
                     ],
                   ],
+                ),
                 ),
               ),
             ),

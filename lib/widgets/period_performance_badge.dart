@@ -157,20 +157,15 @@ class PeriodPerformanceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gap = compact ? 4.0 : 8.0;
-    final items = <Widget>[];
+    final metricTiles = <Widget>[];
 
     void addPeriod(String title, double? percent, double? amount) {
       if (percent == null) return;
-      if (items.isNotEmpty) {
-        items.add(SizedBox(width: gap));
-      }
-      items.add(
-        Expanded(
-          child: _buildMetricTile(
-            title: title,
-            percent: percent,
-            amount: amount,
-          ),
+      metricTiles.add(
+        _buildMetricTile(
+          title: title,
+          percent: percent,
+          amount: amount,
         ),
       );
     }
@@ -183,12 +178,45 @@ class PeriodPerformanceRow extends StatelessWidget {
     addPeriod(compact ? '1Y' : '1 Yıl', yearlyPercent, yearlyAmount);
     addPeriod(compact ? 'Ömür' : 'Ömür Boyu', allTimePercent, allTimeAmount);
 
-    if (items.isEmpty) {
+    if (metricTiles.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Row(
-      children: items,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final minRequiredWidth = metricTiles.length * (compact ? 44.0 : 82.0) + (metricTiles.length - 1) * gap;
+        // Eğer alan dar ise yatay kaydırılabilir yap (özellikle mobil telefonlar için)
+        if (constraints.maxWidth < minRequiredWidth || !compact) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int i = 0; i < metricTiles.length; i++) ...[
+                  if (i > 0) SizedBox(width: gap),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: compact ? 44 : 76,
+                    ),
+                    child: metricTiles[i],
+                  ),
+                ],
+              ],
+            ),
+          );
+        }
+
+        // Geniş ekranda tüm alana dengeli dağıt
+        return Row(
+          children: [
+            for (int i = 0; i < metricTiles.length; i++) ...[
+              if (i > 0) SizedBox(width: gap),
+              Expanded(child: metricTiles[i]),
+            ],
+          ],
+        );
+      },
     );
   }
 

@@ -45,7 +45,7 @@ extension ReturnCalculationModeExtension on ReturnCalculationMode {
       case ReturnCalculationMode.net:
         return 'Fon kârlarından yasal stopaj vergisi düşülmüş net tutarları gösterir.';
       case ReturnCalculationMode.reel:
-        return 'Bakiye ve kâr tutarını eksiltmeden, TÜFE enflasyonuna göre net getiri oranını (%) gösterir.';
+        return 'Enflasyona (TÜFE) göre net getiri oranını (%) gösterir.';
     }
   }
 

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'firebase_options.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -13,8 +15,15 @@ import 'models/return_mode.dart';
 import 'widgets/net_gross_badge.dart';
 import 'widgets/portfolio_card.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase başlatma uyarısı (Henüz yapılandırılmamış olabilir): $e');
+  }
   runApp(
     ChangeNotifierProvider(
       create: (_) => PortfolioProvider(),
@@ -184,11 +193,12 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
     return Scaffold(
-      body: Column(
+      body: SafeArea(
+        child: Column(
         children: [
           // ÜST BAŞLIK & İSTATİSTİK ŞERİDİ
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+            padding: EdgeInsets.symmetric(horizontal: MediaQuery.sizeOf(context).width < 600 ? 14 : 28, vertical: MediaQuery.sizeOf(context).width < 600 ? 12 : 16),
             decoration: const BoxDecoration(
               color: AppTheme.surface,
               border: Border(bottom: BorderSide(color: AppTheme.borderSubtle)),
@@ -201,6 +211,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                     provider.grandTotalRealizedWithholdingTax > 0;
                 final mode = provider.returnMode;
 
+                final isMobile = constraints.maxWidth < 700;
                 final summaryCards = [
                   _buildHeaderSummaryCard(
                     title: 'Toplam Portföy Değeri',
@@ -336,7 +347,73 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                   ),
                 );
 
-                if (isWide) {
+                if (isMobile) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Mobil Üst Aksiyon Çubuğu
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _showAddPortfolioDialog(context),
+                              icon: const Icon(Icons.add_rounded, size: 18),
+                              label: const Text(
+                                'Yeni Portföy',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          OutlinedButton(
+                            onPressed: provider.isRefreshing ? null : () => _refreshAllData(),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.all(10),
+                              side: const BorderSide(color: AppTheme.borderSubtle),
+                              foregroundColor: AppTheme.textPrimary,
+                            ),
+                            child: provider.isRefreshing
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.refresh_rounded, size: 18),
+                          ),
+                          const SizedBox(width: 8),
+                          OutlinedButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const SettingsScreen(),
+                                ),
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.all(10),
+                              side: const BorderSide(color: AppTheme.borderSubtle),
+                              foregroundColor: AppTheme.textPrimary,
+                            ),
+                            child: const Icon(Icons.settings_outlined, size: 18),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      summaryCards[0],
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(child: summaryCards[1]),
+                          const SizedBox(width: 10),
+                          Expanded(child: summaryCards[2]),
+                        ],
+                      ),
+                    ],
+                  );
+                } else if (isWide) {
                   return Row(
                     children: [
                       Expanded(
@@ -357,6 +434,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                 } else {
                   return SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
                     child: Row(
                       children: [
                         SizedBox(width: 250, child: summaryCards[0]),
@@ -390,14 +468,15 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                             crossAxisCount = 2;
                           }
 
+                          final isMobileScreen = constraints.maxWidth < 600;
                           return GridView.builder(
-                            padding: const EdgeInsets.all(28),
+                            padding: EdgeInsets.all(isMobileScreen ? 14 : 28),
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: crossAxisCount,
-                              crossAxisSpacing: 20,
-                              mainAxisSpacing: 20,
-                              mainAxisExtent: 345,
+                              crossAxisSpacing: isMobileScreen ? 12 : 20,
+                              mainAxisSpacing: isMobileScreen ? 12 : 20,
+                              mainAxisExtent: isMobileScreen ? 355 : 345,
                             ),
                             itemCount: portfolios.length,
                             itemBuilder: (context, index) {
@@ -442,6 +521,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                       ),
           ),
         ],
+      ),
       ),
     );
   }

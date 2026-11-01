@@ -38,8 +38,11 @@ Release/
 *.userosscache
 *.sln.docstates
 
-# Android
+# Android & APK Outputs
+*.apk
+*.aab
 **/android/.gradle
+**/android/.kotlin
 **/android/captures/
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
@@ -99,10 +102,24 @@ app.*.map.json
 *.env
 !*.env.example
 !*.env.template
+*.pem
+*.p12
+*.key
+
+# Firebase & Cloud Credentials
+firebase.json
+.firebaserc
+.firebase/
+lib/firebase_options.dart
+**/firebase_options.dart
+**/google-services.json
+**/GoogleService-Info.plist
 
 # ==========================================
 # Application Local Data & Caches
 # ==========================================
+app_settings.json
+inflation_cache.json
 portfolios_data.json
 logo_cache.json
 *.local.json

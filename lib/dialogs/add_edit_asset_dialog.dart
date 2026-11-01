@@ -411,7 +411,7 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
     final hasData = totalCost > 0;
 
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      insetPadding: EdgeInsets.symmetric(horizontal: MediaQuery.sizeOf(context).width < 600 ? 10 : 20, vertical: MediaQuery.sizeOf(context).width < 600 ? 10 : 16),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640),
         child: Form(
@@ -464,11 +464,15 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: AssetCategory.values.map((cat) {
-                      final isSelected = _selectedCategory == cat;
-                      return Expanded(
-                        child: GestureDetector(
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: AssetCategory.values.map((cat) {
+                        final isSelected = _selectedCategory == cat;
+                        return SizedBox(
+                          width: 76,
+                          child: GestureDetector(
                           onTap: () {
                             setState(() {
                               _debounceTimer?.cancel();
@@ -529,6 +533,7 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                         ),
                       );
                     }).toList(),
+                    ),
                   ),
                   const SizedBox(height: 16),
 
