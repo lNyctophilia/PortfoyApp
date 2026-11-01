@@ -117915,7 +117915,7 @@ A.M0.prototype={}
 A.aii.prototype={
 zE(){var s=0,r=A.x(t.DZ),q,p=2,o=[],n=this,m,l,k,j,i,h,g,f,e,d,c,b,a,a0,a1,a2
 var $async$zE=A.t(function(a3,a4){if(a3===1){o.push(a4)
-s=p}for(;;)switch(s){case 0:a=B.d.aA("Versiyon (01.11.2026-20.41)")
+s=p}for(;;)switch(s){case 0:a=B.d.aA("Versiyon (01.11.2026-20.48)")
 a0=n.aiA()
 g=a0.length,f=t.N,e=t.z,d=0
 case 3:if(!(d<a0.length)){s=5
@@ -119999,7 +119999,7 @@ m=A.bW(B.X,1)
 l=A.aq(16)
 k=A.bW(B.X,1)
 j=A.aq(15)
-return A.AY(a3,B.dp,A.e7(new A.dD(B.Sg,A.b2i(A.c([r,B.P8,new A.b4(B.oW,q,a1),new A.AI(a5,new A.aEj(a2),s,a1,t.Rq),B.P8,new A.b4(B.oW,o,a1),A.aM(a1,A.aP(A.c([A.aM(a1,A.uw(j,new A.zs(A.ba2(a1,a1,new A.Er("assets/icons/app_icon.png",a1,a1)),new A.aEk(),60,60,B.iq,a1),B.bL),B.k,a1,a1,new A.aI(a1,a1,k,l,a1,a1,B.u),a1,60,a1,a1,a1,a1,60),B.cq,B.aK4,B.e1,A.a5("Versiyon (01.11.2026-20.41)",a1,a1,a1,A.bX(a1,a1,B.ab.b5(0.55),a1,a1,a1,a1,a1,a1,a1,a1,12,a1,a1,B.a6,a1,a1,!0,a1,0.2,a1,a1,a1,a1,a1,a1),a1,a1,a1),B.cq,B.R7,B.fE,B.aCI,B.cq,B.aAq,B.fF,B.aJT],p),B.j,B.h,B.J),B.k,a1,a1,new A.aI(B.bi,a1,m,n,a1,a1,B.u),a1,a1,a1,B.Ze,a1,a1,1/0),B.P9],p),new A.a4(a4,20,a4,20),a1,a1,!1),a1),a1,a1),a1)},
+return A.AY(a3,B.dp,A.e7(new A.dD(B.Sg,A.b2i(A.c([r,B.P8,new A.b4(B.oW,q,a1),new A.AI(a5,new A.aEj(a2),s,a1,t.Rq),B.P8,new A.b4(B.oW,o,a1),A.aM(a1,A.aP(A.c([A.aM(a1,A.uw(j,new A.zs(A.ba2(a1,a1,new A.Er("assets/icons/app_icon.png",a1,a1)),new A.aEk(),60,60,B.iq,a1),B.bL),B.k,a1,a1,new A.aI(a1,a1,k,l,a1,a1,B.u),a1,60,a1,a1,a1,a1,60),B.cq,B.aK4,B.e1,A.a5("Versiyon (01.11.2026-20.48)",a1,a1,a1,A.bX(a1,a1,B.ab.b5(0.55),a1,a1,a1,a1,a1,a1,a1,a1,12,a1,a1,B.a6,a1,a1,!0,a1,0.2,a1,a1,a1,a1,a1,a1),a1,a1,a1),B.cq,B.R7,B.fE,B.aCI,B.cq,B.aAq,B.fF,B.aJT],p),B.j,B.h,B.J),B.k,a1,a1,new A.aI(B.bi,a1,m,n,a1,a1,B.u),a1,a1,a1,B.Ze,a1,a1,1/0),B.P9],p),new A.a4(a4,20,a4,20),a1,a1,!1),a1),a1,a1),a1)},
 Ks(a,b,c,d,e,f,g){var s,r=null,q=e.ay===d,p=q?B.U.b5(0.05):B.K,o=c.b5(0.12),n=A.aq(10)
 n=A.aM(r,A.d3(b,c,r,22),B.k,r,r,new A.aI(o,r,r,n,r,r,B.u),r,r,r,B.he,r,r,r)
 o=q?B.Q:B.aq
