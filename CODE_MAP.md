@@ -108,10 +108,9 @@
   - **Lines 29-37:** generateSessionToken() - Derives persistent browser authorization session token.
   - **Lines 38-50:** secureCompare() - Constant-time string equality checker preventing timing side-channel attacks.
 - **File:** `lib/features/auth_gate/widgets/auth_gate_card.dart`
-  - **Lines 1-50:** Imports, AuthGateCard declaration, controllers, focus node, and lockout countdown timer.
-  - **Lines 51-85:** _signInWithGoogle() - Direct Google Sign-In with Firestore database approval and automatic gate unlocking.
-  - **Lines 86-130:** _submit() method - Password validation, lockout checking, verification dispatch, and responsive error handling.
-  - **Lines 131-388:** build() method - Apple-minimalist card, lock shield icon, authentic Google Sign-In button, subtle divider, obscured textfield with reveal toggle, and submit button.
+  - **Lines 1-46:** Imports, AuthGateCard declaration, controllers, focus node, and lockout countdown timer.
+  - **Lines 47-92:** _submit() method - Password validation, lockout checking, verification dispatch, and responsive error handling.
+  - **Lines 93-274:** build() method - Apple-minimalist surface card, lock icon badge, obscured textfield with reveal toggle, and submit button.
 - **File:** `lib/features/auth_gate/widgets/auth_gate_wrapper.dart`
   - **Lines 1-74:** AuthGateWrapper stateful widget dynamically rendering PortfolioHomeScreen when authorized or AuthGateScreen when locked.
 - **File:** `lib/firebase_options.dart`
