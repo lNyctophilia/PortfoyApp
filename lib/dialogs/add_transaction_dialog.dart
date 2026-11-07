@@ -6,6 +6,7 @@ import '../models/portfolio_asset.dart';
 import '../models/portfolio_transaction.dart';
 import '../services/asset_catalog_service.dart';
 import '../services/market_data_service.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../utils/fifo_calculator.dart';
 import '../utils/formatters.dart';
@@ -55,9 +56,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   DateTime? _alisEarliestDate;
   String? _alisIconUrl;
   String _alisLastSymbol = '';
+  bool _alisHasSelectedAsset = false;
   bool _isAlisPurchasePriceManual = false;
   bool _isLoadingAlisMarketData = false;
-  String? _alisMarketDataStatus;
   Timer? _alisDebounceTimer;
 
   // SATIŞ DURUMU DEĞİŞKENLERİ
@@ -70,8 +71,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   DateTime? _satisEarliestDate;
   String? _satisIconUrl;
   bool _isSatisPriceManual = false;
-  bool _isLoadingSatisMarketData = false;
-  String? _satisMarketDataStatus;
 
   @override
   void initState() {
@@ -113,6 +112,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       _alisNameController.text = widget.initialAsset!.name;
       _alisIconUrl = widget.initialAsset!.iconUrl;
       _alisLastSymbol = widget.initialAsset!.symbol;
+      _alisHasSelectedAsset = true;
       _fetchAlisMarketData(widget.initialAsset!.symbol, forceHistoricalPrice: true);
     } else if (widget.portfolio.assets.isNotEmpty) {
       _selectExistingAsset(widget.portfolio.assets.first);
@@ -164,6 +164,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
   // --- ALIŞ FONKSİYONLARI ---
   void _clearAlisFetchedData() {
+    _alisHasSelectedAsset = false;
     _alisIconUrl = null;
     _alisNameController.clear();
     _alisCurrentPriceController.clear();
@@ -174,7 +175,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _alisThreeMonthlyChangeController.text = '0.0';
     _alisSixMonthlyChangeController.text = '0.0';
     _alisYearlyChangeController.text = '0.0';
-    _alisMarketDataStatus = null;
     _alisEarliestDate = null;
   }
 
@@ -185,7 +185,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       _alisNameController.text = suggestion.name;
       _alisIconUrl = suggestion.iconUrl;
       _alisLastSymbol = suggestion.symbol;
-      _alisMarketDataStatus = null;
+      _alisCategory = suggestion.category;
+      _alisHasSelectedAsset = true;
     });
     _fetchAlisMarketData(suggestion.symbol, forceHistoricalPrice: true);
   }
@@ -207,7 +208,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     if (symbol.trim().isEmpty) return;
     setState(() {
       _isLoadingAlisMarketData = true;
-      _alisMarketDataStatus = null;
     });
 
     final info = await MarketDataService.fetchAssetData(
@@ -234,6 +234,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           _alisDate = _alisEarliestDate!;
         }
         _alisLastSymbol = symbol.trim();
+        _alisHasSelectedAsset = true;
         _alisIconUrl = info.iconUrl;
         _alisNameController.text = info.name;
         _alisCurrentPriceController.text = _formatPrice(info.currentPrice);
@@ -253,18 +254,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 forceHistoricalPrice)) {
           _alisPurchasePriceController.text =
               _formatPrice(info.purchaseDatePrice!);
-          _alisMarketDataStatus =
-              '${Formatters.date(_alisDate)} tarihindeki fiyat (${_formatPrice(info.purchaseDatePrice!)} ₺) ve güncel veriler otomatik uygulandı.';
-        } else if (_isAlisPurchasePriceManual) {
-          _alisMarketDataStatus =
-              'Manuel girilen alış fiyatı korundu. Güncel piyasa verileri yüklendi.';
-        } else {
-          _alisMarketDataStatus =
-              'Anlık fiyat (${_formatPrice(info.currentPrice)} ₺) ve varlık detayları güncellendi.';
         }
-      } else {
-        _alisMarketDataStatus =
-            'Fiyat bilgisi bulunamadı. Lütfen manuel giriniz.';
       }
     });
   }
@@ -405,66 +395,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     }
   }
 
-  Widget _buildReadonlyPeriodBadge(String label, double val) {
-    final isPos = val >= 0;
-    final color = isPos ? AppTheme.profit : AppTheme.loss;
-    final bg = isPos ? AppTheme.profitBg : AppTheme.lossBg;
-    final sign = isPos ? '+' : '';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withValues(alpha: 0.35),
-          width: 1.2,
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textMuted,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 3),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isPos
-                      ? Icons.trending_up_rounded
-                      : Icons.trending_down_rounded,
-                  size: 13,
-                  color: color,
-                ),
-                const SizedBox(width: 2),
-                Text(
-                  '$sign${val.toStringAsFixed(2)}%',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // --- SATIŞ FONKSİYONLARI ---
   void _selectExistingAsset(PortfolioAsset asset) {
     setState(() {
@@ -492,11 +422,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     final clean = symbol.trim().toUpperCase();
     if (clean.length < 2) return;
 
-    setState(() {
-      _isLoadingSatisMarketData = true;
-      _satisMarketDataStatus = null;
-    });
-
     final info = await MarketDataService.fetchAssetData(
       category: category,
       symbol: clean,
@@ -506,7 +431,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     if (!mounted) return;
 
     setState(() {
-      _isLoadingSatisMarketData = false;
       if (info != null) {
         _satisEarliestDate = info.earliestDate;
         final now = DateTime.now();
@@ -524,19 +448,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         if (!_isSatisPriceManual && targetPrice > 0) {
           _satisPriceController.text = _formatPrice(targetPrice);
         }
-
-        if (_isSatisPriceManual) {
-          _satisMarketDataStatus =
-              'Manuel girilen fiyat korundu. (${Formatters.date(date)} piyasa: ${_formatPrice(targetPrice)} ₺)';
-        } else if (info.purchaseDatePrice != null) {
-          _satisMarketDataStatus =
-              '${Formatters.date(date)} tarihindeki fiyat (${_formatPrice(info.purchaseDatePrice!)} ₺) uygulandı.';
-        } else {
-          _satisMarketDataStatus =
-              'Güncel piyasa fiyatı (${_formatPrice(info.currentPrice)} ₺) uygulandı.';
-        }
-      } else {
-        _satisMarketDataStatus = 'Fiyat bilgisi bulunamadı.';
       }
     });
   }
@@ -950,115 +861,42 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   Widget _buildAlisForm() {
     final pPrice = _parseVal(_alisPurchasePriceController.text);
     final qty = _parseVal(_alisQuantityController.text);
-    final cPrice = _parseVal(_alisCurrentPriceController.text) > 0
-        ? _parseVal(_alisCurrentPriceController.text)
-        : pPrice;
-
     final totalCost = pPrice * qty;
-    final currentValue = cPrice * qty;
-    final totalProfit = currentValue - totalCost;
-    final profitPercent = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0.0;
-    final isProfit = totalProfit >= 0;
     final hasData = totalCost > 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Sembol ve İsim
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 480;
-            final symbolField = AssetSymbolAutocomplete(
-              controller: _alisSymbolController,
-              isLoading: _isLoadingAlisMarketData,
-              hintText: 'Örn: THYAO, TI2, BTC, USD, Altın...',
-              onChanged: _onAlisSymbolChanged,
-              onSelected: _onAlisSuggestionSelected,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Sembol girin' : null,
-            );
-            final nameField = TextFormField(
-              controller: _alisNameController,
-              decoration: const InputDecoration(
-                labelText: 'Varlık Adı *',
-                hintText: 'Örn: Türk Hava Yolları',
-                prefixIcon: Icon(Icons.badge_outlined),
-              ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Önerilerden bir varlık seçin' : null,
-            );
-            final logo = Padding(
-              padding: const EdgeInsets.only(top: 4, right: 10),
+        // Sembol ve Akıllı İsim Gösterimi
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
               child: AssetLogo(
                 iconUrl: _alisIconUrl,
-                symbol: _alisSymbolController.text.trim(),
-                name: _alisNameController.text.trim(),
+                symbol: _alisHasSelectedAsset ? _alisSymbolController.text.trim() : '',
+                name: _alisHasSelectedAsset ? _alisNameController.text.trim() : null,
                 category: _alisCategory,
                 size: 48,
                 iconSize: 24,
                 borderRadius: 12,
               ),
-            );
-
-            if (isNarrow) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      logo,
-                      Expanded(child: symbolField),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  nameField,
-                ],
-              );
-            }
-
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                logo,
-                Expanded(flex: 2, child: symbolField),
-                const SizedBox(width: 12),
-                Expanded(flex: 3, child: nameField),
-              ],
-            );
-          },
+            ),
+            Expanded(
+              child: AssetSymbolAutocomplete(
+                controller: _alisSymbolController,
+                assetName: _alisNameController.text,
+                isLoading: _isLoadingAlisMarketData,
+                hintText: 'Varlık ara...',
+                onChanged: _onAlisSymbolChanged,
+                onSelected: _onAlisSuggestionSelected,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Varlık seçin veya sembol girin' : null,
+              ),
+            ),
+          ],
         ),
-
-        // Otomatik Fiyat Bildirimi
-        if (_alisMarketDataStatus != null) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-              border:
-                  Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.auto_awesome_rounded,
-                    size: 14, color: AppTheme.primary),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    _alisMarketDataStatus!,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
 
         const SizedBox(height: 14),
 
@@ -1070,10 +908,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 onTap: _pickAlisDate,
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 14,
-                  ),
+                  height: 52,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceLight,
                     borderRadius: BorderRadius.circular(12),
@@ -1088,29 +924,15 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Alış Tarihi (Tıkla & Değiştir)',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppTheme.textMuted,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              Formatters.date(_alisDate),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                        child: Text(
+                          Formatters.date(_alisDate),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -1125,9 +947,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
-                  labelText: 'Alınan Adet / Miktar *',
-                  hintText: 'Örn: 100',
-                  prefixIcon: Icon(Icons.format_list_numbered_rounded),
+                  labelText: 'Adet',
+                  hintText: '0',
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Adet girin';
@@ -1140,7 +961,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         ),
         const SizedBox(height: 14),
 
-        // Alış Birim Fiyatı
+        // Alış Fiyatı
         TextFormField(
           controller: _alisPurchasePriceController,
           keyboardType:
@@ -1150,22 +971,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               _isAlisPurchasePriceManual = val.trim().isNotEmpty;
             });
           },
-          decoration: InputDecoration(
-            labelText: 'Alış Birim Fiyatı (₺) *',
+          decoration: const InputDecoration(
+            labelText: 'Alış Fiyatı',
             hintText: '0.00',
-            prefixIcon: const Icon(Icons.shopping_bag_outlined),
-            helperText: _isAlisPurchasePriceManual
-                ? 'Manuel girildi (otomatik yenilemede korunur)'
-                : 'Tarihe göre otomatik bulunur',
-            helperStyle: TextStyle(
-              fontSize: 10,
-              color: _isAlisPurchasePriceManual
-                  ? AppTheme.profit
-                  : AppTheme.textMuted,
-              fontWeight: _isAlisPurchasePriceManual
-                  ? FontWeight.w600
-                  : FontWeight.normal,
-            ),
+            prefixIcon: Icon(Icons.currency_lira_rounded),
           ),
           validator: (v) {
             if (v == null || v.trim().isEmpty) return 'Fiyat girin';
@@ -1175,205 +984,37 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         ),
         const SizedBox(height: 14),
 
-        // Canlı Değer ve Kâr Önizleme Paneli (Alış Tarihinden İtibaren Kâr Hesabı)
+        // Toplam Maliyet Paneli
         Container(
-          padding: const EdgeInsets.all(14),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: AppTheme.surfaceLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: hasData
-                  ? (isProfit
-                      ? AppTheme.profit.withValues(alpha: 0.3)
-                      : AppTheme.loss.withValues(alpha: 0.3))
-                  : AppTheme.borderSubtle,
-            ),
+            border: Border.all(color: AppTheme.borderSubtle),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    hasData
-                        ? (isProfit
-                            ? Icons.trending_up_rounded
-                            : Icons.trending_down_rounded)
-                        : Icons.analytics_outlined,
-                    size: 16,
-                    color: hasData
-                        ? (isProfit ? AppTheme.profit : AppTheme.loss)
-                        : AppTheme.textMuted,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      '${Formatters.date(_alisDate)} Alışından Bugüne (${Formatters.formatDuration(_alisDate)}) Getiri Hesabı:',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: hasData
-                            ? (isProfit ? AppTheme.profit : AppTheme.loss)
-                            : AppTheme.textMuted,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+              const Text(
+                'Toplam',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        const Text('Toplam Maliyet',
-                            style: TextStyle(
-                                fontSize: 11, color: AppTheme.textMuted)),
-                        const SizedBox(height: 2),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            hasData ? Formatters.currency(totalCost) : '-',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 13),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        const Text('Güncel Değer',
-                            style: TextStyle(
-                                fontSize: 11, color: AppTheme.textMuted)),
-                        const SizedBox(height: 2),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            hasData ? Formatters.currency(currentValue) : '-',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 13),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        const Text('Net Kâr / Zarar',
-                            style: TextStyle(
-                                fontSize: 11, color: AppTheme.textMuted)),
-                        const SizedBox(height: 2),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            hasData
-                                ? '${isProfit ? '+' : ''}${Formatters.currency(totalProfit)} (${Formatters.percent(profitPercent)})'
-                                : '-',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                              color: hasData
-                                  ? (isProfit
-                                      ? AppTheme.profit
-                                      : AppTheme.loss)
-                                  : AppTheme.textMuted,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 4),
+              Text(
+                hasData ? Formatters.currency(totalCost) : '0,00 ₺',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 14),
-
-        // Tarihsel Değişim Oranları (Günlük, Haftalık, Aylık, Yıllık %)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Tarihsel Değişim Yüzdeleri (%)',
-              style: TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceLight,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: AppTheme.borderSubtle),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.lock_outline_rounded,
-                      size: 12, color: AppTheme.textMuted),
-                  SizedBox(width: 4),
-                  Text(
-                    'Otomatik / Dokunulmaz',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 460;
-            if (isNarrow) {
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: [
-                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('Günlük', _parseVal(_alisDailyChangeController.text))),
-                    const SizedBox(width: 6),
-                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('Haftalık', _parseVal(_alisWeeklyChangeController.text))),
-                    const SizedBox(width: 6),
-                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('1 Aylık', _parseVal(_alisMonthlyChangeController.text))),
-                    const SizedBox(width: 6),
-                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('3 Aylık', _parseVal(_alisThreeMonthlyChangeController.text))),
-                    const SizedBox(width: 6),
-                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('6 Aylık', _parseVal(_alisSixMonthlyChangeController.text))),
-                    const SizedBox(width: 6),
-                    SizedBox(width: 72, child: _buildReadonlyPeriodBadge('Yıllık', _parseVal(_alisYearlyChangeController.text))),
-                  ],
-                ),
-              );
-            }
-            return Row(
-              children: [
-                Expanded(child: _buildReadonlyPeriodBadge('Günlük', _parseVal(_alisDailyChangeController.text))),
-                const SizedBox(width: 6),
-                Expanded(child: _buildReadonlyPeriodBadge('Haftalık', _parseVal(_alisWeeklyChangeController.text))),
-                const SizedBox(width: 6),
-                Expanded(child: _buildReadonlyPeriodBadge('1 Aylık', _parseVal(_alisMonthlyChangeController.text))),
-                const SizedBox(width: 6),
-                Expanded(child: _buildReadonlyPeriodBadge('3 Aylık', _parseVal(_alisThreeMonthlyChangeController.text))),
-                const SizedBox(width: 6),
-                Expanded(child: _buildReadonlyPeriodBadge('6 Aylık', _parseVal(_alisSixMonthlyChangeController.text))),
-                const SizedBox(width: 6),
-                Expanded(child: _buildReadonlyPeriodBadge('Yıllık', _parseVal(_alisYearlyChangeController.text))),
-              ],
-            );
-          },
         ),
       ],
     );
@@ -1413,25 +1054,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     final satisQty = _parseVal(_satisQuantityController.text);
     final satisPrice = _parseVal(_satisPriceController.text);
 
-    final fifoEst = _selectedExistingAsset != null && satisQty > 0
-        ? FifoCalculator.estimateSaleCost(
-            widget.portfolio,
-            _selectedExistingAsset!.symbol,
-            satisQty,
-            assetFallback: _selectedExistingAsset,
-          )
-        : null;
-
-    final double totalSatisCost = fifoEst != null && fifoEst.totalCost > 0
-        ? fifoEst.totalCost
-        : (satisQty * (_selectedExistingAsset?.purchasePrice ?? 0.0));
-    final double satisUnitCost =
-        satisQty > 0 ? (totalSatisCost / satisQty) : 0.0;
     final double totalSatisRevenue = satisQty * satisPrice;
-    final double totalSatisProfit = totalSatisRevenue - totalSatisCost;
-    final double satisProfitPercent =
-        totalSatisCost > 0 ? (totalSatisProfit / totalSatisCost) * 100 : 0.0;
-    final bool isProfit = totalSatisProfit >= 0;
     final bool hasData = satisQty > 0 && satisPrice > 0;
 
     return Column(
@@ -1475,67 +1098,62 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         const SizedBox(height: 14),
 
         // SEMBOL VE İSİM (Seçilen Varlık Bilgisi)
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 480;
-            final logo = Padding(
-              padding: const EdgeInsets.only(top: 4, right: 10),
-              child: AssetLogo(
-                iconUrl: _satisIconUrl,
-                symbol: _satisSymbolController.text.trim(),
-                name: _satisNameController.text.trim(),
-                category: _selectedExistingAsset?.category ?? AssetCategory.fon,
-                size: 48,
-                iconSize: 24,
-                borderRadius: 12,
+        if (_selectedExistingAsset != null) ...[
+          Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: AssetLogo(
+                  iconUrl: _satisIconUrl,
+                  symbol: _satisSymbolController.text.trim(),
+                  name: _satisNameController.text.trim(),
+                  category: _selectedExistingAsset?.category ?? AssetCategory.fon,
+                  size: 48,
+                  iconSize: 24,
+                  borderRadius: 12,
+                ),
               ),
-            );
-            final symbolField = TextFormField(
-              controller: _satisSymbolController,
-              readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Sembol',
-                filled: true,
-              ),
-            );
-            final nameField = TextFormField(
-              controller: _satisNameController,
-              readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Varlık Adı',
-                filled: true,
-              ),
-            );
-
-            if (isNarrow) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      logo,
-                      Expanded(child: symbolField),
-                    ],
+              Expanded(
+                child: Container(
+                  height: 52,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.borderSubtle),
                   ),
-                  const SizedBox(height: 12),
-                  nameField,
-                ],
-              );
-            }
-
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                logo,
-                Expanded(flex: 2, child: symbolField),
-                const SizedBox(width: 12),
-                Expanded(flex: 3, child: nameField),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 14),
+                  alignment: Alignment.centerLeft,
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: _satisSymbolController.text.trim(),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        if (_satisNameController.text.trim().isNotEmpty)
+                          TextSpan(
+                            text: ' (${_satisNameController.text.trim()})',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.normal,
+                              color: AppColors.textSecondary.withValues(alpha: 0.65),
+                            ),
+                          ),
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+        ],
 
         // MİKTAR VE SATIŞ FİYATI
         Row(
@@ -1546,10 +1164,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
-                  labelText: 'Satılan Adet *',
+                  labelText: 'Adet',
                   hintText: '0',
                   helperText: _selectedExistingAsset != null
-                      ? 'Portföydeki Mevcut: ${_formatNumber(_selectedExistingAsset!.quantity)}'
+                      ? 'Portföydeki: ${_formatNumber(_selectedExistingAsset!.quantity)}'
                       : null,
                 ),
                 validator: (v) {
@@ -1574,46 +1192,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                     _isSatisPriceManual = val.trim().isNotEmpty;
                   });
                 },
-                decoration: InputDecoration(
-                  labelText: 'Satış Fiyatı (₺) *',
+                decoration: const InputDecoration(
+                  labelText: 'Satış Fiyatı',
                   hintText: '0.00',
-                  helperText: _isSatisPriceManual
-                      ? 'Manuel girildi'
-                      : 'Piyasa fiyatı',
-                  helperStyle: TextStyle(
-                    fontSize: 10,
-                    color: _isSatisPriceManual
-                        ? AppTheme.profit
-                        : AppTheme.textMuted,
-                    fontWeight: _isSatisPriceManual
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                  ),
-                  suffixIcon: _isLoadingSatisMarketData
-                      ? const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppTheme.profit,
-                            ),
-                          ),
-                        )
-                      : IconButton(
-                          icon: const Icon(Icons.sync_rounded, size: 18),
-                          tooltip: 'Seçili tarihteki fiyatı tekrar getir',
-                          onPressed: () {
-                            if (_selectedExistingAsset != null) {
-                              _fetchSatisMarketPriceForDate(
-                                symbol: _selectedExistingAsset!.symbol,
-                                category: _selectedExistingAsset!.category,
-                                date: _satisDate,
-                              );
-                            }
-                          },
-                        ),
+                  prefixIcon: Icon(Icons.currency_lira_rounded),
                 ),
                 validator: (v) =>
                     _parseVal(v ?? '') <= 0 ? 'Geçerli fiyat girin' : null,
@@ -1626,226 +1208,69 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         // İŞLEM TARİHİ
         InkWell(
           onTap: _pickSatisDate,
-          child: InputDecorator(
-            decoration: const InputDecoration(
-              labelText: 'İşlem Tarihi',
-              suffixIcon: Icon(Icons.calendar_today_rounded, size: 18),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLight,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.borderSubtle),
             ),
-            child: Text(
-              Formatters.date(_satisDate),
-              style: const TextStyle(fontSize: 14),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.calendar_today_rounded,
+                  size: 18,
+                  color: AppTheme.profit,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    Formatters.date(_satisDate),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-
-        if (_isLoadingSatisMarketData) ...[
-          const SizedBox(height: 8),
-          const Row(
-            children: [
-              SizedBox(
-                width: 13,
-                height: 13,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppTheme.profit,
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Seçili tarihe göre satış fiyatı güncelleniyor...',
-                style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-              ),
-            ],
-          ),
-        ] else if (_satisMarketDataStatus != null) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.info_outline_rounded,
-                  size: 14, color: AppTheme.profit),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  _satisMarketDataStatus!,
-                  style: const TextStyle(
-                      fontSize: 12, color: AppTheme.textSecondary),
-                ),
-              ),
-            ],
-          ),
-        ],
-
         const SizedBox(height: 14),
 
-        // Canlı Değer ve Kâr Önizleme Paneli (Satış İşlemi Özeti)
+        // Toplam Satış Tutarı Paneli
         Container(
-          padding: const EdgeInsets.all(14),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: AppTheme.surfaceLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: hasData
-                  ? (isProfit
-                      ? AppTheme.profit.withValues(alpha: 0.3)
-                      : AppTheme.loss.withValues(alpha: 0.3))
-                  : AppTheme.borderSubtle,
-            ),
+            border: Border.all(color: AppTheme.borderSubtle),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    hasData
-                        ? (isProfit
-                            ? Icons.trending_up_rounded
-                            : Icons.trending_down_rounded)
-                        : Icons.analytics_outlined,
-                    size: 16,
-                    color: hasData
-                        ? (isProfit ? AppTheme.profit : AppTheme.loss)
-                        : AppTheme.textMuted,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      '${Formatters.date(_satisDate)} Satış İşlemi Özeti & Kâr Hesabı:',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: hasData
-                            ? (isProfit ? AppTheme.profit : AppTheme.loss)
-                            : AppTheme.textMuted,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+              const Text(
+                'Toplam',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        const Text('Toplam Maliyet (FIFO)',
-                            style: TextStyle(
-                                fontSize: 11, color: AppTheme.textMuted)),
-                        const SizedBox(height: 2),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            hasData ? Formatters.currency(totalSatisCost) : '-',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 13),
-                          ),
-                        ),
-                        if (hasData && satisUnitCost > 0)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text(
-                              'Birim: ${Formatters.currency(satisUnitCost)}',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: AppTheme.textMuted,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        const Text('Toplam Satış Tutarı',
-                            style: TextStyle(
-                                fontSize: 11, color: AppTheme.textMuted)),
-                        const SizedBox(height: 2),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            hasData ? Formatters.currency(totalSatisRevenue) : '-',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 13),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        const Text('Net Kâr / Zarar',
-                            style: TextStyle(
-                                fontSize: 11, color: AppTheme.textMuted)),
-                        const SizedBox(height: 2),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Builder(
-                            builder: (context) {
-                              final hasStopaj = hasData &&
-                                  _selectedExistingAsset?.category ==
-                                      AssetCategory.fon &&
-                                  totalSatisProfit > 0 &&
-                                  _selectedExistingAsset!
-                                          .effectiveWithholdingTaxRate >
-                                      0;
-                              final stopajRate = _selectedExistingAsset
-                                      ?.effectiveWithholdingTaxRate ??
-                                  0.0;
-                              final netProfit = hasStopaj
-                                  ? totalSatisProfit -
-                                      totalSatisProfit * (stopajRate / 100)
-                                  : totalSatisProfit;
-                              final netPct = (hasStopaj && totalSatisCost > 0)
-                                  ? (netProfit / totalSatisCost) * 100
-                                  : satisProfitPercent;
-                              final isNetProfit = netProfit >= 0;
-
-                              return Text(
-                                hasData
-                                    ? '${isNetProfit ? '+' : ''}${Formatters.currency(netProfit)} (${Formatters.percent(netPct)})'
-                                    : '-',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                  color: hasData
-                                      ? (isNetProfit
-                                          ? AppTheme.profit
-                                          : AppTheme.loss)
-                                      : AppTheme.textMuted,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        if (hasData &&
-                            _selectedExistingAsset?.category ==
-                                AssetCategory.fon &&
-                            totalSatisProfit > 0 &&
-                            _selectedExistingAsset!
-                                    .effectiveWithholdingTaxRate >
-                                0)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                'Brüt: ${Formatters.currency(totalSatisProfit)}',
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppTheme.textMuted,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 4),
+              Text(
+                hasData ? Formatters.currency(totalSatisRevenue) : '0,00 ₺',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
           ),

@@ -600,6 +600,9 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                         controller: _symbolController,
                         category: _selectedCategory,
                         isLoading: _isLoadingMarketData,
+                        labelText: 'Kod / Sembol *',
+                        prefixIcon: const Icon(Icons.tag_rounded),
+                        showRefreshButton: true,
                         hintText: _selectedCategory == AssetCategory.fon
                             ? 'Örn: TI2 / Fon adı'
                             : _selectedCategory == AssetCategory.hisse

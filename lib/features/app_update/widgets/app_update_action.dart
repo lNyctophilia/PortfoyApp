@@ -190,16 +190,7 @@ class _AppUpdateActionState extends State<AppUpdateAction> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      const Text(
-                        'Önbellek temizlenerek uygulama en yeni sürüme güncellenecek.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                       Row(
                         children: [
                           Expanded(

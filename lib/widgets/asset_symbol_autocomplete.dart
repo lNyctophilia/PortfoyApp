@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/asset_category.dart';
 import '../services/asset_catalog_service.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'asset_logo.dart';
 
@@ -14,6 +15,10 @@ class AssetSymbolAutocomplete extends StatefulWidget {
   final bool isLoading;
   final String? Function(String?)? validator;
   final String? hintText;
+  final String? labelText;
+  final Widget? prefixIcon;
+  final bool showRefreshButton;
+  final String? assetName;
   final ValueChanged<String>? onChanged;
 
   const AssetSymbolAutocomplete({
@@ -25,6 +30,10 @@ class AssetSymbolAutocomplete extends StatefulWidget {
     this.isLoading = false,
     this.validator,
     this.hintText,
+    this.labelText,
+    this.prefixIcon,
+    this.showRefreshButton = false,
+    this.assetName,
     this.onChanged,
   });
 
@@ -58,6 +67,9 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
         _hideOverlay();
       }
     }
+    if (oldWidget.assetName != widget.assetName) {
+      setState(() {});
+    }
   }
 
   @override
@@ -71,6 +83,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
   }
 
   void _onFocusChanged() {
+    setState(() {});
     if (_focusNode.hasFocus) {
       if (widget.controller.text.trim().isNotEmpty) {
         _performSearch(widget.controller.text);
@@ -384,6 +397,11 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
 
   @override
   Widget build(BuildContext context) {
+    final showInlineName = !_focusNode.hasFocus &&
+        widget.assetName != null &&
+        widget.assetName!.trim().isNotEmpty &&
+        widget.controller.text.trim().isNotEmpty;
+
     return CompositedTransformTarget(
       link: _layerLink,
       child: TextFormField(
@@ -392,9 +410,24 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
         textCapitalization: TextCapitalization.characters,
         onChanged: widget.onChanged,
         decoration: InputDecoration(
-          labelText: 'Kod / Sembol *',
-          hintText: widget.hintText,
-          prefixIcon: const Icon(Icons.tag_rounded),
+          labelText: widget.labelText,
+          hintText: widget.hintText ?? 'Varlık ara...',
+          prefixIcon: widget.prefixIcon ?? const Icon(Icons.help_outline_rounded, size: 20),
+          suffix: showInlineName
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Text(
+                    '(${widget.assetName!.trim()})',
+                    style: TextStyle(
+                      color: AppColors.textSecondary.withValues(alpha: 0.65),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.normal,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                )
+              : null,
           suffixIcon: widget.isLoading
               ? const Padding(
                   padding: EdgeInsets.all(12),
@@ -407,11 +440,13 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                     ),
                   ),
                 )
-              : IconButton(
-                  tooltip: 'Otomatik Fiyat & Bilgi Getir',
-                  icon: const Icon(Icons.sync_rounded, size: 20),
-                  onPressed: widget.onFetchManual,
-                ),
+              : (widget.showRefreshButton && widget.onFetchManual != null)
+                  ? IconButton(
+                      tooltip: 'Otomatik Fiyat & Bilgi Getir',
+                      icon: const Icon(Icons.sync_rounded, size: 20),
+                      onPressed: widget.onFetchManual,
+                    )
+                  : null,
         ),
         validator: widget.validator,
       ),

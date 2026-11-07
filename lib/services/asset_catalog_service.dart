@@ -261,6 +261,79 @@ class AssetCatalogService {
         .replaceAll('ç', 'c');
   }
 
+  /// Bilinen sabit katalogdan sembol tam eşleşmesi bulur
+  static AssetSuggestion? findCurated(String symbol) {
+    final sym = symbol.trim().toUpperCase();
+    if (sym.isEmpty) return null;
+
+    // 1. Hisseler
+    for (final s in _knownStocks) {
+      if (s['symbol']!.toUpperCase() == sym) {
+        return AssetSuggestion(
+          symbol: s['symbol']!,
+          name: s['name']!,
+          category: AssetCategory.hisse,
+          iconUrl: MarketDataService.getKnownAssetLogo(s['symbol']!, AssetCategory.hisse, s['name']),
+          subtitle: s['sub'],
+        );
+      }
+    }
+
+    // 2. Fonlar
+    for (final f in _knownFunds) {
+      if (f['code']!.toUpperCase() == sym) {
+        return AssetSuggestion(
+          symbol: f['code']!,
+          name: f['name']!,
+          category: AssetCategory.fon,
+          iconUrl: MarketDataService.resolveFundLogo(f['code']!, f['name']!),
+          subtitle: f['sub'],
+        );
+      }
+    }
+
+    // 3. Kriptolar
+    for (final c in _knownCryptos) {
+      if (c['symbol']!.toUpperCase() == sym) {
+        return AssetSuggestion(
+          symbol: c['symbol']!,
+          name: c['name']!,
+          category: AssetCategory.kripto,
+          iconUrl: MarketDataService.getKnownAssetLogo(c['symbol']!, AssetCategory.kripto, c['name']),
+          subtitle: c['sub'],
+        );
+      }
+    }
+
+    // 4. Emtia
+    for (final cm in _knownCommodities) {
+      if (cm['symbol']!.toUpperCase() == sym) {
+        return AssetSuggestion(
+          symbol: cm['symbol']!,
+          name: cm['name']!,
+          category: AssetCategory.emtia,
+          iconUrl: MarketDataService.getKnownAssetLogo(cm['symbol']!, AssetCategory.emtia, cm['name']),
+          subtitle: cm['sub'],
+        );
+      }
+    }
+
+    // 5. Döviz
+    for (final cu in _knownCurrencies) {
+      if (cu['symbol']!.toUpperCase() == sym) {
+        return AssetSuggestion(
+          symbol: cu['symbol']!,
+          name: cu['name']!,
+          category: AssetCategory.doviz,
+          iconUrl: MarketDataService.getKnownAssetLogo(cu['symbol']!, AssetCategory.doviz, cu['name']),
+          subtitle: cu['sub'],
+        );
+      }
+    }
+
+    return null;
+  }
+
   /// Kategoriye göre veya tüm kategorilerde varlık ara ve öneri listesi üret
   static Future<List<AssetSuggestion>> search({
     AssetCategory? category,
@@ -296,8 +369,16 @@ class AssetCatalogService {
     ]);
 
     final combined = <AssetSuggestion>[];
+    final seen = <String>{};
+
     for (final list in searchFutures) {
-      combined.addAll(list);
+      for (final item in list) {
+        final key = item.symbol.trim().toUpperCase();
+        if (!seen.contains(key)) {
+          seen.add(key);
+          combined.add(item);
+        }
+      }
     }
 
     // Alaka düzeyine göre sırala:
@@ -434,25 +515,50 @@ class AssetCatalogService {
           for (final item in list) {
             if (item is Map<String, dynamic>) {
               final type = (item['type'] as String?)?.toLowerCase();
-              if (type == 'stock' || type == 'fund' || type == 'dr') {
-                final sym = (item['symbol'] as String?)?.toUpperCase() ?? '';
-                final desc = (item['description'] as String?) ?? sym;
-                final logoid = item['logoid'] as String?;
-                if (sym.isNotEmpty && !seen.contains(sym)) {
-                  seen.add(sym);
-                  final logoUrl = (logoid != null && logoid.isNotEmpty)
-                      ? 'https://s3-symbol-logo.tradingview.com/$logoid.svg'
-                      : MarketDataService.getKnownAssetLogo(sym, AssetCategory.hisse, desc);
-
-                  results.add(AssetSuggestion(
-                    symbol: sym,
-                    name: desc,
-                    category: AssetCategory.hisse,
-                    iconUrl: logoUrl,
-                    subtitle: 'BIST • ${item['exchange'] ?? 'Hisse'}',
-                  ));
-                }
+              if (type == 'futures' || type == 'index' || type == 'war' || type == 'warrant') {
+                continue;
               }
+              final sym = (item['symbol'] as String?)?.toUpperCase() ?? '';
+              if (sym.isEmpty || seen.contains(sym)) continue;
+              seen.add(sym);
+
+              final curated = findCurated(sym);
+              if (curated != null) {
+                results.add(curated);
+                continue;
+              }
+
+              final desc = (item['description'] as String?) ?? sym;
+              final logoid = item['logoid'] as String?;
+              final ex = item['exchange'] as String? ?? 'BIST';
+
+              AssetCategory itemCat = AssetCategory.hisse;
+              String sub = '$ex • Hisse';
+              if (type == 'fund' || type == 'etf') {
+                itemCat = AssetCategory.fon;
+                sub = '$ex • Fon';
+              } else if (type == 'crypto') {
+                itemCat = AssetCategory.kripto;
+                sub = 'Kripto Para';
+              } else if (type == 'forex' || type == 'currency') {
+                itemCat = AssetCategory.doviz;
+                sub = 'Döviz';
+              } else if (type == 'commodity') {
+                itemCat = AssetCategory.emtia;
+                sub = 'Emtia';
+              }
+
+              final logoUrl = (logoid != null && logoid.isNotEmpty)
+                  ? 'https://s3-symbol-logo.tradingview.com/$logoid.svg'
+                  : MarketDataService.getKnownAssetLogo(sym, itemCat, desc);
+
+              results.add(AssetSuggestion(
+                symbol: sym,
+                name: desc,
+                category: itemCat,
+                iconUrl: logoUrl,
+                subtitle: sub,
+              ));
             }
           }
         }
@@ -471,26 +577,50 @@ class AssetCatalogService {
             for (final item in list) {
               if (item is Map<String, dynamic>) {
                 final type = (item['type'] as String?)?.toLowerCase();
-                if (type == 'stock') {
-                  final sym = (item['symbol'] as String?)?.toUpperCase() ?? '';
-                  final desc = (item['description'] as String?) ?? sym;
-                  final ex = item['exchange'] as String? ?? 'Yabancı';
-                  final logoid = item['logoid'] as String?;
-                  if (sym.isNotEmpty && !seen.contains(sym)) {
-                    seen.add(sym);
-                    final logoUrl = (logoid != null && logoid.isNotEmpty)
-                        ? 'https://s3-symbol-logo.tradingview.com/$logoid.svg'
-                        : MarketDataService.getKnownAssetLogo(sym, AssetCategory.hisse, desc);
-
-                    results.add(AssetSuggestion(
-                      symbol: sym,
-                      name: desc,
-                      category: AssetCategory.hisse,
-                      iconUrl: logoUrl,
-                      subtitle: '$ex • Hisse',
-                    ));
-                  }
+                if (type == 'futures' || type == 'index' || type == 'war' || type == 'warrant') {
+                  continue;
                 }
+                final sym = (item['symbol'] as String?)?.toUpperCase() ?? '';
+                if (sym.isEmpty || seen.contains(sym)) continue;
+                seen.add(sym);
+
+                final curated = findCurated(sym);
+                if (curated != null) {
+                  results.add(curated);
+                  continue;
+                }
+
+                final desc = (item['description'] as String?) ?? sym;
+                final ex = item['exchange'] as String? ?? 'Yabancı';
+                final logoid = item['logoid'] as String?;
+
+                AssetCategory itemCat = AssetCategory.hisse;
+                String sub = '$ex • Hisse';
+                if (type == 'fund' || type == 'etf') {
+                  itemCat = AssetCategory.fon;
+                  sub = '$ex • Fon';
+                } else if (type == 'crypto') {
+                  itemCat = AssetCategory.kripto;
+                  sub = 'Kripto Para';
+                } else if (type == 'forex' || type == 'currency') {
+                  itemCat = AssetCategory.doviz;
+                  sub = 'Döviz';
+                } else if (type == 'commodity') {
+                  itemCat = AssetCategory.emtia;
+                  sub = 'Emtia';
+                }
+
+                final logoUrl = (logoid != null && logoid.isNotEmpty)
+                    ? 'https://s3-symbol-logo.tradingview.com/$logoid.svg'
+                    : MarketDataService.getKnownAssetLogo(sym, itemCat, desc);
+
+                results.add(AssetSuggestion(
+                  symbol: sym,
+                  name: desc,
+                  category: itemCat,
+                  iconUrl: logoUrl,
+                  subtitle: sub,
+                ));
               }
             }
           }
