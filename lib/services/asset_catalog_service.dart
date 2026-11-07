@@ -261,9 +261,9 @@ class AssetCatalogService {
         .replaceAll('ç', 'c');
   }
 
-  /// Kategoriye göre varlık ara ve öneri listesi üret
+  /// Kategoriye göre veya tüm kategorilerde varlık ara ve öneri listesi üret
   static Future<List<AssetSuggestion>> search({
-    required AssetCategory category,
+    AssetCategory? category,
     required String query,
   }) async {
     final cleanQ = _cleanText(query);
@@ -271,18 +271,62 @@ class AssetCatalogService {
       return [];
     }
 
-    switch (category) {
-      case AssetCategory.fon:
-        return _searchFunds(cleanQ);
-      case AssetCategory.hisse:
-        return _searchStocks(cleanQ);
-      case AssetCategory.kripto:
-        return _searchCryptos(cleanQ);
-      case AssetCategory.emtia:
-        return _searchCommodities(cleanQ);
-      case AssetCategory.doviz:
-        return _searchCurrencies(cleanQ);
+    if (category != null) {
+      switch (category) {
+        case AssetCategory.fon:
+          return _searchFunds(cleanQ);
+        case AssetCategory.hisse:
+          return _searchStocks(cleanQ);
+        case AssetCategory.kripto:
+          return _searchCryptos(cleanQ);
+        case AssetCategory.emtia:
+          return _searchCommodities(cleanQ);
+        case AssetCategory.doviz:
+          return _searchCurrencies(cleanQ);
+      }
     }
+
+    // category == null: tüm kategorilerde eşzamanlı ara
+    final searchFutures = await Future.wait([
+      _searchStocks(cleanQ),
+      _searchFunds(cleanQ),
+      _searchCryptos(cleanQ),
+      _searchCommodities(cleanQ),
+      _searchCurrencies(cleanQ),
+    ]);
+
+    final combined = <AssetSuggestion>[];
+    for (final list in searchFutures) {
+      combined.addAll(list);
+    }
+
+    // Alaka düzeyine göre sırala:
+    // 1. Sembol tam eşleşme
+    // 2. Sembol ile başlayanlar
+    // 3. İsim başlangıç eşleşmesi
+    // 4. İçerenler
+    combined.sort((a, b) {
+      final aSym = _cleanText(a.symbol);
+      final bSym = _cleanText(b.symbol);
+      final aName = _cleanText(a.name);
+      final bName = _cleanText(b.name);
+
+      final aExact = aSym == cleanQ;
+      final bExact = bSym == cleanQ;
+      if (aExact != bExact) return aExact ? -1 : 1;
+
+      final aSymStarts = aSym.startsWith(cleanQ);
+      final bSymStarts = bSym.startsWith(cleanQ);
+      if (aSymStarts != bSymStarts) return aSymStarts ? -1 : 1;
+
+      final aNameStarts = aName.startsWith(cleanQ);
+      final bNameStarts = bName.startsWith(cleanQ);
+      if (aNameStarts != bNameStarts) return aNameStarts ? -1 : 1;
+
+      return 0;
+    });
+
+    return combined.take(35).toList();
   }
 
   // Fon arama

@@ -45,18 +45,18 @@
   - **Lines 51-122:** _buildFormFields() - Input fields (name, description), validation, and action buttons.
   - **Lines 123-182:** build() method - Adaptive layout rendering as a draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog shell on desktop.
 - **File:** `lib/dialogs/add_transaction_dialog.dart`
-  - **Lines 1-75:** Imports, AddTransactionDialog declaration with isFullScreen flag, initialAsset, initialType, and state variables.
-  - **Lines 76-155:** initState(), dispose(), price/number parsing and formatting helpers.
-  - **Lines 156-270:** Buy (Alis) transaction logic: autocomplete selection, debounced symbol changes, market data fetching.
-  - **Lines 271-405:** Custom calendar picker dialog (_showCalendarPicker()) and buy date selection (_pickAlisDate()).
-  - **Lines 406-465:** _buildReadonlyPeriodBadge() - Read-only badges for period performance.
-  - **Lines 466-583:** Sell (Satis) transaction logic: asset selection from portfolio, historical price lookup, and date picker.
-  - **Lines 584-674:** _saveTransaction() - FIFO validation, cost estimation, transaction persistence, and asset updating.
-  - **Lines 675-768:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop.
-  - **Lines 769-792:** _buildDesktopHeader() - PC header row with icon, title, subtitle, and close button.
-  - **Lines 793-970:** _buildFormContent() - Form switcher (Alis/Satis tabs) and actions.
-  - **Lines 971-1538:** _buildAlisForm() - Form fields for purchasing assets.
-  - **Lines 1539-2015:** _buildSatisForm() - Form fields for selling assets.
+  - **Lines 1-74:** Imports, AddTransactionDialog declaration with isFullScreen flag, initialAsset, initialType, and state variables.
+  - **Lines 75-154:** initState(), dispose(), price/number parsing and formatting helpers.
+  - **Lines 155-257:** Buy (Alis) transaction logic: suggestion selection, market data fetching.
+  - **Lines 258-392:** Custom calendar picker dialog (_showCalendarPicker()) and buy date selection (_pickAlisDate()).
+  - **Lines 393-452:** _buildReadonlyPeriodBadge() - Read-only badges for period performance.
+  - **Lines 453-570:** Sell (Satis) transaction logic: asset selection from portfolio, historical price lookup, and date picker.
+  - **Lines 571-661:** _saveTransaction() - FIFO validation, cost estimation, transaction persistence, and asset updating.
+  - **Lines 662-720:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop with 'İşlem Ekle' title.
+  - **Lines 721-752:** _buildDesktopHeader() - PC header row with icon, 'İşlem Ekle' title, and close button.
+  - **Lines 753-916:** _buildFormContent() - Form switcher (Alis/Satis tabs with clean labels) and actions.
+  - **Lines 917-1379:** _buildAlisForm() - Form fields for purchasing assets without category selector and without manual current unit price field.
+  - **Lines 1380-1856:** _buildSatisForm() - Form fields for selling assets.
 - **File:** `lib/dialogs/asset_status_dialog.dart`
   - **Lines 1-35:** Imports, AssetStatusDialog declaration with isFullScreen flag, and state setup.
   - **Lines 36-165:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar and Add Transaction action on mobile or responsive Dialog shell on desktop.
@@ -192,12 +192,12 @@
   - **Lines 185-219:** Static catalog for major cryptocurrencies (_knownCryptos).
   - **Lines 220-235:** Static catalog for precious metals / commodities (_knownCommodities).
   - **Lines 236-251:** Static catalog for foreign exchange currencies (_knownCurrencies).
-  - **Lines 252-289:** Search query normalizer (_cleanText) and unified search() entry point across categories.
-  - **Lines 290-355:** _searchFunds() - Query matcher and online lookup for TEFAS funds via AppHttpClient.
-  - **Lines 356-470:** _searchStocks() - Query matcher and online lookup for BIST stocks via TradingView.
-  - **Lines 471-540:** _searchCryptos() - Query matcher for cryptocurrencies via TradingView.
-  - **Lines 541-562:** _searchCommodities() - Query matcher for precious metals and gold types.
-  - **Lines 563-583:** _searchCurrencies() - Query matcher for fiat currencies.
+  - **Lines 252-333:** Search query normalizer (_cleanText) and unified search() entry point with support for multi-category concurrent searching when category is null.
+  - **Lines 334-399:** _searchFunds() - Query matcher and online lookup for TEFAS funds via AppHttpClient.
+  - **Lines 400-514:** _searchStocks() - Query matcher and online lookup for BIST stocks via TradingView.
+  - **Lines 515-584:** _searchCryptos() - Query matcher for cryptocurrencies via TradingView.
+  - **Lines 585-606:** _searchCommodities() - Query matcher for precious metals and gold types.
+  - **Lines 607-627:** _searchCurrencies() - Query matcher for fiat currencies.
 - **File:** `lib/services/auth_service.dart`
   - **Lines 1-30:** Imports, AuthService singleton declaration, and state getters.
   - **Lines 31-90:** signInWithGoogle() - Cross-platform Google sign-in with web popup, friendly error translations, and mobile credential exchange.
@@ -273,12 +273,12 @@
   - **Lines 95-119:** build() method: Image network loader with cached network image, fallback category icon, or initials avatar.
   - **Lines 120-227:** buildGoldCard() - Vector gold ingot badge for gold and precious metal assets.
 - **File:** `lib/widgets/asset_symbol_autocomplete.dart`
-  - **Lines 1-33:** Imports (including math library) and AssetSymbolAutocomplete declaration with controllers and callbacks.
-  - **Lines 34-71:** _AssetSymbolAutocompleteState declaration, focus node listeners, and lifecycle hooks (initState, dispose).
-  - **Lines 72-151:** Event handling (_onFocusChanged, _onControllerChanged), debounced search invocation (_performSearch).
-  - **Lines 152-358:** Custom floating dropdown overlay builder (_showOverlay(), CompositedTransformTarget, suggestions list clamped to screen width).
-  - **Lines 359-364:** Overlay dismissal helper (_hideOverlay()).
-  - **Lines 365-399:** build() method: Text form field wrapped in CompositedTransformTarget with clear icon and search indicator.
+  - **Lines 1-34:** Imports and AssetSymbolAutocomplete declaration with nullable category support, controllers, and callbacks.
+  - **Lines 35-72:** _AssetSymbolAutocompleteState declaration, focus node listeners, and lifecycle hooks (initState, dispose).
+  - **Lines 73-152:** Event handling (_onFocusChanged, _onControllerChanged), debounced search invocation (_performSearch).
+  - **Lines 153-379:** Custom floating dropdown overlay builder (_showOverlay(), CompositedTransformTarget, category badges, suggestions list clamped to screen width).
+  - **Lines 380-385:** Overlay dismissal helper (_hideOverlay()).
+  - **Lines 386-420:** build() method: Text form field wrapped in CompositedTransformTarget with clear icon and search indicator.
 - **File:** `lib/widgets/category_distribution_bar.dart`
   - **Lines 1-33:** Imports, CategoryDistributionBar declaration, and color palette definition.
   - **Lines 34-160:** build() method: Multi-segmented horizontal progress bar, compact responsive legend badges with percentages and monetary values.

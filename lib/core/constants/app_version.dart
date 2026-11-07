@@ -1,4 +1,4 @@
 /// Uygulama versiyonu. scripts/deploy_web.bat tarafindan otomatik guncellenir.
 class AppVersion {
-  static const String current = 'Versiyon (01.11.2026-20.48)';
+  static const String current = 'Versiyon (08.11.2026-01.26)';
 }

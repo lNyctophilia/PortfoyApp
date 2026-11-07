@@ -56,7 +56,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   String? _alisIconUrl;
   String _alisLastSymbol = '';
   bool _isAlisPurchasePriceManual = false;
-  bool _isAlisCurrentPriceManual = false;
   bool _isLoadingAlisMarketData = false;
   String? _alisMarketDataStatus;
   Timer? _alisDebounceTimer;
@@ -109,6 +108,12 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _selectedType = widget.initialType;
     if (widget.initialAsset != null) {
       _selectExistingAsset(widget.initialAsset!);
+      _alisCategory = widget.initialAsset!.category;
+      _alisSymbolController.text = widget.initialAsset!.symbol;
+      _alisNameController.text = widget.initialAsset!.name;
+      _alisIconUrl = widget.initialAsset!.iconUrl;
+      _alisLastSymbol = widget.initialAsset!.symbol;
+      _fetchAlisMarketData(widget.initialAsset!.symbol, forceHistoricalPrice: true);
     } else if (widget.portfolio.assets.isNotEmpty) {
       _selectExistingAsset(widget.portfolio.assets.first);
     }
@@ -188,16 +193,13 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   void _onAlisSymbolChanged(String text) {
     _alisDebounceTimer?.cancel();
     final clean = text.trim();
-    if (clean.length < _alisLastSymbol.length || clean.isEmpty) {
+    if (clean.length < _alisLastSymbol.length ||
+        clean.isEmpty ||
+        clean.toUpperCase() != _alisLastSymbol.toUpperCase()) {
       _clearAlisFetchedData();
     }
     _alisLastSymbol = clean;
     setState(() {});
-    if (clean.length >= 3) {
-      _alisDebounceTimer = Timer(const Duration(milliseconds: 900), () {
-        _fetchAlisMarketData(clean, forceHistoricalPrice: true);
-      });
-    }
   }
 
   Future<void> _fetchAlisMarketData(String symbol,
@@ -234,9 +236,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         _alisLastSymbol = symbol.trim();
         _alisIconUrl = info.iconUrl;
         _alisNameController.text = info.name;
-        if (!_isAlisCurrentPriceManual) {
-          _alisCurrentPriceController.text = _formatPrice(info.currentPrice);
-        }
+        _alisCurrentPriceController.text = _formatPrice(info.currentPrice);
         _alisDailyChangeController.text = info.dailyChangePercent.toString();
         _alisWeeklyChangeController.text = info.weeklyChangePercent.toString();
         _alisMonthlyChangeController.text = info.monthlyChangePercent.toString();
@@ -245,9 +245,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         _alisSixMonthlyChangeController.text =
             info.sixMonthlyChangePercent.toString();
         _alisYearlyChangeController.text = info.yearlyChangePercent.toString();
-
-        final hasManualPrice =
-            _isAlisPurchasePriceManual || _isAlisCurrentPriceManual;
 
         if (!_isAlisPurchasePriceManual &&
             info.purchaseDatePrice != null &&
@@ -258,9 +255,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               _formatPrice(info.purchaseDatePrice!);
           _alisMarketDataStatus =
               '${Formatters.date(_alisDate)} tarihindeki fiyat (${_formatPrice(info.purchaseDatePrice!)} ₺) ve güncel veriler otomatik uygulandı.';
-        } else if (hasManualPrice) {
+        } else if (_isAlisPurchasePriceManual) {
           _alisMarketDataStatus =
-              'Manuel girilen fiyatlar korundu. Anlık piyasa ve varlık verileri güncellendi.';
+              'Manuel girilen alış fiyatı korundu. Güncel piyasa verileri yüklendi.';
         } else {
           _alisMarketDataStatus =
               'Anlık fiyat (${_formatPrice(info.currentPrice)} ₺) ve varlık detayları güncellendi.';
@@ -400,7 +397,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     );
     if (picked != null) {
       setState(() => _alisDate = picked);
-      if (_alisSymbolController.text.trim().isNotEmpty) {
+      if (_alisSymbolController.text.trim().isNotEmpty &&
+          _alisNameController.text.trim().isNotEmpty) {
         _fetchAlisMarketData(_alisSymbolController.text.trim(),
             forceHistoricalPrice: true);
       }
@@ -687,18 +685,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
             icon: const Icon(Icons.close_rounded),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isAlis ? 'Alış İşlemi Ekle' : 'Satış İşlemi Ekle',
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-              ),
-              Text(
-                widget.portfolio.name,
-                style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
-              ),
-            ],
+          title: const Text(
+            'İşlem Ekle',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
           ),
         ),
         body: SafeArea(
@@ -759,26 +748,14 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         ),
                       ),
                       const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Alış / Satış İşlemi',
-                              style: TextStyle(
-                                fontSize: 19,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              '${widget.portfolio.name} • Alış veya Satış Kaydı',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.textMuted,
-                              ),
-                            ),
-                          ],
+                      const Expanded(
+                        child: Text(
+                          'İşlem Ekle',
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
                       ),
                       IconButton(
@@ -837,9 +814,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                   const SizedBox(width: 6),
                                   Flexible(
                                     child: Text(
-                                      MediaQuery.sizeOf(context).width < 500
-                                          ? 'Alış Yap'
-                                          : 'Alış (Yeni / Ek Alım)',
+                                      'Alış',
                                       style: TextStyle(
                                         fontWeight: isAlis
                                             ? FontWeight.w700
@@ -899,9 +874,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                   const SizedBox(width: 6),
                                   Flexible(
                                     child: Text(
-                                      MediaQuery.sizeOf(context).width < 500
-                                          ? 'Satış Yap'
-                                          : 'Satış (Kâr / Zarar Gerçekleştir)',
+                                      'Satış',
                                       style: TextStyle(
                                         fontWeight: !isAlis
                                             ? FontWeight.w700
@@ -991,107 +964,16 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Kategori Seçici
-        const Text(
-          'Varlık Kategorisi',
-          style: TextStyle(
-            color: AppTheme.textMuted,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: AssetCategory.values.map((cat) {
-              final isSelected = _alisCategory == cat;
-              return SizedBox(
-                width: 76,
-                child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _alisDebounceTimer?.cancel();
-                    _alisCategory = cat;
-                    _alisSymbolController.clear();
-                    _alisLastSymbol = '';
-                    _isAlisPurchasePriceManual = false;
-                    _isAlisCurrentPriceManual = false;
-                    _isLoadingAlisMarketData = false;
-                    _clearAlisFetchedData();
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? cat.color.withValues(alpha: 0.2)
-                        : AppTheme.surfaceLight,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isSelected ? cat.color : AppTheme.borderSubtle,
-                      width: isSelected ? 1.5 : 1.0,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      cat.buildIcon(
-                        size: 20,
-                        color: isSelected ? cat.color : AppTheme.textMuted,
-                      ),
-                      const SizedBox(height: 4),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          cat.displayName,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight:
-                                isSelected ? FontWeight.w700 : FontWeight.w500,
-                            color: isSelected
-                                ? cat.color
-                                : AppTheme.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-          ),
-        ),
-        const SizedBox(height: 16),
-
         // Sembol ve İsim
         LayoutBuilder(
           builder: (context, constraints) {
             final isNarrow = constraints.maxWidth < 480;
             final symbolField = AssetSymbolAutocomplete(
               controller: _alisSymbolController,
-              category: _alisCategory,
               isLoading: _isLoadingAlisMarketData,
-              hintText: _alisCategory == AssetCategory.fon
-                  ? 'Örn: TI2 / Fon adı'
-                  : _alisCategory == AssetCategory.hisse
-                      ? 'Örn: THYAO / Hisse adı'
-                      : _alisCategory == AssetCategory.doviz
-                          ? 'Örn: USD / Dolar'
-                          : _alisCategory == AssetCategory.emtia
-                              ? 'Örn: Altın / Gümüş'
-                              : 'Örn: BTC / Bitcoin',
+              hintText: 'Örn: THYAO, TI2, BTC, USD, Altın...',
               onChanged: _onAlisSymbolChanged,
               onSelected: _onAlisSuggestionSelected,
-              onFetchManual: () => _fetchAlisMarketData(
-                _alisSymbolController.text.trim(),
-                forceHistoricalPrice: true,
-              ),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? 'Sembol girin' : null,
             );
@@ -1103,7 +985,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 prefixIcon: Icon(Icons.badge_outlined),
               ),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'İsim girin' : null,
+                  (v == null || v.trim().isEmpty) ? 'Önerilerden bir varlık seçin' : null,
             );
             final logo = Padding(
               padding: const EdgeInsets.only(top: 4, right: 10),
@@ -1258,79 +1140,38 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         ),
         const SizedBox(height: 14),
 
-        // Alış Fiyatı & Güncel Fiyat
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _alisPurchasePriceController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                onChanged: (val) {
-                  setState(() {
-                    _isAlisPurchasePriceManual = val.trim().isNotEmpty;
-                  });
-                },
-                decoration: InputDecoration(
-                  labelText: 'Alış Birim Fiyatı (₺) *',
-                  hintText: '0.00',
-                  prefixIcon: const Icon(Icons.shopping_bag_outlined),
-                  helperText: _isAlisPurchasePriceManual
-                      ? 'Manuel girildi (otomatik yenilemede korunur)'
-                      : 'Tarihe göre otomatik bulunur',
-                  helperStyle: TextStyle(
-                    fontSize: 10,
-                    color: _isAlisPurchasePriceManual
-                        ? AppTheme.profit
-                        : AppTheme.textMuted,
-                    fontWeight: _isAlisPurchasePriceManual
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                  ),
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Fiyat girin';
-                  if (_parseVal(v) <= 0) return 'Geçerli fiyat girin';
-                  return null;
-                },
-              ),
+        // Alış Birim Fiyatı
+        TextFormField(
+          controller: _alisPurchasePriceController,
+          keyboardType:
+              const TextInputType.numberWithOptions(decimal: true),
+          onChanged: (val) {
+            setState(() {
+              _isAlisPurchasePriceManual = val.trim().isNotEmpty;
+            });
+          },
+          decoration: InputDecoration(
+            labelText: 'Alış Birim Fiyatı (₺) *',
+            hintText: '0.00',
+            prefixIcon: const Icon(Icons.shopping_bag_outlined),
+            helperText: _isAlisPurchasePriceManual
+                ? 'Manuel girildi (otomatik yenilemede korunur)'
+                : 'Tarihe göre otomatik bulunur',
+            helperStyle: TextStyle(
+              fontSize: 10,
+              color: _isAlisPurchasePriceManual
+                  ? AppTheme.profit
+                  : AppTheme.textMuted,
+              fontWeight: _isAlisPurchasePriceManual
+                  ? FontWeight.w600
+                  : FontWeight.normal,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextFormField(
-                controller: _alisCurrentPriceController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                onChanged: (val) {
-                  setState(() {
-                    _isAlisCurrentPriceManual = val.trim().isNotEmpty;
-                  });
-                },
-                decoration: InputDecoration(
-                  labelText: 'Güncel Birim Fiyat (₺) *',
-                  hintText: '0.00',
-                  prefixIcon: const Icon(Icons.price_check_rounded),
-                  helperText: _isAlisCurrentPriceManual
-                      ? 'Manuel girildi (otomatik yenilemede korunur)'
-                      : 'Canlı piyasadan çekilir',
-                  helperStyle: TextStyle(
-                    fontSize: 10,
-                    color: _isAlisCurrentPriceManual
-                        ? AppTheme.profit
-                        : AppTheme.textMuted,
-                    fontWeight: _isAlisCurrentPriceManual
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                  ),
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Fiyat girin';
-                  if (_parseVal(v) <= 0) return 'Geçerli fiyat girin';
-                  return null;
-                },
-              ),
-            ),
-          ],
+          ),
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return 'Fiyat girin';
+            if (_parseVal(v) <= 0) return 'Geçerli fiyat girin';
+            return null;
+          },
         ),
         const SizedBox(height: 14),
 

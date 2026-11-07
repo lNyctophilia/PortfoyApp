@@ -8,7 +8,7 @@ import 'asset_logo.dart';
 
 class AssetSymbolAutocomplete extends StatefulWidget {
   final TextEditingController controller;
-  final AssetCategory category;
+  final AssetCategory? category;
   final ValueChanged<AssetSuggestion> onSelected;
   final VoidCallback? onFetchManual;
   final bool isLoading;
@@ -19,7 +19,7 @@ class AssetSymbolAutocomplete extends StatefulWidget {
   const AssetSymbolAutocomplete({
     super.key,
     required this.controller,
-    required this.category,
+    this.category,
     required this.onSelected,
     this.onFetchManual,
     this.isLoading = false,
@@ -162,6 +162,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
       builder: (context) {
         final screenWidth = MediaQuery.sizeOf(context).width;
         final targetWidth = math.min(size.width.clamp(200.0, 480.0), screenWidth - 32);
+        final accentColor = widget.category?.color ?? AppTheme.primaryLight;
         return Positioned(
           width: targetWidth,
           child: CompositedTransformFollower(
@@ -176,7 +177,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                   color: AppTheme.surfaceElevated,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: widget.category.color.withValues(alpha: 0.35),
+                    color: accentColor.withValues(alpha: 0.35),
                     width: 1.2,
                   ),
                   boxShadow: [
@@ -196,18 +197,22 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
-                        color: widget.category.color.withValues(alpha: 0.08),
+                        color: accentColor.withValues(alpha: 0.08),
                         child: Row(
                           children: [
-                            widget.category.buildIcon(
-                                size: 14, color: widget.category.color),
+                            widget.category?.buildIcon(
+                                    size: 14, color: accentColor) ??
+                                const Icon(Icons.travel_explore_rounded,
+                                    size: 14, color: AppTheme.primaryLight),
                             const SizedBox(width: 6),
                             Text(
-                              '${widget.category.displayName} Önerileri',
+                              widget.category != null
+                                  ? '${widget.category!.displayName} Önerileri'
+                                  : 'Varlık Önerileri',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: widget.category.color,
+                                color: accentColor,
                                 letterSpacing: 0.3,
                               ),
                             ),
@@ -218,7 +223,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                 height: 12,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 1.5,
-                                  color: widget.category.color,
+                                  color: accentColor,
                                 ),
                               )
                             else
@@ -247,14 +252,14 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                           ),
                           itemBuilder: (context, index) {
                             final item = _suggestions[index];
+                            final itemColor = item.category.color;
                             return InkWell(
                               onTap: () {
                                 _hideOverlay();
                                 _focusNode.unfocus();
                                 widget.onSelected(item);
                               },
-                              hoverColor: widget.category.color
-                                  .withValues(alpha: 0.12),
+                              hoverColor: itemColor.withValues(alpha: 0.12),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 8),
@@ -284,6 +289,23 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                                   fontWeight: FontWeight.w700,
                                                   fontSize: 13,
                                                   color: Colors.white,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 5, vertical: 1.5),
+                                                decoration: BoxDecoration(
+                                                  color: itemColor.withValues(alpha: 0.18),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  item.category.shortName,
+                                                  style: TextStyle(
+                                                    fontSize: 9.5,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: itemColor,
+                                                  ),
                                                 ),
                                               ),
                                               if (item.subtitle != null) ...[
@@ -333,8 +355,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                     Icon(
                                       Icons.north_west_rounded,
                                       size: 14,
-                                      color: widget.category.color
-                                          .withValues(alpha: 0.7),
+                                      color: itemColor.withValues(alpha: 0.7),
                                     ),
                                   ],
                                 ),
