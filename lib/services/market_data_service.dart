@@ -149,7 +149,7 @@ class MarketDataService {
 
     // 4. Garanti Portföy / Garanti BBVA
     if (t.contains('GARANTI') ||
-        ['GL1', 'GBV', 'GMR', 'GMA', 'GPY', 'GTA', 'GTL', 'GTZ'].contains(code)) {
+        ['GL1', 'GBV', 'GMR', 'GMA', 'GPY', 'GTA', 'GTL', 'GTZ', 'GPN', 'GPB', 'GZL', 'GKV', 'GKK', 'GAF', 'GOH', 'GPO', 'GNZ', 'GEL', 'GSY', 'GBL'].contains(code)) {
       return 'https://s3-symbol-logo.tradingview.com/garanti.svg';
     }
 
@@ -541,6 +541,9 @@ class MarketDataService {
       'https://www.tefas.gov.tr/api/funds/fonFiyatBilgiGetir',
       headers: {
         'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Origin': 'https://www.tefas.gov.tr',
+        'Referer': 'https://www.tefas.gov.tr/tr/fon-detayli-analiz/',
       },
       body: payload,
       timeout: const Duration(seconds: 5),

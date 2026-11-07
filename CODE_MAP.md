@@ -53,9 +53,9 @@
   - **Lines 497-586:** _saveTransaction() - FIFO validation, cost estimation, transaction persistence, and asset updating.
   - **Lines 587-645:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop with 'İşlem Ekle' title.
   - **Lines 646-677:** _buildDesktopHeader() - PC header row with icon, 'İşlem Ekle' title, and close button.
-  - **Lines 678-860:** _buildFormContent() - Form switcher (Alis/Satis tabs with clean labels) and actions.
-  - **Lines 861-1025:** _buildAlisForm() - Minimalist purchase form with inline parenthetical name, centered date, TL icon, and simplified "Toplam" cost card.
-  - **Lines 1026-1281:** _buildSatisForm() - Minimalist sale form with consolidated asset info, centered date, TL icon, and simplified "Toplam" sale card.
+  - **Lines 678-860:** _buildFormContent() - Form switcher (Alis/Satis tabs with green/red theme) and actions (save buttons with Alis/Satis colors).
+  - **Lines 861-1028:** _buildAlisForm() - Minimalist purchase form with clean inline code/name, centered date, TL icon, and centered soft-green "Toplam" cost card.
+  - **Lines 1029-1287:** _buildSatisForm() - Minimalist sale form with consolidated asset info, centered date, TL icon, and centered soft-red "Toplam" revenue card.
 - **File:** `lib/dialogs/asset_status_dialog.dart`
   - **Lines 1-35:** Imports, AssetStatusDialog declaration with isFullScreen flag, and state setup.
   - **Lines 36-165:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar and Add Transaction action on mobile or responsive Dialog shell on desktop.
@@ -186,14 +186,14 @@
   - **Lines 930-951:** _buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
 - **File:** `lib/services/asset_catalog_service.dart`
   - **Lines 1-21:** Imports and AssetSuggestion model class.
-  - **Lines 22-263:** Static catalogs for funds, stocks, cryptos, commodities, and currencies.
-  - **Lines 264-337:** findCurated() - Helper resolving curated metadata, verified Turkish names, and correct category badges.
-  - **Lines 338-413:** Search query normalizer (_cleanText) and unified search() entry point with cross-category deduplication and relevance sorting.
-  - **Lines 414-478:** _searchFunds() - Query matcher and online lookup for TEFAS funds via AppHttpClient.
-  - **Lines 479-640:** _searchStocks() - Query matcher and online lookup for BIST & Global stocks via TradingView with accurate category mapping and futures filtering.
-  - **Lines 641-710:** _searchCryptos() - Query matcher for cryptocurrencies via TradingView.
-  - **Lines 711-733:** _searchCommodities() - Query matcher for precious metals and gold types.
-  - **Lines 734-757:** _searchCurrencies() - Query matcher for fiat currencies.
+  - **Lines 22-274:** Static catalogs for funds (including GPN and Garanti Portföy funds), stocks, cryptos, commodities, and currencies.
+  - **Lines 275-348:** findCurated() - Helper resolving curated metadata, verified Turkish names, and correct category badges.
+  - **Lines 349-424:** Search query normalizer (_cleanText) and unified search() entry point with cross-category deduplication and relevance sorting.
+  - **Lines 425-518:** _searchFunds() - Multi-token fund query matcher, TEFAS API lookup with browser headers and periyod:1, and 3-letter TEFAS code fallback suggestion generator.
+  - **Lines 519-680:** _searchStocks() - Query matcher and online lookup for BIST & Global stocks via TradingView with accurate category mapping and futures filtering.
+  - **Lines 681-750:** _searchCryptos() - Query matcher for cryptocurrencies via TradingView.
+  - **Lines 751-773:** _searchCommodities() - Query matcher for precious metals and gold types.
+  - **Lines 774-797:** _searchCurrencies() - Query matcher for fiat currencies.
 - **File:** `lib/services/auth_service.dart`
   - **Lines 1-30:** Imports, AuthService singleton declaration, and state getters.
   - **Lines 31-90:** signInWithGoogle() - Cross-platform Google sign-in with web popup, friendly error translations, and mobile credential exchange.
@@ -220,16 +220,16 @@
   - **Lines 569-592:** Mathematical formulas for calculating real return percent and real profit amount.
 - **File:** `lib/services/market_data_service.dart`
   - **Lines 1-94:** Imports and MarketAssetInfo data model (currentPrice, change percentages, history map).
-  - **Lines 95-270:** MarketDataService initialization, logo caching, and TEFAS fund logo resolver mapping (resolveFundLogo).
+  - **Lines 95-270:** MarketDataService initialization, logo caching, and TEFAS fund logo resolver mapping (resolveFundLogo) including Garanti funds (GPN etc.).
   - **Lines 271-409:** Static logos for popular crypto, stock, and forex tickers (getKnownAssetLogo).
   - **Lines 410-488:** Web logo lookup and fallback resolver (fetchAssetLogo).
   - **Lines 489-533:** Main dispatch function fetchAssetData() routing by AssetCategory.
-  - **Lines 534-648:** TEFAS fund data fetcher (_fetchTefasFund()) via AppHttpClient.
-  - **Lines 649-755:** BIST stock price & historical chart fetcher (_fetchBistStock(), _fetchYahooChart()).
-  - **Lines 756-851:** Currency / Forex rate fetcher (_fetchCurrency(), _fetchYahooForex()).
-  - **Lines 852-1082:** Commodities & precious metals fetcher (_fetchCommodity(), Truncgil API / Gold price parsers).
-  - **Lines 1083-1301:** Cryptocurrency live prices & history fetchers via Binance & Yahoo Finance (_fetchCrypto(), _fetchYahooCrypto()).
-  - **Lines 1302-1373:** Historical price interpolation helpers (_findClosestPrice, _calcChange, _currencyName).
+  - **Lines 534-651:** TEFAS fund data fetcher (_fetchTefasFund()) with origin/referer headers via AppHttpClient.
+  - **Lines 652-758:** BIST stock price & historical chart fetcher (_fetchBistStock(), _fetchYahooChart()).
+  - **Lines 759-854:** Currency / Forex rate fetcher (_fetchCurrency(), _fetchYahooForex()).
+  - **Lines 855-1085:** Commodities & precious metals fetcher (_fetchCommodity(), Truncgil API / Gold price parsers).
+  - **Lines 1086-1304:** Cryptocurrency live prices & history fetchers via Binance & Yahoo Finance (_fetchCrypto(), _fetchYahooCrypto()).
+  - **Lines 1305-1376:** Historical price interpolation helpers (_findClosestPrice, _calcChange, _currencyName).
 - **File:** `lib/services/storage_service.dart`
   - **Lines 1-13:** Imports and StorageService class declaration with storage key constants.
   - **Lines 14-36:** App settings persistence (loadSettings() defaulting to brut, saveSettings()) using SharedPreferences.
@@ -272,9 +272,9 @@
   - **Lines 1-43:** Imports and AssetSymbolAutocomplete declaration with assetName, labelText, prefixIcon, and showRefreshButton support.
   - **Lines 44-80:** _AssetSymbolAutocompleteState declaration, focus node listeners, and lifecycle hooks (initState, dispose).
   - **Lines 81-165:** Event handling (_onFocusChanged, _onControllerChanged), debounced search invocation (_performSearch).
-  - **Lines 166-392:** Custom floating dropdown overlay builder (_showOverlay(), CompositedTransformTarget, category badges, suggestions list clamped to screen width).
-  - **Lines 393-398:** Overlay dismissal helper (_hideOverlay()).
-  - **Lines 399-455:** build() method: Text form field wrapped in CompositedTransformTarget with dynamic inline parenthetical asset name suffix when unfocused, question mark icon, and loading indicator.
+  - **Lines 166-444:** _showOverlay() - Category-grouped dropdown overlay with minimal section headers (Fon, Hisse, Kripto, etc.), clutter-free item rows without badges.
+  - **Lines 445-450:** _hideOverlay() - Overlay dismissal helper.
+  - **Lines 451-530:** build() method - TextFormField with dynamic question mark hint icon when empty, clean inline code & name display (no parentheses, smaller text) when unfocused, and clear action.
 - **File:** `lib/widgets/category_distribution_bar.dart`
   - **Lines 1-33:** Imports, CategoryDistributionBar declaration, and color palette definition.
   - **Lines 34-160:** build() method: Multi-segmented horizontal progress bar, compact responsive legend badges with percentages and monetary values.

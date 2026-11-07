@@ -705,11 +705,11 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: isAlis
-                                    ? AppTheme.primary.withValues(alpha: 0.2)
+                                    ? AppTheme.profit.withValues(alpha: 0.18)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                                 border: isAlis
-                                    ? Border.all(color: AppTheme.primary)
+                                    ? Border.all(color: AppTheme.profit, width: 1.2)
                                     : null,
                               ),
                               child: Row(
@@ -719,7 +719,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                     Icons.arrow_downward_rounded,
                                     size: 16,
                                     color: isAlis
-                                        ? AppTheme.primaryLight
+                                        ? AppTheme.profit
                                         : AppTheme.textSecondary,
                                   ),
                                   const SizedBox(width: 6),
@@ -731,7 +731,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                             ? FontWeight.w700
                                             : FontWeight.w500,
                                         color: isAlis
-                                            ? AppTheme.primaryLight
+                                            ? AppTheme.profit
                                             : AppTheme.textSecondary,
                                         fontSize: 13,
                                       ),
@@ -765,11 +765,11 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: !isAlis
-                                    ? AppTheme.profit.withValues(alpha: 0.2)
+                                    ? AppTheme.loss.withValues(alpha: 0.18)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                                 border: !isAlis
-                                    ? Border.all(color: AppTheme.profit)
+                                    ? Border.all(color: AppTheme.loss, width: 1.2)
                                     : null,
                               ),
                               child: Row(
@@ -779,7 +779,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                     Icons.arrow_upward_rounded,
                                     size: 16,
                                     color: !isAlis
-                                        ? AppTheme.profit
+                                        ? AppTheme.loss
                                         : AppTheme.textSecondary,
                                   ),
                                   const SizedBox(width: 6),
@@ -791,7 +791,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                             ? FontWeight.w700
                                             : FontWeight.w500,
                                         color: !isAlis
-                                            ? AppTheme.profit
+                                            ? AppTheme.loss
                                             : AppTheme.textSecondary,
                                         fontSize: 13,
                                       ),
@@ -831,7 +831,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              isAlis ? AppTheme.primary : AppTheme.profit,
+                              isAlis ? AppTheme.profit : AppTheme.loss,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 22, vertical: 14),
                         ),
@@ -920,7 +920,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       const Icon(
                         Icons.calendar_today_rounded,
                         size: 18,
-                        color: AppTheme.primary,
+                        color: AppTheme.profit,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -984,34 +984,37 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         ),
         const SizedBox(height: 14),
 
-        // Toplam Maliyet Paneli
+        // Toplam Maliyet Paneli (Ortalanmış & Hafif Yeşil Vurgu)
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: AppTheme.surfaceLight,
+            color: AppTheme.profit.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.borderSubtle),
+            border: Border.all(color: AppTheme.profit.withValues(alpha: 0.25)),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'Toplam',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.textMuted,
-                  fontWeight: FontWeight.w500,
+                  color: AppTheme.profit.withValues(alpha: 0.85),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4,
                 ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
               Text(
                 hasData ? Formatters.currency(totalCost) : '0,00 ₺',
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 19,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: AppTheme.profit,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
@@ -1136,11 +1139,11 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         ),
                         if (_satisNameController.text.trim().isNotEmpty)
                           TextSpan(
-                            text: ' (${_satisNameController.text.trim()})',
+                            text: '   ${_satisNameController.text.trim()}',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: FontWeight.normal,
-                              color: AppColors.textSecondary.withValues(alpha: 0.65),
+                              color: AppColors.textSecondary.withValues(alpha: 0.85),
                             ),
                           ),
                       ],
@@ -1222,7 +1225,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 const Icon(
                   Icons.calendar_today_rounded,
                   size: 18,
-                  color: AppTheme.profit,
+                  color: AppTheme.loss,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1243,34 +1246,37 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         ),
         const SizedBox(height: 14),
 
-        // Toplam Satış Tutarı Paneli
+        // Toplam Satış Tutarı Paneli (Ortalanmış & Hafif Kırmızı Vurgu)
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: AppTheme.surfaceLight,
+            color: AppTheme.loss.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.borderSubtle),
+            border: Border.all(color: AppTheme.loss.withValues(alpha: 0.25)),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'Toplam',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.textMuted,
-                  fontWeight: FontWeight.w500,
+                  color: AppTheme.loss.withValues(alpha: 0.85),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4,
                 ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
               Text(
                 hasData ? Formatters.currency(totalSatisRevenue) : '0,00 ₺',
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 19,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: AppTheme.loss,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),

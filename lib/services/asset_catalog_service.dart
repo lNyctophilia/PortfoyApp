@@ -60,14 +60,25 @@ class AssetCatalogService {
     {'code': 'YAZ', 'name': 'Yapı Kredi Portföy Eurobond Borçlanma Araçları Fonu', 'sub': 'Yapı Kredi • Eurobond'},
     {'code': 'YBE', 'name': 'Yapı Kredi Portföy Eurobond Dolar Borçlanma Araçları Fonu', 'sub': 'Yapı Kredi • Eurobond'},
 
-    // Garanti Portföy
-    {'code': 'GMR', 'name': 'Garanti Portföy İkinci Hisse Senedi Fonu (Hisse Senedi Yoğun)', 'sub': 'Garanti • Hisse Yoğun'},
-    {'code': 'GTA', 'name': 'Garanti Portföy Altın Fonu', 'sub': 'Garanti • Altın'},
-    {'code': 'GBV', 'name': 'Garanti Portföy BIST 100 Dışı Şirketler Hisse Senedi Fonu', 'sub': 'Garanti • BIST Dışı'},
-    {'code': 'GL1', 'name': 'Garanti Portföy Hisse Senedi Fonu', 'sub': 'Garanti • Hisse Yoğun'},
-    {'code': 'GTL', 'name': 'Garanti Portföy Para Piyasası Fonu', 'sub': 'Garanti • Para Piyasası'},
-    {'code': 'GMA', 'name': 'Garanti Portföy Birinci Değişken Fon', 'sub': 'Garanti • Değişken'},
-    {'code': 'GPY', 'name': 'Garanti Portföy İhracatçı Şirketler Hisse Senedi Fonu', 'sub': 'Garanti • İhracat'},
+    // Garanti Portföy (Garanti Bankası / Garanti BBVA)
+    {'code': 'GPN', 'name': 'Garanti Portföy Para Piyasası Katılım (TL) Fonu', 'sub': 'Garanti Bankası BBVA • Para Piyasası Katılım'},
+    {'code': 'GPB', 'name': 'Garanti Portföy Birinci Para Piyasası (TL) Fonu', 'sub': 'Garanti Bankası BBVA • Para Piyasası'},
+    {'code': 'GZL', 'name': 'Garanti Portföy İkinci Para Piyasası (TL) Fonu', 'sub': 'Garanti Bankası BBVA • Para Piyasası'},
+    {'code': 'GMR', 'name': 'Garanti Portföy İkinci Hisse Senedi Fonu (Hisse Senedi Yoğun)', 'sub': 'Garanti Bankası BBVA • Hisse Yoğun'},
+    {'code': 'GTA', 'name': 'Garanti Portföy Altın Fonu', 'sub': 'Garanti Bankası BBVA • Altın'},
+    {'code': 'GAF', 'name': 'Garanti Portföy Altın Katılım Fonu', 'sub': 'Garanti Bankası BBVA • Altın Katılım'},
+    {'code': 'GBV', 'name': 'Garanti Portföy BIST 100 Dışı Şirketler Hisse Senedi Fonu', 'sub': 'Garanti Bankası BBVA • BIST Dışı'},
+    {'code': 'GL1', 'name': 'Garanti Portföy Hisse Senedi Fonu', 'sub': 'Garanti Bankası BBVA • Hisse Yoğun'},
+    {'code': 'GTL', 'name': 'Garanti Portföy Para Piyasası Fonu', 'sub': 'Garanti Bankası BBVA • Para Piyasası'},
+    {'code': 'GMA', 'name': 'Garanti Portföy Birinci Değişken Fon', 'sub': 'Garanti Bankası BBVA • Değişken'},
+    {'code': 'GPY', 'name': 'Garanti Portföy İhracatçı Şirketler Hisse Senedi Fonu', 'sub': 'Garanti Bankası BBVA • İhracat'},
+    {'code': 'GKV', 'name': 'Garanti Portföy Kısa Vadeli Borçlanma Araçları Fonu', 'sub': 'Garanti Bankası BBVA • Borçlanma'},
+    {'code': 'GKK', 'name': 'Garanti Portföy Kira Sertifikaları Katılım Fonu', 'sub': 'Garanti Bankası BBVA • Katılım Kira Sertifikası'},
+    {'code': 'GOH', 'name': 'Garanti Portföy Birinci Hisse Senedi Fonu', 'sub': 'Garanti Bankası BBVA • Hisse Yoğun'},
+    {'code': 'GPO', 'name': 'Garanti Portföy BIST 30 Endeksi Fonu', 'sub': 'Garanti Bankası BBVA • BIST 30'},
+    {'code': 'GNZ', 'name': 'Garanti Portföy Yabancı Teknoloji Fon Sepeti Fonu', 'sub': 'Garanti Bankası BBVA • Yabancı Teknoloji'},
+    {'code': 'GEL', 'name': 'Garanti Portföy BIST Banka Dışı Likit 10 Fonu', 'sub': 'Garanti Bankası BBVA • Likit 10'},
+    {'code': 'GSY', 'name': 'Garanti Portföy Sürdürülebilirlik Hisse Senedi Fonu', 'sub': 'Garanti Bankası BBVA • Sürdürülebilirlik'},
 
     // Ziraat Portföy
     {'code': 'ZPE', 'name': 'Ziraat Portföy Katılım Endeksi Hisse Senedi Fonu', 'sub': 'Ziraat • Katılım Hisse'},
@@ -413,16 +424,26 @@ class AssetCatalogService {
   // Fon arama
   static Future<List<AssetSuggestion>> _searchFunds(String q) async {
     final results = <AssetSuggestion>[];
+    final tokens = q.split(' ').where((t) => t.isNotEmpty).toList();
 
     for (final item in _knownFunds) {
       final code = item['code']!;
       final name = item['name']!;
       final sub = item['sub']!;
 
-      if (q.isEmpty ||
-          _cleanText(code).contains(q) ||
-          _cleanText(name).contains(q) ||
-          _cleanText(sub).contains(q)) {
+      final cCode = _cleanText(code);
+      final cName = _cleanText(name);
+      final cSub = _cleanText(sub);
+
+      final matchesSingle = q.isEmpty ||
+          cCode.contains(q) ||
+          cName.contains(q) ||
+          cSub.contains(q);
+
+      final matchesTokens = tokens.length > 1 &&
+          tokens.every((t) => cCode.contains(t) || cName.contains(t) || cSub.contains(t));
+
+      if (matchesSingle || matchesTokens) {
         final logo = MarketDataService.resolveFundLogo(code, name);
         results.add(AssetSuggestion(
           symbol: code,
@@ -435,18 +456,23 @@ class AssetCatalogService {
     }
 
     // Kullanıcı 3 harfli yeni bir fon kodu yazdıysa ve listede yoksa TEFAS'tan kontrol et
-    final cleanUpper = q.toUpperCase();
+    final cleanUpper = q.replaceAll(' ', '').toUpperCase();
     if (cleanUpper.length == 3 &&
         !results.any((r) => r.symbol.toUpperCase() == cleanUpper)) {
       try {
         final payload = jsonEncode({
           'fonKodu': cleanUpper,
           'dil': 'TR',
-          'periyod': 5,
+          'periyod': 1,
         });
         final resp = await AppHttpClient.post(
           'https://www.tefas.gov.tr/api/funds/fonFiyatBilgiGetir',
-          headers: {'Content-Type': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Origin': 'https://www.tefas.gov.tr',
+            'Referer': 'https://www.tefas.gov.tr/tr/fon-detayli-analiz/',
+          },
           body: payload,
           timeout: const Duration(seconds: 4),
         );
@@ -470,6 +496,20 @@ class AssetCatalogService {
           }
         }
       } catch (_) {}
+
+      // Sonuç bulunamadıysa bile 3 harfli sembol için doğrudan TEFAS fon önerisi sun
+      if (!results.any((r) => r.symbol.toUpperCase() == cleanUpper) &&
+          RegExp(r'^[A-Z0-9]{3}$').hasMatch(cleanUpper)) {
+        results.add(
+          AssetSuggestion(
+            symbol: cleanUpper,
+            name: '$cleanUpper Yatırım Fonu',
+            category: AssetCategory.fon,
+            iconUrl: MarketDataService.resolveFundLogo(cleanUpper, ''),
+            subtitle: 'TEFAS • Yatırım Fonu',
+          ),
+        );
+      }
     }
 
     return results.take(15).toList();

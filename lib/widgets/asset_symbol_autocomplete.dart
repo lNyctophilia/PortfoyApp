@@ -174,8 +174,34 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
     _overlayEntry = OverlayEntry(
       builder: (context) {
         final screenWidth = MediaQuery.sizeOf(context).width;
-        final targetWidth = math.min(size.width.clamp(200.0, 480.0), screenWidth - 32);
+        final targetWidth = math.min(size.width.clamp(200.0, 520.0), screenWidth - 32);
         final accentColor = widget.category?.color ?? AppTheme.primaryLight;
+
+        // Kategorilere göre grupla (Yalnızca aramayla eşleşen en az 1 sonucu olan kategoriler)
+        const preferredOrder = [
+          AssetCategory.fon,
+          AssetCategory.hisse,
+          AssetCategory.kripto,
+          AssetCategory.emtia,
+          AssetCategory.doviz,
+        ];
+
+        final grouped = <AssetCategory, List<AssetSuggestion>>{};
+        for (final cat in preferredOrder) {
+          final items = _suggestions.where((s) => s.category == cat).toList();
+          if (items.isNotEmpty) {
+            grouped[cat] = items;
+          }
+        }
+        for (final s in _suggestions) {
+          if (!grouped.containsKey(s.category)) {
+            final items = _suggestions.where((item) => item.category == s.category).toList();
+            if (items.isNotEmpty) {
+              grouped[s.category] = items;
+            }
+          }
+        }
+
         return Positioned(
           width: targetWidth,
           child: CompositedTransformFollower(
@@ -185,7 +211,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
             child: Material(
               color: Colors.transparent,
               child: Container(
-                constraints: const BoxConstraints(maxHeight: 280),
+                constraints: const BoxConstraints(maxHeight: 320),
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceElevated,
                   borderRadius: BorderRadius.circular(14),
@@ -206,15 +232,13 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Başlık / Kategori Bilgisi
+                      // Üst Bilgi Barı
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         color: accentColor.withValues(alpha: 0.08),
                         child: Row(
                           children: [
-                            widget.category?.buildIcon(
-                                    size: 14, color: accentColor) ??
+                            widget.category?.buildIcon(size: 14, color: accentColor) ??
                                 const Icon(Icons.travel_explore_rounded,
                                     size: 14, color: AppTheme.primaryLight),
                             const SizedBox(width: 6),
@@ -251,130 +275,132 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                         ),
                       ),
                       const Divider(height: 1, thickness: 1, color: AppTheme.border),
-                      // Öneri Listesi
+
+                      // Gruplanmış Öneri Listesi
                       Flexible(
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: ListView(
+                          padding: EdgeInsets.zero,
                           shrinkWrap: true,
-                          itemCount: _suggestions.length,
-                          separatorBuilder: (context, _) => const Divider(
-                            height: 1,
-                            thickness: 0.5,
-                            color: AppTheme.border,
-                            indent: 48,
-                          ),
-                          itemBuilder: (context, index) {
-                            final item = _suggestions[index];
-                            final itemColor = item.category.color;
-                            return InkWell(
-                              onTap: () {
-                                _hideOverlay();
-                                _focusNode.unfocus();
-                                widget.onSelected(item);
-                              },
-                              hoverColor: itemColor.withValues(alpha: 0.12),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 8),
+                          children: [
+                            for (final entry in grouped.entries) ...[
+                              // Kategori Başlığı (Section Header)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: entry.key.color.withValues(alpha: 0.08),
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: entry.key.color.withValues(alpha: 0.15),
+                                      width: 0.8,
+                                    ),
+                                    top: BorderSide(
+                                      color: AppTheme.border.withValues(alpha: 0.35),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                ),
                                 child: Row(
                                   children: [
-                                    AssetLogo(
-                                      iconUrl: item.iconUrl,
-                                      symbol: item.symbol,
-                                      name: item.name,
-                                      category: item.category,
-                                      size: 32,
-                                      iconSize: 16,
-                                      borderRadius: 8,
+                                    entry.key.buildIcon(size: 13, color: entry.key.color),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      entry.key.displayName,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: entry.key.color,
+                                        letterSpacing: 0.3,
+                                      ),
                                     ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Row(
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: entry.key.color.withValues(alpha: 0.16),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        '${entry.value.length}',
+                                        style: TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: entry.key.color,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Bu kategoriye ait varlıklar (Sade, rozetsiz, minimal)
+                              for (final item in entry.value)
+                                InkWell(
+                                  onTap: () {
+                                    _hideOverlay();
+                                    _focusNode.unfocus();
+                                    widget.onSelected(item);
+                                  },
+                                  hoverColor: entry.key.color.withValues(alpha: 0.08),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: const BoxDecoration(
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: AppTheme.borderSubtle,
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        AssetLogo(
+                                          iconUrl: item.iconUrl,
+                                          symbol: item.symbol,
+                                          name: item.name,
+                                          category: item.category,
+                                          size: 32,
+                                          iconSize: 16,
+                                          borderRadius: 8,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Text(
                                                 item.symbol,
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.w700,
-                                                  fontSize: 13,
+                                                  fontSize: 13.5,
                                                   color: Colors.white,
                                                 ),
                                               ),
-                                              const SizedBox(width: 6),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                    horizontal: 5, vertical: 1.5),
-                                                decoration: BoxDecoration(
-                                                  color: itemColor.withValues(alpha: 0.18),
-                                                  borderRadius: BorderRadius.circular(4),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                item.name,
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: AppTheme.textSecondary,
                                                 ),
-                                                child: Text(
-                                                  item.category.shortName,
-                                                  style: TextStyle(
-                                                    fontSize: 9.5,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: itemColor,
-                                                  ),
-                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
-                                              if (item.subtitle != null) ...[
-                                                const SizedBox(width: 6),
-                                                Flexible(
-                                                  child: Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 6,
-                                                        vertical: 1.5),
-                                                    decoration: BoxDecoration(
-                                                      color: AppTheme.border,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              4),
-                                                    ),
-                                                    child: Text(
-                                                      item.subtitle!,
-                                                      style: const TextStyle(
-                                                        fontSize: 9.5,
-                                                        color: AppTheme
-                                                            .textSecondary,
-                                                      ),
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
                                             ],
                                           ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            item.name,
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AppTheme.textSecondary,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          Icons.north_west_rounded,
+                                          size: 14,
+                                          color: entry.key.color.withValues(alpha: 0.65),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 6),
-                                    Icon(
-                                      Icons.north_west_rounded,
-                                      size: 14,
-                                      color: itemColor.withValues(alpha: 0.7),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
+                            ],
+                          ],
                         ),
                       ),
                     ],
@@ -397,58 +423,107 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isEmpty = widget.controller.text.trim().isEmpty;
     final showInlineName = !_focusNode.hasFocus &&
         widget.assetName != null &&
         widget.assetName!.trim().isNotEmpty &&
-        widget.controller.text.trim().isNotEmpty;
+        !isEmpty;
 
     return CompositedTransformTarget(
       link: _layerLink,
-      child: TextFormField(
-        controller: widget.controller,
-        focusNode: _focusNode,
-        textCapitalization: TextCapitalization.characters,
-        onChanged: widget.onChanged,
-        decoration: InputDecoration(
-          labelText: widget.labelText,
-          hintText: widget.hintText ?? 'Varlık ara...',
-          prefixIcon: widget.prefixIcon ?? const Icon(Icons.help_outline_rounded, size: 20),
-          suffix: showInlineName
-              ? Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: Text(
-                    '(${widget.assetName!.trim()})',
-                    style: TextStyle(
-                      color: AppColors.textSecondary.withValues(alpha: 0.65),
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                )
-              : null,
-          suffixIcon: widget.isLoading
-              ? const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppTheme.primary,
-                    ),
-                  ),
-                )
-              : (widget.showRefreshButton && widget.onFetchManual != null)
-                  ? IconButton(
-                      tooltip: 'Otomatik Fiyat & Bilgi Getir',
-                      icon: const Icon(Icons.sync_rounded, size: 20),
-                      onPressed: widget.onFetchManual,
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          TextFormField(
+            controller: widget.controller,
+            focusNode: _focusNode,
+            textCapitalization: TextCapitalization.characters,
+            onChanged: widget.onChanged,
+            style: TextStyle(
+              color: showInlineName ? Colors.transparent : AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+            ),
+            decoration: InputDecoration(
+              labelText: widget.labelText,
+              hintText: widget.hintText ?? 'Varlık ara...',
+              prefixIcon: widget.prefixIcon ??
+                  (isEmpty
+                      ? const Icon(
+                          Icons.question_mark_rounded,
+                          size: 18,
+                          color: AppColors.textHint,
+                        )
+                      : null),
+              suffixIcon: widget.isLoading
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.primary,
+                        ),
+                      ),
                     )
-                  : null,
-        ),
-        validator: widget.validator,
+                  : (widget.showRefreshButton && widget.onFetchManual != null)
+                      ? IconButton(
+                          tooltip: 'Otomatik Fiyat & Bilgi Getir',
+                          icon: const Icon(Icons.sync_rounded, size: 20),
+                          onPressed: widget.onFetchManual,
+                        )
+                      : (!isEmpty
+                          ? IconButton(
+                              tooltip: 'Temizle',
+                              icon: const Icon(Icons.close_rounded, size: 16, color: AppColors.textHint),
+                              onPressed: () {
+                                widget.controller.clear();
+                                widget.onChanged?.call('');
+                                setState(() {});
+                              },
+                            )
+                          : null),
+            ),
+            validator: widget.validator,
+          ),
+          if (showInlineName)
+            Positioned(
+              left: 14,
+              right: 42,
+              top: 0,
+              bottom: 0,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _focusNode.requestFocus(),
+                child: Row(
+                  children: [
+                    Text(
+                      widget.controller.text.trim(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        widget.assetName!.trim(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.normal,
+                          color: AppColors.textSecondary.withValues(alpha: 0.8),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
