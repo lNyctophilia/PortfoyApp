@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../models/portfolio.dart';
+import '../models/portfolio_asset.dart';
 import '../models/return_mode.dart';
 import '../services/inflation_service.dart';
 import '../theme/app_theme.dart';
@@ -160,10 +161,96 @@ class PeriodPerformanceRow extends StatelessWidget {
     );
   }
 
+  factory PeriodPerformanceRow.fromAsset(
+    PortfolioAsset asset, {
+    bool compact = false,
+    ReturnCalculationMode mode = ReturnCalculationMode.brut,
+    PeriodInflationData? periodInflation,
+    double? assetInflationRate,
+  }) {
+    double statDailyPercent = asset.dailyChangePercent;
+    double? statDailyProfit = asset.dailyProfit;
+    double statWeeklyPercent = asset.weeklyChangePercent;
+    double? statWeeklyProfit = asset.weeklyProfit;
+    double statMonthlyPercent = asset.monthlyChangePercent;
+    double? statMonthlyProfit = asset.monthlyProfit;
+    double statThreeMonthlyPercent = asset.threeMonthlyChangePercent;
+    double? statThreeMonthlyProfit = asset.threeMonthlyProfit;
+    double statSixMonthlyPercent = asset.sixMonthlyChangePercent;
+    double? statSixMonthlyProfit = asset.sixMonthlyProfit;
+    double statYearlyPercent = asset.yearlyChangePercent;
+    double? statYearlyProfit = asset.yearlyProfit;
+
+    if (mode == ReturnCalculationMode.reel && periodInflation != null) {
+      double calcP(double nom, double inf) =>
+          InflationService.calculateRealReturnPercent(
+            nominalReturnPercent: nom,
+            inflationPercent: inf,
+          );
+      double? calcA(double nomProfit, double inf) {
+        if (asset.currentValue <= 0) return null;
+        final prev = asset.currentValue - nomProfit;
+        return asset.currentValue - (prev * (1.0 + (inf / 100.0)));
+      }
+
+      statDailyPercent = calcP(asset.dailyChangePercent, periodInflation.daily);
+      statDailyProfit = calcA(asset.dailyProfit, periodInflation.daily);
+
+      statWeeklyPercent =
+          calcP(asset.weeklyChangePercent, periodInflation.weekly);
+      statWeeklyProfit = calcA(asset.weeklyProfit, periodInflation.weekly);
+
+      statMonthlyPercent =
+          calcP(asset.monthlyChangePercent, periodInflation.monthly);
+      statMonthlyProfit = calcA(asset.monthlyProfit, periodInflation.monthly);
+
+      statThreeMonthlyPercent =
+          calcP(asset.threeMonthlyChangePercent, periodInflation.threeMonthly);
+      statThreeMonthlyProfit =
+          calcA(asset.threeMonthlyProfit, periodInflation.threeMonthly);
+
+      statSixMonthlyPercent =
+          calcP(asset.sixMonthlyChangePercent, periodInflation.sixMonthly);
+      statSixMonthlyProfit =
+          calcA(asset.sixMonthlyProfit, periodInflation.sixMonthly);
+
+      statYearlyPercent =
+          calcP(asset.yearlyChangePercent, periodInflation.yearly);
+      statYearlyProfit = calcA(asset.yearlyProfit, periodInflation.yearly);
+    }
+
+    final displayProfit =
+        asset.profitForMode(mode, assetInflationRate ?? 0.0);
+    final displayPercent =
+        asset.profitPercentForMode(mode, assetInflationRate ?? 0.0);
+
+    return PeriodPerformanceRow(
+      compact: compact,
+      mode: mode,
+      dailyPercent: statDailyPercent,
+      dailyAmount: statDailyProfit,
+      weeklyPercent: asset.hasWeeklyData ? statWeeklyPercent : 0.0,
+      weeklyAmount: asset.hasWeeklyData ? statWeeklyProfit : 0.0,
+      monthlyPercent: asset.hasMonthlyData ? statMonthlyPercent : 0.0,
+      monthlyAmount: asset.hasMonthlyData ? statMonthlyProfit : 0.0,
+      threeMonthlyPercent:
+          asset.hasThreeMonthlyData ? statThreeMonthlyPercent : 0.0,
+      threeMonthlyAmount:
+          asset.hasThreeMonthlyData ? statThreeMonthlyProfit : 0.0,
+      sixMonthlyPercent:
+          asset.hasSixMonthlyData ? statSixMonthlyPercent : 0.0,
+      sixMonthlyAmount: asset.hasSixMonthlyData ? statSixMonthlyProfit : 0.0,
+      yearlyPercent: asset.hasYearlyData ? statYearlyPercent : 0.0,
+      yearlyAmount: asset.hasYearlyData ? statYearlyProfit : 0.0,
+      allTimePercent: displayPercent,
+      allTimeAmount: displayProfit,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.sizeOf(context).width < 720;
-    final gap = isMobile ? 7.0 : 6.0;
+    final gap = isMobile ? 6.0 : 6.0;
     final metricTiles = <Widget>[];
 
     void addPeriod(String title, double? percent, double? amount) {
@@ -191,8 +278,8 @@ class PeriodPerformanceRow extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Her kutucuk mobilde ~60-64px, masaüstünde ~48-52px genişlik ister.
-        final singleWidth = isMobile ? 62.0 : 52.0;
+        // Her kutucuk mobilde ~66-70px, masaüstünde ~58-62px genişlik ister.
+        final singleWidth = isMobile ? 68.0 : 60.0;
         final minRequiredWidth = metricTiles.length * singleWidth + (metricTiles.length - 1) * gap;
 
         // Alan yetersizse (dar ekran veya dar portföy kartı) mouse tekerleği destekli yatay kaydırılabilir yap
@@ -204,7 +291,7 @@ class PeriodPerformanceRow extends StatelessWidget {
           );
         }
 
-        // Geniş ekranda tüm alana dengeli ve ferah dağıt (tüm 7 tarih tek bakışta sığar)
+        // Geniş ekranda tüm alana dengeli ve ferah dağıt (tüm 7 tarih tek bakışta sığar ve alanı tamamen doldurur)
         return Row(
           children: [
             for (int i = 0; i < metricTiles.length; i++) ...[
@@ -250,8 +337,8 @@ class PeriodPerformanceRow extends StatelessWidget {
 
     final tile = Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 9 : 6,
-        vertical: isMobile ? 7 : 5,
+        horizontal: isMobile ? 11 : 8,
+        vertical: isMobile ? 4.0 : 4.5,
       ),
       decoration: BoxDecoration(
         color: bg,
@@ -272,14 +359,14 @@ class PeriodPerformanceRow extends StatelessWidget {
               title,
               style: TextStyle(
                 color: AppTheme.textMuted,
-                fontSize: isMobile ? 11.5 : 10.5,
+                fontSize: isMobile ? 10.5 : 10.5,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.2,
               ),
               maxLines: 1,
             ),
           ),
-          SizedBox(height: isMobile ? 3 : 2),
+          const SizedBox(height: 1.5),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Row(
@@ -290,7 +377,7 @@ class PeriodPerformanceRow extends StatelessWidget {
                 Icon(
                   iconData,
                   color: color,
-                  size: isNeutral ? (isMobile ? 14 : 13) : (isMobile ? 18 : 16),
+                  size: isNeutral ? (isMobile ? 13 : 13) : (isMobile ? 16 : 16),
                 ),
                 Text(
                   isNeutral
@@ -298,7 +385,7 @@ class PeriodPerformanceRow extends StatelessWidget {
                       : Formatters.percent(percent, includeSign: false),
                   style: TextStyle(
                     color: color,
-                    fontSize: isMobile ? 12.5 : 11,
+                    fontSize: isMobile ? 11.5 : 11,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -386,7 +473,7 @@ class _ScrollablePeriodStripState extends State<_ScrollablePeriodStrip> {
                 if (i > 0) SizedBox(width: widget.gap),
                 ConstrainedBox(
                   constraints: BoxConstraints(
-                    minWidth: widget.isMobile ? 60 : 48,
+                    minWidth: widget.isMobile ? 66 : 58,
                   ),
                   child: widget.children[i],
                 ),

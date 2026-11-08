@@ -260,12 +260,11 @@
   - **Lines 176-190:** parseDouble - Robust Turkish locale number parser handling thousand dots and decimal commas without precision loss.
   - **Lines 191-307:** TurkishNumberInputFormatter - Dynamic TextInputFormatter automatically grouping integer thousands with '.' without auto-commas, rejecting manual dot keys, and cleanly supporting manual decimal comma with cursor preservation.
 - **File:** `lib/widgets/asset_item_tile.dart`
-  - **Lines 1-25:** Imports and AssetItemTile declaration with onDelete and onStatus callbacks.
-  - **Lines 26-106:** build() method: Full-width card container (width: double.infinity), ink response, layout shell, and value calculation setups.
-  - **Lines 107-330:** LayoutBuilder adaptive layout: logo, symbol/category Wrap, name, status button, right-aligned value & profit badge, and right-aligned delete button.
-  - **Lines 331-360:** Desktop 1-row layout with logo & info on left (Expanded) and price, profit badge, and delete button pinned to the far right.
-  - **Lines 361-401:** Historical period performance row showing 1G, 1H, 1A, 3A, 6A, 1Y, and Ömür Boyu formatted as sleek mini column cards mirroring portfolio detail top metrics.
-  - **Lines 402-491:** _buildSmallStat() - Helper widget rendering period metric card with top label, bottom directional arrow and percentage value, and mode tooltips.
+  - **Lines 1-24:** Imports and AssetItemTile declaration with onDelete and onStatus callbacks.
+  - **Lines 25-50:** build() method: mode, inflation rates, and display values setup.
+  - **Lines 51-274:** LayoutBuilder adaptive layout: logo, symbol/category Wrap, name, status button, right-aligned value & profit badge, and action buttons.
+  - **Lines 275-304:** Desktop 1-row layout with logo & info on left (Expanded) and price, profit badge, and delete button pinned to the far right.
+  - **Lines 305-321:** Historical period performance section delegating to responsive PeriodPerformanceRow.fromAsset ensuring unified responsive expansion on PC and sleek horizontal scroll on mobile.
 - **File:** `lib/widgets/asset_logo.dart`
   - **Lines 1-30:** Imports, constants, and AssetLogo widget declaration.
   - **Lines 31-135:** _AssetLogoState lifecycle, SVG icon detection, candidate URLs cascading fallback mechanism (_candidateUrls, _candidateIndex, _tryNextCandidate).
@@ -289,16 +288,20 @@
   - **Lines 1-27:** Imports and NetGrossBadge declaration.
   - **Lines 28-77:** build() method: Compact badge showing BRUT, NET, or REEL with semantic styling and tooltip.
 - **File:** `lib/widgets/period_performance_badge.dart`
-  - **Lines 1-163:** Imports, PeriodPerformanceRow declaration, factory PeriodPerformanceRow.fromPortfolio() populating all 7 periods with neutral 0.0 values for insufficient holding periods.
-  - **Lines 164-219:** build() method: Responsive layout builder with adaptive mobile chip sizing (~62px) or desktop (~52px) and falling back to _ScrollablePeriodStrip with mouse wheel support.
-  - **Lines 220-329:** _buildMetricTile() - Responsive percentage-only metric pill (larger touch targets and font on mobile, compact on desktop) with mode tooltips.
-  - **Lines 330-400:** _ScrollablePeriodStrip - Stateful horizontal scroll widget capturing PointerScrollEvent for desktop mouse wheel scrolling with adaptive mobile minWidth constraints.
+  - **Lines 1-46:** Imports, PeriodPerformanceRow declaration and constructor.
+  - **Lines 47-162:** PeriodPerformanceRow.fromPortfolio() populating all 7 periods with neutral 0.0 values for insufficient holding periods and real inflation support.
+  - **Lines 163-250:** PeriodPerformanceRow.fromAsset() populating all 7 periods with neutral 0.0 values for insufficient holding periods and real inflation support for individual assets.
+  - **Lines 251-306:** build() method: Responsive layout builder with adaptive mobile chip sizing (~68px) or desktop (~60px), expanded Row on PC filling full card width, and falling back to _ScrollablePeriodStrip with mouse wheel support when narrow.
+  - **Lines 307-413:** _buildMetricTile() - Responsive percentage-only metric pill (larger horizontal width, sleek vertical padding 4.0/4.5) with mode tooltips.
+  - **Lines 414-487:** _ScrollablePeriodStrip - Stateful horizontal scroll widget capturing PointerScrollEvent for desktop mouse wheel scrolling with adaptive minWidth constraints (66 mobile, 58 desktop).
 - **File:** `lib/widgets/portfolio_card.dart`
   - **Lines 1-33:** Imports, PortfolioCard declaration with onReorder callback support.
   - **Lines 34-92:** _PortfolioCardState and build(): immediate-response hover state without frame delay, constant border width preventing subpixel jitter, opaque hitbox, and shadow elevations.
   - **Lines 93-240:** Header with portfolio name, description, and popup menu actions.
   - **Lines 241-325:** Total portfolio value, cost, profit/loss banner, and period return badges.
   - **Lines 326-406:** Category distribution bar, asset allocation summary, and footer action area.
+- **File:** `test/period_performance_test.dart`
+  - **Lines 1-95:** Unit & widget tests verifying PeriodPerformanceRow.fromAsset data mapping, 7-period rendering on desktop with expanded layout, and responsive mobile scroll behavior.
 - **File:** `test/transaction_undo_and_disambiguation_test.dart`
   - **Lines 1-123:** Unit tests covering TEB fund logo candidate resolution, TPZ search disambiguation (TEFAS vs foreign ETF), BYF tagging, and buy transaction rollback (decreasing quantity, weighted average cost recalculation, and asset deletion upon reaching zero).
 - **File:** `web/manifest.json`
