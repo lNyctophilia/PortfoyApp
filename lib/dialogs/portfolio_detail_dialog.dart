@@ -13,7 +13,6 @@ import '../models/return_mode.dart';
 import '../widgets/period_performance_badge.dart';
 import '../core/navigation/adaptive_navigation.dart';
 import 'add_transaction_dialog.dart';
-import 'asset_status_dialog.dart';
 class PortfolioDetailDialog extends StatefulWidget {
   final String portfolioId;
   final bool isFullScreen;
@@ -746,13 +745,10 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
               return AssetItemTile(
                 asset: asset,
                 onStatus: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => AssetStatusDialog(
-                      portfolio: portfolio,
-                      asset: asset,
-                      provider: provider,
-                    ),
+                  AdaptiveNavigation.openAssetStatus(
+                    context,
+                    portfolio: portfolio,
+                    asset: asset,
                   );
                 },
                 onDelete: () {
@@ -876,7 +872,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         Widget? profitBadgeWidget;
         if (isSatis) {
           profitBadgeWidget = Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             decoration: BoxDecoration(
               color: profitColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
@@ -888,28 +884,25 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                 final hasStopaj = tx.category == AssetCategory.fon && tx.withholdingTax > 0;
                 final displayProfit = (hasStopaj && showNetValues) ? tx.netRealizedProfit : tx.realizedProfit;
                 final displayPercent = (hasStopaj && showNetValues) ? tx.netProfitPercent : tx.profitPercent;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                return Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  alignment: WrapAlignment.end,
+                  spacing: 4,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Kâr: ${Formatters.currency(displayProfit)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: profitColor,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      Formatters.currency(displayProfit),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: profitColor,
+                      ),
                     ),
                     Text(
-                      'Oran: ${Formatters.percent(displayPercent)}',
+                      '(${Formatters.percent(displayPercent)})',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
                         color: profitColor,
-                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],

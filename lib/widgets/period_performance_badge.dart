@@ -162,7 +162,8 @@ class PeriodPerformanceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const gap = 6.0;
+    final isMobile = MediaQuery.sizeOf(context).width < 720;
+    final gap = isMobile ? 7.0 : 6.0;
     final metricTiles = <Widget>[];
 
     void addPeriod(String title, double? percent, double? amount) {
@@ -171,6 +172,7 @@ class PeriodPerformanceRow extends StatelessWidget {
           title: title,
           percent: percent ?? 0.0,
           amount: amount,
+          isMobile: isMobile,
         ),
       );
     }
@@ -189,13 +191,15 @@ class PeriodPerformanceRow extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Her kutucuk sadece yüzde ile ~48-52px genişlik ister.
-        final minRequiredWidth = metricTiles.length * 52.0 + (metricTiles.length - 1) * gap;
+        // Her kutucuk mobilde ~60-64px, masaüstünde ~48-52px genişlik ister.
+        final singleWidth = isMobile ? 62.0 : 52.0;
+        final minRequiredWidth = metricTiles.length * singleWidth + (metricTiles.length - 1) * gap;
 
         // Alan yetersizse (dar ekran veya dar portföy kartı) mouse tekerleği destekli yatay kaydırılabilir yap
         if (constraints.maxWidth < minRequiredWidth) {
           return _ScrollablePeriodStrip(
             gap: gap,
+            isMobile: isMobile,
             children: metricTiles,
           );
         }
@@ -204,7 +208,7 @@ class PeriodPerformanceRow extends StatelessWidget {
         return Row(
           children: [
             for (int i = 0; i < metricTiles.length; i++) ...[
-              if (i > 0) const SizedBox(width: gap),
+              if (i > 0) SizedBox(width: gap),
               Expanded(child: metricTiles[i]),
             ],
           ],
@@ -217,6 +221,7 @@ class PeriodPerformanceRow extends StatelessWidget {
     required String title,
     required double percent,
     double? amount,
+    bool isMobile = false,
   }) {
     final isNeutral = percent.abs() < 0.0001 && (amount == null || amount.abs() < 0.01);
     final isPositive = percent > 0;
@@ -244,9 +249,9 @@ class PeriodPerformanceRow extends StatelessWidget {
     }
 
     final tile = Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 6,
-        vertical: 5,
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 9 : 6,
+        vertical: isMobile ? 7 : 5,
       ),
       decoration: BoxDecoration(
         color: bg,
@@ -265,16 +270,16 @@ class PeriodPerformanceRow extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppTheme.textMuted,
-                fontSize: 10.5,
+                fontSize: isMobile ? 11.5 : 10.5,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.2,
               ),
               maxLines: 1,
             ),
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: isMobile ? 3 : 2),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Row(
@@ -285,7 +290,7 @@ class PeriodPerformanceRow extends StatelessWidget {
                 Icon(
                   iconData,
                   color: color,
-                  size: isNeutral ? 13 : 16,
+                  size: isNeutral ? (isMobile ? 14 : 13) : (isMobile ? 18 : 16),
                 ),
                 Text(
                   isNeutral
@@ -293,7 +298,7 @@ class PeriodPerformanceRow extends StatelessWidget {
                       : Formatters.percent(percent, includeSign: false),
                   style: TextStyle(
                     color: color,
-                    fontSize: 11,
+                    fontSize: isMobile ? 12.5 : 11,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -325,10 +330,12 @@ class PeriodPerformanceRow extends StatelessWidget {
 class _ScrollablePeriodStrip extends StatefulWidget {
   final List<Widget> children;
   final double gap;
+  final bool isMobile;
 
   const _ScrollablePeriodStrip({
     required this.children,
     this.gap = 6.0,
+    this.isMobile = false,
   });
 
   @override
@@ -378,8 +385,8 @@ class _ScrollablePeriodStripState extends State<_ScrollablePeriodStrip> {
               for (int i = 0; i < widget.children.length; i++) ...[
                 if (i > 0) SizedBox(width: widget.gap),
                 ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 48,
+                  constraints: BoxConstraints(
+                    minWidth: widget.isMobile ? 60 : 48,
                   ),
                   child: widget.children[i],
                 ),

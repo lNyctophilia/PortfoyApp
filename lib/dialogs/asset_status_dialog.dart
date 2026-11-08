@@ -237,75 +237,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   : _buildSalesTab(fifoResult, currentAsset, isMobile),
             ),
 
-            // ALT AKSİYON ÇUBUÄU
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
-              decoration: const BoxDecoration(
-                color: AppTheme.surfaceLight,
-                border: Border(
-                  top: BorderSide(color: AppTheme.borderSubtle),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline_rounded,
-                    size: 15,
-                    color: AppTheme.textMuted,
-                  ),
-                  const SizedBox(width: 6),
-                  const Expanded(
-                    child: Text(
-                      'Satış yapıldığında ilk alınan lotlardan otomatik düşülür (FIFO).',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      AdaptiveNavigation.openAddTransaction(
-      context,
-      portfolio: currentPortfolio,
-      initialAsset: currentAsset,
-    );
-                    },
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('İşlem Ekle'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      side: const BorderSide(color: AppTheme.primaryLight),
-                      foregroundColor: AppTheme.primaryLight,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.surface,
-                      foregroundColor: AppTheme.textPrimary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 10,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(color: AppTheme.borderSubtle),
-                      ),
-                    ),
-                    child: const Text('Kapat'),
-                  ),
-                ],
-              ),
-            ),
             ],
           ),
         ),
@@ -374,25 +305,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                                 ),
                               ),
                             ),
-                            if (!isMobile)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primary.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  'FIFO Maliyet & Durum',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.primaryLight,
-                                  ),
-                                ),
-                              ),
+
                           ],
                         ),
                         const SizedBox(height: 3),
@@ -527,75 +440,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   : _buildSalesTab(fifoResult, currentAsset, isMobile),
             ),
 
-            // ALT AKSİYON ÇUBUÄU
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
-              decoration: const BoxDecoration(
-                color: AppTheme.surfaceLight,
-                border: Border(
-                  top: BorderSide(color: AppTheme.borderSubtle),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline_rounded,
-                    size: 15,
-                    color: AppTheme.textMuted,
-                  ),
-                  const SizedBox(width: 6),
-                  const Expanded(
-                    child: Text(
-                      'Satış yapıldığında ilk alınan lotlardan otomatik düşülür (FIFO).',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      AdaptiveNavigation.openAddTransaction(
-      context,
-      portfolio: currentPortfolio,
-      initialAsset: currentAsset,
-    );
-                    },
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('İşlem Ekle'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      side: const BorderSide(color: AppTheme.primaryLight),
-                      foregroundColor: AppTheme.primaryLight,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.surface,
-                      foregroundColor: AppTheme.textPrimary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 10,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(color: AppTheme.borderSubtle),
-                      ),
-                    ),
-                    child: const Text('Kapat'),
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),

@@ -378,17 +378,17 @@ class AssetItemTile extends StatelessWidget {
               child: Row(
                 children: [
                   _buildSmallStat('1G', statDailyPercent, statDailyProfit, mode),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                   _buildSmallStat('1H', asset.hasWeeklyData ? statWeeklyPercent : 0.0, asset.hasWeeklyData ? statWeeklyProfit : 0.0, mode),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                   _buildSmallStat('1A', asset.hasMonthlyData ? statMonthlyPercent : 0.0, asset.hasMonthlyData ? statMonthlyProfit : 0.0, mode),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                   _buildSmallStat('3A', asset.hasThreeMonthlyData ? statThreeMonthlyPercent : 0.0, asset.hasThreeMonthlyData ? statThreeMonthlyProfit : 0.0, mode),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                   _buildSmallStat('6A', asset.hasSixMonthlyData ? statSixMonthlyPercent : 0.0, asset.hasSixMonthlyData ? statSixMonthlyProfit : 0.0, mode),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                   _buildSmallStat('1Y', asset.hasYearlyData ? statYearlyPercent : 0.0, asset.hasYearlyData ? statYearlyProfit : 0.0, mode),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                   _buildSmallStat('Ömür Boyu', displayPercent, displayProfit, mode),
                 ],
               ),
@@ -405,59 +405,83 @@ class AssetItemTile extends StatelessWidget {
     final Color col;
     final Color bg;
     final Color borderColor;
+    final IconData iconData;
 
     if (isNeutral) {
       col = AppTheme.textMuted;
-      bg = AppTheme.surfaceLight.withValues(alpha: 0.5);
+      bg = AppTheme.surfaceLight.withValues(alpha: 0.6);
       borderColor = AppTheme.borderSubtle;
+      iconData = Icons.remove_rounded;
     } else if (isPos) {
       col = AppTheme.profit;
       bg = AppTheme.profitBg;
-      borderColor = col.withValues(alpha: 0.2);
+      borderColor = col.withValues(alpha: 0.25);
+      iconData = Icons.arrow_drop_up_rounded;
     } else {
       col = AppTheme.loss;
       bg = AppTheme.lossBg;
-      borderColor = col.withValues(alpha: 0.2);
+      borderColor = col.withValues(alpha: 0.25);
+      iconData = Icons.arrow_drop_down_rounded;
     }
 
     final statWidget = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      constraints: const BoxConstraints(minWidth: 46),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: borderColor),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor, width: 1),
       ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '$label ',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
               style: const TextStyle(
                 color: AppTheme.textMuted,
                 fontSize: 10,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
               ),
+              maxLines: 1,
             ),
-            Text(
-              isNeutral ? '%0,00' : Formatters.percent(val),
-              style: TextStyle(
-                color: col,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-              ),
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(
+                  iconData,
+                  color: col,
+                  size: isNeutral ? 12 : 15,
+                ),
+                Text(
+                  isNeutral ? '%0,00' : Formatters.percent(val, includeSign: false),
+                  style: TextStyle(
+                    color: col,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
 
     final modeSuffix = mode == ReturnCalculationMode.reel ? ' (Reel)' : '';
     final tooltipMsg = profit != null
-        ? '$label$modeSuffix Kâr/Zarar: ${isNeutral ? '₺0,00 (%0,00)' : '${Formatters.currency(profit)} (${Formatters.percent(val)})'}'
-        : '$label$modeSuffix: ${isNeutral ? '%0,00' : Formatters.percent(val)}';
+        ? '$label$modeSuffix: ${Formatters.currency(profit)} (${Formatters.percent(val)})'
+        : '$label$modeSuffix: ${Formatters.percent(val)}';
 
     return Tooltip(
       message: tooltipMsg,

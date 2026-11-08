@@ -7,7 +7,6 @@ import '../features/app_update/widgets/app_update_action.dart';
 import '../models/return_mode.dart';
 import '../providers/portfolio_provider.dart';
 import '../theme/app_theme.dart';
-import '../utils/formatters.dart';
 import '../widgets/net_gross_badge.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -69,40 +68,6 @@ class SettingsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Başlık
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.tune_rounded,
-                                color: AppTheme.primaryLight,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                'Getiri Hesaplama Modu',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.textPrimary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const Divider(color: AppTheme.borderSubtle, height: 1),
-
                       // 1. SEÇENEK: BRÜT GETİRİ
                       _buildRadioOption(
                         context: context,
@@ -195,7 +160,10 @@ class SettingsScreen extends StatelessWidget {
                                 ReturnCalculationMode.reel) ...[
                               const SizedBox(height: 12),
                               Container(
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppTheme.warning
                                       .withValues(alpha: 0.08),
@@ -207,58 +175,9 @@ class SettingsScreen extends StatelessWidget {
                                 ),
                                 child: Row(
                                   children: [
-                                    if (provider.isLoadingInflation)
-                                      const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: AppTheme.warning,
-                                        ),
-                                      )
-                                    else
-                                      const Icon(
-                                        Icons.cloud_done_rounded,
-                                        size: 20,
-                                        color: AppTheme.warning,
-                                      ),
-                                    const SizedBox(width: 12),
                                     Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Wrap(
-                                            crossAxisAlignment: WrapCrossAlignment.center,
-                                            spacing: 6,
-                                            runSpacing: 4,
-                                            children: [
-                                              const Text(
-                                                'Resmi TÜFE Oranları:',
-                                                style: TextStyle(
-                                                  fontSize: 12.5,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: AppTheme.textPrimary,
-                                                ),
-                                              ),
-                                              Text(
-                                                provider.latestAnnualInflation >
-                                                        0
-                                                    ? 'Son 1 Yıllık TÜFE: %${Formatters.percent(provider.latestAnnualInflation)}'
-                                                    : (provider.isLoadingInflation
-                                                        ? 'Veriler çekiliyor...'
-                                                        : 'Veri güncel'),
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppTheme.warning,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 6),
-                                          if (provider.periodInflation != null) ...[
-                                            Wrap(
+                                      child: provider.periodInflation != null
+                                          ? Wrap(
                                               spacing: 6,
                                               runSpacing: 4,
                                               children: [
@@ -267,33 +186,37 @@ class SettingsScreen extends StatelessWidget {
                                                 _buildTufeBadge('6 Ay', provider.periodInflation!.sixMonthly),
                                                 _buildTufeBadge('1 Yıl', provider.periodInflation!.yearly),
                                               ],
-                                            ),
-                                            const SizedBox(height: 6),
-                                          ],
-                                          const Text(
-                                            'Aylık TÜFE raporları esas alınarak hem dönemsel performanslar (1A, 3A, 6A, 1Y) hem de 1 yılı doldurmayan varlıklar dahil tüm tutma süreleri için enflasyon pro-rata düşülür.',
-                                            style: TextStyle(
-                                              fontSize: 11.5,
-                                              color: AppTheme.textSecondary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                            )
+                                          : const SizedBox.shrink(),
                                     ),
                                     const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.refresh_rounded,
-                                        size: 20,
-                                        color: AppTheme.warning,
+                                    if (provider.isLoadingInflation)
+                                      const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: AppTheme.warning,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.refresh_rounded,
+                                          size: 20,
+                                          color: AppTheme.warning,
+                                        ),
+                                        tooltip:
+                                            'TÜFE Verilerini İnternetten Yenile',
+                                        onPressed: () =>
+                                            provider.refreshInflationData(),
                                       ),
-                                      tooltip:
-                                          'TÜFE Verilerini İnternetten Yenile',
-                                      onPressed: provider.isLoadingInflation
-                                          ? null
-                                          : () =>
-                                              provider.refreshInflationData(),
-                                    ),
                                   ],
                                 ),
                               ),
