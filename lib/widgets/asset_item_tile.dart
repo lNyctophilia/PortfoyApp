@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/asset_category.dart';
@@ -362,25 +363,35 @@ class AssetItemTile extends StatelessWidget {
             padding: EdgeInsets.only(top: 12, bottom: 8),
             child: Divider(color: AppTheme.borderSubtle, height: 1),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: [
-                _buildSmallStat('1G', statDailyPercent, statDailyProfit, mode),
-                const SizedBox(width: 5),
-                _buildSmallStat('1H', asset.hasWeeklyData ? statWeeklyPercent : 0.0, asset.hasWeeklyData ? statWeeklyProfit : 0.0, mode),
-                const SizedBox(width: 5),
-                _buildSmallStat('1A', asset.hasMonthlyData ? statMonthlyPercent : 0.0, asset.hasMonthlyData ? statMonthlyProfit : 0.0, mode),
-                const SizedBox(width: 5),
-                _buildSmallStat('3A', asset.hasThreeMonthlyData ? statThreeMonthlyPercent : 0.0, asset.hasThreeMonthlyData ? statThreeMonthlyProfit : 0.0, mode),
-                const SizedBox(width: 5),
-                _buildSmallStat('6A', asset.hasSixMonthlyData ? statSixMonthlyPercent : 0.0, asset.hasSixMonthlyData ? statSixMonthlyProfit : 0.0, mode),
-                const SizedBox(width: 5),
-                _buildSmallStat('1Y', asset.hasYearlyData ? statYearlyPercent : 0.0, asset.hasYearlyData ? statYearlyProfit : 0.0, mode),
-                const SizedBox(width: 5),
-                _buildSmallStat('Ömür Boyu', displayPercent, displayProfit, mode),
-              ],
+          ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(
+              dragDevices: {
+                PointerDeviceKind.touch,
+                PointerDeviceKind.mouse,
+                PointerDeviceKind.trackpad,
+                PointerDeviceKind.stylus,
+              },
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  _buildSmallStat('1G', statDailyPercent, statDailyProfit, mode),
+                  const SizedBox(width: 5),
+                  _buildSmallStat('1H', asset.hasWeeklyData ? statWeeklyPercent : 0.0, asset.hasWeeklyData ? statWeeklyProfit : 0.0, mode),
+                  const SizedBox(width: 5),
+                  _buildSmallStat('1A', asset.hasMonthlyData ? statMonthlyPercent : 0.0, asset.hasMonthlyData ? statMonthlyProfit : 0.0, mode),
+                  const SizedBox(width: 5),
+                  _buildSmallStat('3A', asset.hasThreeMonthlyData ? statThreeMonthlyPercent : 0.0, asset.hasThreeMonthlyData ? statThreeMonthlyProfit : 0.0, mode),
+                  const SizedBox(width: 5),
+                  _buildSmallStat('6A', asset.hasSixMonthlyData ? statSixMonthlyPercent : 0.0, asset.hasSixMonthlyData ? statSixMonthlyProfit : 0.0, mode),
+                  const SizedBox(width: 5),
+                  _buildSmallStat('1Y', asset.hasYearlyData ? statYearlyPercent : 0.0, asset.hasYearlyData ? statYearlyProfit : 0.0, mode),
+                  const SizedBox(width: 5),
+                  _buildSmallStat('Ömür Boyu', displayPercent, displayProfit, mode),
+                ],
+              ),
             ),
           ),
         ],
@@ -438,17 +449,6 @@ class AssetItemTile extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            if (profit != null) ...[
-              const SizedBox(width: 3),
-              Text(
-                isNeutral ? '₺0,00' : Formatters.currency(profit),
-                style: TextStyle(
-                  color: col,
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
           ],
         ),
       ),

@@ -358,7 +358,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.w700,
                                                   fontSize: 13.5,
-                                                  color: Colors.white,
+                                                  color: AppTheme.textPrimary,
                                                 ),
                                               ),
                                               const SizedBox(height: 2),

@@ -284,7 +284,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           data: Theme.of(dialogContext).copyWith(
             colorScheme: ColorScheme.dark(
               primary: primaryColor,
-              onPrimary: Colors.white,
+              onPrimary: AppTheme.textPrimary,
               surface: AppTheme.surface,
               onSurface: AppTheme.textPrimary,
             ),
@@ -325,7 +325,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryColor,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppTheme.textPrimary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),

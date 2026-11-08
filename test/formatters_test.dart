@@ -55,12 +55,56 @@ void main() {
       );
       expect(res.text, '1.234,5');
 
-      // Typing dot instead of comma
+      // Typing dot is rejected (user cannot type dots manually)
       res = formatter.formatEditUpdate(
         const TextEditingValue(text: '123', selection: TextSelection.collapsed(offset: 3)),
         const TextEditingValue(text: '123.', selection: TextSelection.collapsed(offset: 4)),
       );
-      expect(res.text, '123,');
+      expect(res.text, '123');
+
+      // Continuing to type digits beyond thousands groups without converting to comma
+      var numberFlow = formatter.formatEditUpdate(
+        TextEditingValue.empty,
+        const TextEditingValue(text: '1', selection: TextSelection.collapsed(offset: 1)),
+      );
+      numberFlow = formatter.formatEditUpdate(
+        numberFlow,
+        const TextEditingValue(text: '10', selection: TextSelection.collapsed(offset: 2)),
+      );
+      numberFlow = formatter.formatEditUpdate(
+        numberFlow,
+        const TextEditingValue(text: '100', selection: TextSelection.collapsed(offset: 3)),
+      );
+      numberFlow = formatter.formatEditUpdate(
+        numberFlow,
+        const TextEditingValue(text: '1000', selection: TextSelection.collapsed(offset: 4)),
+      );
+      expect(numberFlow.text, '1.000');
+
+      numberFlow = formatter.formatEditUpdate(
+        numberFlow,
+        const TextEditingValue(text: '1.0000', selection: TextSelection.collapsed(offset: 6)),
+      );
+      expect(numberFlow.text, '10.000');
+
+      numberFlow = formatter.formatEditUpdate(
+        numberFlow,
+        const TextEditingValue(text: '10.0000', selection: TextSelection.collapsed(offset: 7)),
+      );
+      expect(numberFlow.text, '100.000');
+
+      // Typing comma adds decimal part
+      numberFlow = formatter.formatEditUpdate(
+        numberFlow,
+        const TextEditingValue(text: '100.000,', selection: TextSelection.collapsed(offset: 8)),
+      );
+      expect(numberFlow.text, '100.000,');
+
+      numberFlow = formatter.formatEditUpdate(
+        numberFlow,
+        const TextEditingValue(text: '100.000,5', selection: TextSelection.collapsed(offset: 9)),
+      );
+      expect(numberFlow.text, '100.000,5');
     });
   });
 }

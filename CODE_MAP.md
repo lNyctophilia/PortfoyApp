@@ -181,14 +181,12 @@
 - **File:** `lib/screens/settings_screen.dart`
   - **Lines 1-16:** Imports and SettingsScreen declaration.
   - **Lines 17-47:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
-  - **Lines 48-329:** Return calculation mode settings section (Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators with Wrap).
-  - **Lines 330-441:** About app section with official app icon, version, AppUpdateAction trigger, developer, and copyright info.
-  - **Lines 442-535:** _buildRadioOption() - Radio selection tile with mode descriptions, badges, and status indicators with responsive Wrap header.
-  - **Lines 536-688:** _buildAccountSection() & _buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
-  - **Lines 689-856:** _buildSignedInContent(), user avatar fallback builder, and sync/sign-out actions.
-  - **Lines 857-914:** _confirmSignOut() - Modal confirmation dialog for Google account sign out.
-  - **Lines 915-929:** _buildSectionHeader() - Section heading widget with custom typography and accent indicator.
-  - **Lines 930-951:** _buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
+  - **Lines 48-311:** Return calculation mode settings section ('Getiri Hesaplama Tercihi', clean mode title without redundant subtitle, Brut, Net, Reel getiri modes, inflation info card, TUFE period indicators with Wrap, unparenthesized current mode text).
+  - **Lines 312-421:** About app section with official app icon, version, AppUpdateAction trigger, developer, and copyright info.
+  - **Lines 422-496:** _buildRadioOption() - Minimalist radio selection tile with mode titles, badges, and status indicators without redundant subtitles, and compact icons.
+  - **Lines 497-650:** _buildAccountSection() ('Hesap Senkronizasyonu') & _buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
+  - **Lines 651-818:** _buildSignedInContent(), user avatar fallback builder, and sync/sign-out actions.
+  - **Lines 819-879:** _confirmSignOut() - Modal confirmation dialog for Google account sign out, section header, and TUFE badge helpers.
 - **File:** `lib/services/asset_catalog_service.dart`
   - **Lines 1-24:** Imports and AssetSuggestion model class with isByf flag.
   - **Lines 25-274:** Static catalogs for funds (with verified active TEFAS funds including TEB funds like TPZ, TPF, TGE), stocks, cryptos, commodities, and currencies.
@@ -259,15 +257,15 @@
   - **Lines 59-112:** Holding duration text formatter (formatDuration calculating days, months, and years in Turkish).
   - **Lines 113-160:** formatPriceGrouped and formatPrice - Turkish number formatter with '.' thousand separators and ',' decimal kuruş separators up to 7 decimal precision.
   - **Lines 161-175:** formatNumber with Turkish grouping.
-  - **Lines 176-205:** parseDouble - Robust Turkish locale number parser handling thousand dots and decimal commas without precision loss.
-  - **Lines 206-325:** TurkishNumberInputFormatter - Dynamic TextInputFormatter formatting thousand dots and decimal commas in real-time with cursor position preservation.
+  - **Lines 176-190:** parseDouble - Robust Turkish locale number parser handling thousand dots and decimal commas without precision loss.
+  - **Lines 191-307:** TurkishNumberInputFormatter - Dynamic TextInputFormatter automatically grouping integer thousands with '.' without auto-commas, rejecting manual dot keys, and cleanly supporting manual decimal comma with cursor preservation.
 - **File:** `lib/widgets/asset_item_tile.dart`
-  - **Lines 1-25:** Imports and AssetItemTile declaration with onDelete and onStatus callbacks.
-  - **Lines 26-106:** build() method: Full-width card container (width: double.infinity), ink response, layout shell, and value calculation setups.
-  - **Lines 107-330:** LayoutBuilder adaptive layout: logo, symbol/category Wrap, name, status button, right-aligned value & profit badge, and right-aligned delete button.
-  - **Lines 331-360:** Desktop 1-row layout with logo & info on left (Expanded) and price, profit badge, and delete button pinned to the far right.
-  - **Lines 361-400:** Historical period performance row showing 1G, 1H, 1A, 3A, 6A, 1Y, and Ömür Boyu with neutral 0 support and smooth horizontal scrolling.
-  - **Lines 401-467:** _buildSmallStat() - Helper widget for compact secondary metric items displaying percentage and currency side-by-side with neutral styling and no unconstrained Expanded.
+  - **Lines 1-26:** Imports and AssetItemTile declaration with onDelete and onStatus callbacks.
+  - **Lines 27-107:** build() method: Full-width card container (width: double.infinity), ink response, layout shell, and value calculation setups.
+  - **Lines 108-331:** LayoutBuilder adaptive layout: logo, symbol/category Wrap, name, status button, right-aligned value & profit badge, and right-aligned delete button.
+  - **Lines 332-361:** Desktop 1-row layout with logo & info on left (Expanded) and price, profit badge, and delete button pinned to the far right.
+  - **Lines 362-390:** Historical period performance row showing 1G, 1H, 1A, 3A, 6A, 1Y, and Ömür Boyu with percentage-only values (no TL) and mouse drag/scroll support.
+  - **Lines 391-435:** _buildSmallStat() - Helper widget for compact secondary metric items displaying percentage with neutral styling and tooltips.
 - **File:** `lib/widgets/asset_logo.dart`
   - **Lines 1-30:** Imports, constants, and AssetLogo widget declaration.
   - **Lines 31-135:** _AssetLogoState lifecycle, SVG icon detection, candidate URLs cascading fallback mechanism (_candidateUrls, _candidateIndex, _tryNextCandidate).
@@ -283,23 +281,24 @@
   - **Lines 1-33:** Imports, CategoryDistributionBar declaration, and color palette definition.
   - **Lines 34-160:** build() method: Multi-segmented horizontal progress bar, compact responsive legend badges with percentages and monetary values.
   - **Lines 161-173:** _AllocationDisplayItem private helper data class.
+  - **Lines 174-186:** _AllocationDisplayItem private helper data class.
 - **File:** `lib/widgets/emtia_vector_icon.dart`
   - **Lines 1-15:** Imports and EmtiaVectorIcon declaration.
   - **Lines 16-36:** Custom metallic gold bar vector drawing widget.
-  - **Lines 288-290:** NetGrossBadge declaration.
 - **File:** `lib/widgets/net_gross_badge.dart`
   - **Lines 1-27:** Imports and NetGrossBadge declaration.
   - **Lines 28-77:** build() method: Compact badge showing BRUT, NET, or REEL with semantic styling and tooltip.
 - **File:** `lib/widgets/period_performance_badge.dart`
-  - **Lines 1-156:** Imports, PeriodPerformanceRow declaration, factory PeriodPerformanceRow.fromPortfolio() populating all 7 periods (1G, 1H, 1A, 3A, 6A, 1Y, Ömür Boyu) with 0.0 neutral values for insufficient holding periods.
-  - **Lines 157-226:** build() method: Responsive layout builder with horizontal scrolling on mobile/narrow screens and expanded balanced layout on wide screens.
-  - **Lines 227-345:** _buildMetricTile() - Apple-minimalist metric pill rendering percentage and monetary amount side-by-side with profit/loss/neutral styling, neutral icon (remove_rounded), and mode tooltips.
+  - **Lines 1-160:** Imports, PeriodPerformanceRow declaration, factory PeriodPerformanceRow.fromPortfolio() populating all 7 periods with neutral 0.0 values for insufficient holding periods.
+  - **Lines 161-228:** build() method: Responsive layout builder fitting all 7 percentage-only chips or falling back to _ScrollablePeriodStrip with mouse wheel support.
+  - **Lines 229-305:** _buildMetricTile() - Minimalist percentage-only metric pill (no TL text) with mode tooltips.
+  - **Lines 306-367:** _ScrollablePeriodStrip - Stateful horizontal scroll widget capturing PointerScrollEvent for desktop mouse wheel scrolling.
 - **File:** `lib/widgets/portfolio_card.dart`
   - **Lines 1-33:** Imports, PortfolioCard declaration with onReorder callback support.
-  - **Lines 34-150:** _PortfolioCardState and build() header: portfolio name, description, visibility toggle.
-  - **Lines 151-245:** Popup menu with 'Cüzdandan Gizle', 'Sıra Değiştir', 'Portföyü Düzenle', and 'Portföyü Sil' options.
-  - **Lines 246-335:** Total portfolio value, cost, profit/loss banner, and period return badges.
-  - **Lines 336-421:** Category distribution bar, asset allocation summary, and footer action area.
+  - **Lines 34-92:** _PortfolioCardState and build(): immediate-response hover state without frame delay, constant border width preventing subpixel jitter, opaque hitbox, and shadow elevations.
+  - **Lines 93-240:** Header with portfolio name, description, and popup menu actions.
+  - **Lines 241-325:** Total portfolio value, cost, profit/loss banner, and period return badges.
+  - **Lines 326-406:** Category distribution bar, asset allocation summary, and footer action area.
 - **File:** `test/transaction_undo_and_disambiguation_test.dart`
   - **Lines 1-123:** Unit tests covering TEB fund logo candidate resolution, TPZ search disambiguation (TEFAS vs foreign ETF), BYF tagging, and buy transaction rollback (decreasing quantity, weighted average cost recalculation, and asset deletion upon reaching zero).
 - **File:** `web/manifest.json`

@@ -33,13 +33,9 @@ class _PortfolioCardState extends State<PortfolioCard> {
   bool _isHovered = false;
 
   void _setHovered(bool value) {
-    if (_isHovered == value) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _isHovered != value) {
-        setState(() {
-          _isHovered = value;
-        });
-      }
+    if (_isHovered == value || !mounted) return;
+    setState(() {
+      _isHovered = value;
     });
   }
 
@@ -56,30 +52,33 @@ class _PortfolioCardState extends State<PortfolioCard> {
     final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
     return MouseRegion(
+      opaque: true,
       onEnter: (_) => _setHovered(true),
       onExit: (_) => _setHovered(false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
         child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 180),
           opacity: p.isVisible ? 1.0 : 0.72,
           child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
+          width: double.infinity,
           decoration: BoxDecoration(
             color: AppTheme.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: _isHovered ? AppTheme.primaryLight : AppTheme.borderSubtle,
-              width: _isHovered ? 1.5 : 1.0,
+              width: 1.2,
             ),
             boxShadow: _isHovered
                 ? [
                     BoxShadow(
-                      color: AppTheme.primary.withValues(alpha: 0.12),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
+                      color: AppTheme.primary.withValues(alpha: 0.15),
+                      blurRadius: 18,
+                      offset: const Offset(0, 4),
                     ),
                   ]
                 : [

@@ -208,6 +208,18 @@ class TurkishNumberInputFormatter extends TextInputFormatter {
       return newValue;
     }
 
+    // Kullanıcı nokta tuşuna basarsa kabul etme (nokta manuel koyulamaz)
+    if (newValue.text.length > oldValue.text.length) {
+      final start = oldValue.selection.start;
+      final end = newValue.selection.end;
+      if (start >= 0 && end >= start && end <= newText.length) {
+        final inserted = newText.substring(start, end);
+        if (inserted == '.') {
+          return oldValue;
+        }
+      }
+    }
+
     // Silme durumunda: Eğer kullanıcı noktayı sildiyse (örn "1.250"deki '.' silinmeye çalışıldıysa)
     // Noktadan önceki basamağı da silerek kullanıcının takılmasını önle
     if (oldValue.text.length - newValue.text.length == 1 &&
@@ -227,95 +239,114 @@ class TurkishNumberInputFormatter extends TextInputFormatter {
       }
     }
 
-    // Nokta girildiğinde kuruş/ondalık virgülü olarak kabul et
-    var cleaned = newText;
-    if (allowDecimals && !cleaned.contains(',') && cleaned.contains('.')) {
-      final dotCount = '.'.allMatches(cleaned).length;
-      if (dotCount == 1 && !oldValue.text.contains('.')) {
-        cleaned = cleaned.replaceAll('.', ',');
+    // Tek bir virgüle izin ver (virgül varsa ayrıştır)
+    final hasCommaInInput = allowDecimals && newText.contains(',');
+    final rawParts = newText.split(',');
+
+    // Tam sayı kısmı: Noktaları ve rakam dışı tüm karakterleri temizle
+    var rawInt = rawParts[0].replaceAll(RegExp(r'[^0-9]'), '');
+    String? rawDec;
+
+    if (hasCommaInInput && rawParts.length > 1) {
+      // Virgülden sonraki ondalık kısmı: sadece rakamlar
+      rawDec = rawParts.sublist(1).join('').replaceAll(RegExp(r'[^0-9]'), '');
+    }
+
+    // Eğer tam sayı boşsa ama virgül varsa '0' ile başlat
+    if (rawInt.isEmpty) {
+      if (hasCommaInInput) {
+        rawInt = '0';
+      } else {
+        return const TextEditingValue(
+          text: '',
+          selection: TextSelection.collapsed(offset: 0),
+        );
       }
     }
 
-    // Sadece rakamlar ve tek bir virgüle izin ver
-    final filtered = StringBuffer();
-    bool hasComma = false;
-    for (int i = 0; i < cleaned.length; i++) {
-      final char = cleaned[i];
-      if (RegExp(r'[0-9]').hasMatch(char)) {
-        filtered.write(char);
-      } else if (char == ',' && allowDecimals && !hasComma) {
-        filtered.write(',');
-        hasComma = true;
-      } else if (char == '.' && !hasComma && !cleaned.contains(',')) {
-        filtered.write(',');
-        hasComma = true;
-      }
+    // Baştaki fazla sıfırları temizle (örn: 05 -> 5, ama tek başına 0 kalabilir)
+    if (rawInt.length > 1 && rawInt.startsWith('0')) {
+      rawInt = rawInt.replaceFirst(RegExp(r'^0+'), '');
+      if (rawInt.isEmpty) rawInt = '0';
     }
 
-    final raw = filtered.toString();
-    if (raw.isEmpty) {
-      return const TextEditingValue(
-        text: '',
-        selection: TextSelection.collapsed(offset: 0),
-      );
-    }
-
-    final parts = raw.split(',');
-    var intPart = parts[0];
-    String? decPart = parts.length > 1 ? parts[1] : null;
-
-    if (intPart.length > 1 && intPart.startsWith('0')) {
-      intPart = intPart.replaceFirst(RegExp(r'^0+'), '');
-      if (intPart.isEmpty) intPart = '0';
-    }
-
-    // Binlik gruplama ekle
+    // Binlik gruplama ekle (sağdan sola 3'erli '.')
     final formattedInt = StringBuffer();
-    for (int i = 0; i < intPart.length; i++) {
-      if (i > 0 && (intPart.length - i) % 3 == 0) {
+    for (int i = 0; i < rawInt.length; i++) {
+      if (i > 0 && (rawInt.length - i) % 3 == 0) {
         formattedInt.write('.');
       }
-      formattedInt.write(intPart[i]);
+      formattedInt.write(rawInt[i]);
     }
 
     String result = formattedInt.toString();
-    if (decPart != null) {
-      if (decPart.length > maxDecimals) {
-        decPart = decPart.substring(0, maxDecimals);
+    if (rawDec != null) {
+      if (rawDec.length > maxDecimals) {
+        rawDec = rawDec.substring(0, maxDecimals);
       }
-      result += ',$decPart';
-    } else if (raw.endsWith(',')) {
+      result += ',$rawDec';
+    } else if (hasCommaInInput || (allowDecimals && newText.endsWith(','))) {
       result += ',';
     }
 
-    // İmleç pozisyonunu koru
-    int digitsBeforeCursor = 0;
-    bool cursorPassedComma = false;
-    for (int i = 0; i < newValue.selection.end && i < newText.length; i++) {
-      if (RegExp(r'[0-9]').hasMatch(newText[i])) {
-        digitsBeforeCursor++;
-      } else if (newText[i] == ',' || newText[i] == '.') {
-        cursorPassedComma = true;
+    // İmleç pozisyonunu hassas ve hatasız hesapla
+    int intDigitsBeforeCursor = 0;
+    bool isCursorAfterComma = false;
+    int decDigitsBeforeCursor = 0;
+
+    final cursorLimit = newValue.selection.end.clamp(0, newText.length);
+    for (int i = 0; i < cursorLimit; i++) {
+      final char = newText[i];
+      if (char == ',') {
+        isCursorAfterComma = true;
+      } else if (RegExp(r'[0-9]').hasMatch(char)) {
+        if (isCursorAfterComma) {
+          decDigitsBeforeCursor++;
+        } else {
+          intDigitsBeforeCursor++;
+        }
       }
     }
 
     int newOffset = 0;
-    int digitsCounted = 0;
-    for (int i = 0; i < result.length; i++) {
-      if (RegExp(r'[0-9]').hasMatch(result[i])) {
-        digitsCounted++;
-      } else if (result[i] == ',' && cursorPassedComma) {
-        newOffset = i + 1;
+    if (!isCursorAfterComma) {
+      if (intDigitsBeforeCursor == 0) {
+        newOffset = 0;
+      } else {
+        int counted = 0;
+        for (int i = 0; i < result.length; i++) {
+          if (result[i] == ',') break;
+          if (RegExp(r'[0-9]').hasMatch(result[i])) {
+            counted++;
+            if (counted == intDigitsBeforeCursor) {
+              newOffset = i + 1;
+              break;
+            }
+          }
+        }
       }
-      if (digitsCounted == digitsBeforeCursor) {
-        newOffset = i + 1;
-        break;
+    } else {
+      final commaIdx = result.indexOf(',');
+      if (commaIdx == -1) {
+        newOffset = result.length;
+      } else if (decDigitsBeforeCursor == 0) {
+        newOffset = commaIdx + 1;
+      } else {
+        int counted = 0;
+        newOffset = commaIdx + 1;
+        for (int i = commaIdx + 1; i < result.length; i++) {
+          if (RegExp(r'[0-9]').hasMatch(result[i])) {
+            counted++;
+            if (counted == decDigitsBeforeCursor) {
+              newOffset = i + 1;
+              break;
+            }
+          }
+        }
       }
     }
+
     if (newOffset > result.length) newOffset = result.length;
-    if (newOffset == 0 && digitsBeforeCursor == 0) {
-      newOffset = result.isNotEmpty && result.startsWith('0,') && raw.startsWith('0,') ? 2 : 0;
-    }
 
     return TextEditingValue(
       text: result,

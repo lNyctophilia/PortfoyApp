@@ -1136,7 +1136,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.warning,
-              foregroundColor: Colors.black,
+              foregroundColor: AppTheme.background,
             ),
             onPressed: () {
               provider.deleteTransaction(portfolioId, transaction.id,

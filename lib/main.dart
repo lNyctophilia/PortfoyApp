@@ -651,13 +651,13 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddPortfolioDialog(context),
-        icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
+        icon: const Icon(Icons.add_rounded, size: 20, color: AppTheme.textPrimary),
         label: const Text(
           'Yeni Portföy',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: AppTheme.textPrimary,
           ),
         ),
       ),

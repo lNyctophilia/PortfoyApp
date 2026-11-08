@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../models/portfolio.dart';
 import '../models/return_mode.dart';
@@ -188,32 +189,18 @@ class PeriodPerformanceRow extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Her kutucuk yan yana yüzde + TL tutarı ile ~115px genişlik ister.
-        final minRequiredWidth = metricTiles.length * 115.0 + (metricTiles.length - 1) * gap;
+        // Her kutucuk sadece yüzde ile ~48-52px genişlik ister.
+        final minRequiredWidth = metricTiles.length * 52.0 + (metricTiles.length - 1) * gap;
 
-        // Alan yetersizse (özellikle mobil veya dar portföy kartlarında) yatay kaydırılabilir yap
+        // Alan yetersizse (dar ekran veya dar portföy kartı) mouse tekerleği destekli yatay kaydırılabilir yap
         if (constraints.maxWidth < minRequiredWidth) {
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (int i = 0; i < metricTiles.length; i++) ...[
-                  if (i > 0) const SizedBox(width: gap),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minWidth: 108,
-                    ),
-                    child: metricTiles[i],
-                  ),
-                ],
-              ],
-            ),
+          return _ScrollablePeriodStrip(
+            gap: gap,
+            children: metricTiles,
           );
         }
 
-        // Geniş ekranda tüm alana dengeli ve ferah dağıt
+        // Geniş ekranda tüm alana dengeli ve ferah dağıt (tüm 7 tarih tek bakışta sığar)
         return Row(
           children: [
             for (int i = 0; i < metricTiles.length; i++) ...[
@@ -258,8 +245,8 @@ class PeriodPerformanceRow extends StatelessWidget {
 
     final tile = Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 6,
+        horizontal: 6,
+        vertical: 5,
       ),
       decoration: BoxDecoration(
         color: bg,
@@ -287,7 +274,7 @@ class PeriodPerformanceRow extends StatelessWidget {
               maxLines: 1,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Row(
@@ -310,17 +297,6 @@ class PeriodPerformanceRow extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (amount != null) ...[
-                  const SizedBox(width: 4),
-                  Text(
-                    isNeutral ? '₺0,00' : Formatters.currency(amount),
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -340,6 +316,78 @@ class PeriodPerformanceRow extends StatelessWidget {
     return Tooltip(
       message: '$title$modeSuffix: ${Formatters.percent(percent)}',
       child: tile,
+    );
+  }
+}
+
+/// PC ve web ekranlarında fare tekerleğiyle (mouse wheel) ve dokunmatik olarak
+/// pürüzsüz yatay kaydırma sağlayan şerit bileşeni.
+class _ScrollablePeriodStrip extends StatefulWidget {
+  final List<Widget> children;
+  final double gap;
+
+  const _ScrollablePeriodStrip({
+    required this.children,
+    this.gap = 6.0,
+  });
+
+  @override
+  State<_ScrollablePeriodStrip> createState() => _ScrollablePeriodStripState();
+}
+
+class _ScrollablePeriodStripState extends State<_ScrollablePeriodStrip> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerSignal: (pointerSignal) {
+        if (pointerSignal is PointerScrollEvent && _scrollController.hasClients) {
+          final delta = pointerSignal.scrollDelta.dy != 0
+              ? pointerSignal.scrollDelta.dy
+              : pointerSignal.scrollDelta.dx;
+          final target = (_scrollController.offset + delta).clamp(
+            0.0,
+            _scrollController.position.maxScrollExtent,
+          );
+          _scrollController.jumpTo(target);
+        }
+      },
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.trackpad,
+            PointerDeviceKind.stylus,
+          },
+        ),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (int i = 0; i < widget.children.length; i++) ...[
+                if (i > 0) SizedBox(width: widget.gap),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                  ),
+                  child: widget.children[i],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
