@@ -33,13 +33,13 @@
   - **Lines 187-207:** openReorderPortfolios - Responsive router opening reorder bottom sheet on phone or modal Dialog on desktop.
 - **File:** `lib/dialogs/add_edit_asset_dialog.dart`
   - **Lines 1-58:** Imports, AddEditAssetDialog declaration with isFullScreen flag, and state controllers.
-  - **Lines 59-132:** State initialization (initState), teardown (dispose), and numeric formatters.
+  - **Lines 59-132:** State initialization (initState), teardown (dispose), and numeric formatters (_formatPrice, _formatNumber, _parseVal).
   - **Lines 133-192:** _buildReadonlyPeriodBadge() - Readonly badges for asset historical period performance.
   - **Lines 193-355:** Market data fetching, suggestion selection, debounce logic, and date picking.
   - **Lines 356-398:** _submit() form validation and asset creation/update dispatch to provider.
   - **Lines 399-470:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop.
   - **Lines 471-492:** _buildDesktopHeader() - PC header with title, icon, and close button.
-  - **Lines 493-1189:** _buildFormContent() - Category selection, symbol autocomplete, quantity, price, stopaj, summary preview, historical period performance badges, and actions.
+  - **Lines 493-1201:** _buildFormContent() - Category selection, symbol autocomplete, quantity & price fields with TurkishNumberInputFormatter (dot thousand, comma decimal), stopaj, summary preview, historical period performance badges, and actions.
 - **File:** `lib/dialogs/add_edit_portfolio_dialog.dart`
   - **Lines 1-28:** Imports, AddEditPortfolioDialog declaration with isBottomSheet flag, and state setup.
   - **Lines 29-50:** Lifecycle methods (initState, dispose) and form submission logic (_submit).
@@ -47,7 +47,7 @@
   - **Lines 123-182:** build() method - Adaptive layout rendering as a draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog shell on desktop.
 - **File:** `lib/dialogs/add_transaction_dialog.dart`
   - **Lines 1-76:** Imports, AddTransactionDialog declaration with isFullScreen flag, initialAsset, initialType, and state variables.
-  - **Lines 77-166:** initState(), dispose(), price/number parsing and formatting helpers with 6-7 decimal precision (_formatPrice).
+  - **Lines 77-166:** initState(), dispose(), Turkish price/number parsing and formatting helpers with precision (_formatPriceGrouped, Formatters.parseDouble).
   - **Lines 167-261:** Buy (Alis) transaction logic: suggestion selection, market data fetching.
   - **Lines 262-398:** Custom calendar picker dialog (_showCalendarPicker()) and buy date selection (_pickAlisDate()).
   - **Lines 399-496:** Sell (Satis) transaction logic: asset selection from portfolio, historical price lookup, and date picker.
@@ -55,8 +55,8 @@
   - **Lines 587-645:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop with 'İşlem Ekle' title.
   - **Lines 646-677:** _buildDesktopHeader() - PC header row with icon, 'İşlem Ekle' title, and close button.
   - **Lines 678-854:** _buildFormContent() - Form switcher (Alis/Satis tabs) and text-only save buttons without icons.
-  - **Lines 855-1022:** _buildAlisForm() - Minimalist purchase form with clean inline code/name, centered date, TL icon, and centered soft-green "Toplam" cost card.
-  - **Lines 1023-1283:** _buildSatisForm() - Minimalist sale form with consolidated asset info, centered date, TL icon, and centered soft-red "Toplam" revenue card.
+  - **Lines 855-1025:** _buildAlisForm() - Minimalist purchase form with clean inline code/name, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-green "Toplam" cost card.
+  - **Lines 1026-1284:** _buildSatisForm() - Minimalist sale form with consolidated asset info, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-red "Toplam" revenue card.
 - **File:** `lib/dialogs/asset_status_dialog.dart`
   - **Lines 1-35:** Imports, AssetStatusDialog declaration with isFullScreen flag, and state setup.
   - **Lines 36-165:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar and Add Transaction action on mobile or responsive Dialog shell on desktop.
@@ -69,7 +69,7 @@
   - **Lines 1-34:** Imports, PortfolioDetailDialog declaration with isFullScreen flag, and state setup.
   - **Lines 35-188:** build() method - Adaptive screen shell: full-screen Scaffold with AppBar on mobile vs responsive Dialog shell on desktop.
   - **Lines 189-247:** _buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, and close icon.
-  - **Lines 248-649:** _buildDetailContent() - Core content: aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount, Gerçekleşen K/Z), period performance, distribution bar, and tab bar switcher.
+  - **Lines 248-649:** _buildDetailContent() - Core content: 'Portföy Değeri' header metric, aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount, Gerçekleşen K/Z), period performance, distribution bar, and tab bar switcher.
   - **Lines 650-689:** _buildTabButton() - Tab switch button between Assets and Transactions.
   - **Lines 690-852:** _buildAssetsTab() - Clean full-width search input, empty state, and AssetItemTile list.
   - **Lines 853-1153:** _buildTransactionsTab() - Chronological transaction history cards with formatPrice precision, and Geri Al action enabled only on the latest transaction for that asset.
@@ -131,11 +131,11 @@
   - **Lines 41-72:** PortfoyApp root widget, MultiProvider setup, and MaterialApp configuration with AuthGateWrapper home child.
   - **Lines 73-194:** PortfolioHomeScreen stateful shell, keyboard shortcut listener (F5 refresh), refresh logic, and dialog triggers.
   - **Lines 195-212:** build() method: Responsive branch rendering _buildMobileView (<720px) or _buildDesktopView (>=720px).
-  - **Lines 213-570:** _buildDesktopView() - Full desktop PC layout with aggregate stats top bar, reorder button, and multi-column portfolio GridView using AdaptiveNavigation.
-  - **Lines 571-692:** _buildMobileView() - Dedicated mobile layout with mobile AppBar (3-dots popup menu with 'Portföyleri Sırala'), pull-to-refresh (RefreshIndicator), mobile summary card, thumb-friendly list of portfolio cards, and FloatingActionButton.
-  - **Lines 693-827:** _buildMobileSummaryCard() - Apple-minimalist summary card for smartphones.
-  - **Lines 828-897:** _buildHeaderSummaryCard() - Desktop aggregate portfolio performance metric tiles.
-  - **Lines 898-1024:** _buildEmptyState() - Centered responsive placeholder illustration and prompt when no portfolios exist.
+  - **Lines 213-548:** _buildDesktopView() - Full desktop PC layout with 'Portföy Değeri' and 'Maliyet' summary metrics, Toplam Kâr/Zarar with inline percentage, Gerçekleşen K/Z without redundant subtitle, action buttons (refresh, settings), and multi-column portfolio GridView with onReorder support.
+  - **Lines 549-670:** _buildMobileView() - Dedicated mobile layout with clean mobile AppBar (refresh, settings), pull-to-refresh, mobile summary card, thumb-friendly list of portfolio cards with onReorder, and FloatingActionButton.
+  - **Lines 671-805:** _buildMobileSummaryCard() - Apple-minimalist summary card with 'Portföy Değeri' and 'Maliyet' titles.
+  - **Lines 806-880:** _buildHeaderSummaryCard() - Desktop aggregate portfolio performance metric tiles with inline trailing value support.
+  - **Lines 881-1001:** _buildEmptyState() - Centered responsive placeholder illustration and prompt when no portfolios exist.
 - **File:** `lib/models/asset_category.dart`
   - **Lines 1-10:** Enum declaration AssetCategory (hisse, tefas, kripto, emtia, doviz, eurobond, fon).
   - **Lines 11-25:** Getter displayName for localized Turkish category names.
@@ -224,16 +224,15 @@
   - **Lines 569-592:** Mathematical formulas for calculating real return percent and real profit amount.
 - **File:** `lib/services/market_data_service.dart`
   - **Lines 1-94:** Imports and MarketAssetInfo data model (currentPrice, change percentages, history map).
-  - **Lines 95-270:** MarketDataService initialization, logo caching, and TEFAS fund logo resolver mapping (resolveFundLogo) including Garanti funds (GPN etc.).
-  - **Lines 271-409:** Static logos for popular crypto, stock, and forex tickers (getKnownAssetLogo).
-  - **Lines 410-488:** Web logo lookup and fallback resolver (fetchAssetLogo).
-  - **Lines 489-533:** Main dispatch function fetchAssetData() routing by AssetCategory.
-  - **Lines 534-651:** TEFAS fund data fetcher (_fetchTefasFund()) with origin/referer headers via AppHttpClient.
-  - **Lines 652-758:** BIST stock price & historical chart fetcher (_fetchBistStock(), _fetchYahooChart()).
-  - **Lines 759-854:** Currency / Forex rate fetcher (_fetchCurrency(), _fetchYahooForex()).
-  - **Lines 855-1085:** Commodities & precious metals fetcher (_fetchCommodity(), Truncgil API / Gold price parsers).
-  - **Lines 1086-1304:** Cryptocurrency live prices & history fetchers via Binance & Yahoo Finance (_fetchCrypto(), _fetchYahooCrypto()).
-  - **Lines 1305-1376:** Historical price interpolation helpers (_findClosestPrice, _calcChange, _currencyName).
+  - **Lines 95-195:** MarketDataService initialization, cached getUsdTryRate() and getEurTryRate() forex fetchers, logo caching, and TEFAS fund logo resolver mapping.
+  - **Lines 196-490:** Static logos for popular crypto, stock, and forex tickers, and web logo lookup.
+  - **Lines 491-535:** Main dispatch function fetchAssetData() routing by AssetCategory.
+  - **Lines 536-655:** TEFAS fund data fetcher (_fetchTefasFund()) with origin/referer headers via AppHttpClient.
+  - **Lines 656-765:** BIST & Global stock price fetcher (_fetchBistStock(), _fetchYahooChart() with automatic currency conversion from USD/EUR to TRY via live rates).
+  - **Lines 766-860:** Currency / Forex rate fetcher (_fetchCurrency(), _fetchYahooForex()).
+  - **Lines 861-1090:** Commodities & precious metals fetcher (_fetchCommodity(), Ons Altın USD to TRY conversion, Truncgil API / Gold price parsers).
+  - **Lines 1091-1310:** Cryptocurrency live prices & history fetchers via Binance & Yahoo Finance (_fetchCrypto(), _fetchYahooCrypto() with centralized getUsdTryRate()).
+  - **Lines 1311-1468:** Historical price interpolation helpers (_findClosestPrice, _calcChange, _currencyName).
 - **File:** `lib/services/storage_service.dart`
   - **Lines 1-13:** Imports and StorageService class declaration with storage key constants.
   - **Lines 14-36:** App settings persistence (loadSettings() defaulting to brut, saveSettings()) using SharedPreferences.
@@ -255,12 +254,14 @@
   - **Lines 119-245:** FifoCalculator.calculate() - Core FIFO simulation algorithm tracking lot depletion and capital gains.
   - **Lines 246-303:** FifoCalculator.estimateSaleCost() - Hypothetical sale cost basis simulator.
 - **File:** `lib/utils/formatters.dart`
-  - **Lines 1-18:** Imports and static DateFormat & NumberFormat instances for Turkish locale.
+  - **Lines 1-18:** Imports, TextInputFormatter support, and static DateFormat & NumberFormat instances for Turkish locale.
   - **Lines 19-37:** Currency and percentage string formatters (currency, compactCurrency, percent).
   - **Lines 38-58:** Date and relative time formatters (date, monthYear, daysAgo).
   - **Lines 59-112:** Holding duration text formatter (formatDuration calculating days, months, and years in Turkish).
-  - **Lines 113-125:** formatPrice - Decimal price formatter displaying 6 or 7 digits after comma.
-  - **Lines 126-158:** formatNumber and parseDouble.
+  - **Lines 113-160:** formatPriceGrouped and formatPrice - Turkish number formatter with '.' thousand separators and ',' decimal kuruş separators up to 7 decimal precision.
+  - **Lines 161-175:** formatNumber with Turkish grouping.
+  - **Lines 176-205:** parseDouble - Robust Turkish locale number parser handling thousand dots and decimal commas without precision loss.
+  - **Lines 206-325:** TurkishNumberInputFormatter - Dynamic TextInputFormatter formatting thousand dots and decimal commas in real-time with cursor position preservation.
 - **File:** `lib/widgets/asset_item_tile.dart`
   - **Lines 1-25:** Imports and AssetItemTile declaration with onDelete and onStatus callbacks (edit removed).
   - **Lines 26-106:** build() method: Card container, ink response, layout shell, and value calculation setups.
@@ -293,10 +294,10 @@
   - **Lines 158-205:** build() method: Responsive layout builder with horizontal scrolling on mobile/narrow screens and expanded layout on wide screens.
   - **Lines 206-303:** _buildMetricTile() - Metric pill rendering change percentage and monetary amount with profit/loss styling.
 - **File:** `lib/widgets/portfolio_card.dart`
-  - **Lines 1-31:** Imports, PortfolioCard declaration, and callbacks (onTap, onDelete, onEdit).
-  - **Lines 32-150:** _PortfolioCardState and build() header: portfolio name, description, visibility toggle, popup menu.
-  - **Lines 151-260:** Total portfolio value, cost, profit/loss banner, and period return badges.
-  - **Lines 261-340:** Category distribution bar (clamped to 4 items on cards) and asset allocation summary within card.
-  - **Lines 341-418:** Footer action area: asset count badge, fund count, and quick transaction trigger button.
+  - **Lines 1-33:** Imports, PortfolioCard declaration with onReorder callback support.
+  - **Lines 34-150:** _PortfolioCardState and build() header: portfolio name, description, visibility toggle.
+  - **Lines 151-245:** Popup menu with 'Cüzdandan Gizle', 'Sıra Değiştir', 'Portföyü Düzenle', and 'Portföyü Sil' options.
+  - **Lines 246-340:** Total portfolio value, cost, profit/loss banner, and period return badges.
+  - **Lines 341-432:** Category distribution bar, asset allocation summary, and footer action area.
 - **File:** `web/manifest.json`
   - **Lines 1-42:** PWA web app manifest specifying app name (PortfoyApp), short_name, icons, standalone display mode, and dark theme colors.

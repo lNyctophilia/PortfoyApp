@@ -15,6 +15,7 @@ class PortfolioCard extends StatefulWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback? onToggleVisibility;
+  final VoidCallback? onReorder;
 
   const PortfolioCard({
     super.key,
@@ -23,6 +24,7 @@ class PortfolioCard extends StatefulWidget {
     required this.onEdit,
     required this.onDelete,
     this.onToggleVisibility,
+    this.onReorder,
   });
 
   @override
@@ -189,6 +191,8 @@ class _PortfolioCardState extends State<PortfolioCard> {
                             onSelected: (value) {
                               if (value == 'toggle_visibility') {
                                 widget.onToggleVisibility?.call();
+                              } else if (value == 'reorder') {
+                                widget.onReorder?.call();
                               } else if (value == 'edit') {
                                 widget.onEdit();
                               } else if (value == 'delete') {
@@ -215,6 +219,16 @@ class _PortfolioCardState extends State<PortfolioCard> {
                                           ? 'Cüzdandan Gizle'
                                           : 'Cüzdanda Göster',
                                     ),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'reorder',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.swap_vert_rounded, size: 16),
+                                    SizedBox(width: 8),
+                                    Text('Sıra Değiştir'),
                                   ],
                                 ),
                               ),

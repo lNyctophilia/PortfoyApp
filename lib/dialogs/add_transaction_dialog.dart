@@ -142,26 +142,15 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   }
 
   String _formatPrice(double val) {
-    if (val == 0) return '0';
-    final s7 = val.toStringAsFixed(7);
-    if (!s7.endsWith('0')) {
-      return s7;
-    }
-    return val.toStringAsFixed(6);
+    return Formatters.formatPriceGrouped(val);
   }
 
   String _formatNumber(double val) {
-    if (val == val.roundToDouble()) return val.toInt().toString();
-    return val.toString();
+    return Formatters.formatNumber(val);
   }
 
   double _parseVal(String text) {
-    var clean = text.trim();
-    if (clean.isEmpty) return 0.0;
-    if (clean.contains(',')) {
-      clean = clean.replaceAll('.', '').replaceAll(',', '.');
-    }
-    return double.tryParse(clean) ?? 0.0;
+    return Formatters.parseDouble(text);
   }
 
   // --- ALIŞ FONKSİYONLARI ---
@@ -942,6 +931,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 controller: _alisQuantityController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  TurkishNumberInputFormatter(maxDecimals: 6),
+                ],
                 decoration: const InputDecoration(
                   labelText: 'Adet',
                   hintText: '0',
@@ -962,6 +954,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           controller: _alisPurchasePriceController,
           keyboardType:
               const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            TurkishNumberInputFormatter(maxDecimals: 7),
+          ],
           onChanged: (val) {
             setState(() {
               _isAlisPurchasePriceManual = val.trim().isNotEmpty;
@@ -969,7 +964,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           },
           decoration: const InputDecoration(
             labelText: 'Alış Fiyatı',
-            hintText: '0.00',
+            hintText: '0,00',
             prefixIcon: Icon(Icons.currency_lira_rounded),
           ),
           validator: (v) {
@@ -1162,6 +1157,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 controller: _satisQuantityController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  TurkishNumberInputFormatter(maxDecimals: 6),
+                ],
                 decoration: InputDecoration(
                   labelText: 'Adet',
                   hintText: '0',
@@ -1186,6 +1184,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 controller: _satisPriceController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  TurkishNumberInputFormatter(maxDecimals: 7),
+                ],
                 onChanged: (val) {
                   setState(() {
                     _isSatisPriceManual = val.trim().isNotEmpty;
@@ -1193,7 +1194,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 },
                 decoration: const InputDecoration(
                   labelText: 'Satış Fiyatı',
-                  hintText: '0.00',
+                  hintText: '0,00',
                   prefixIcon: Icon(Icons.currency_lira_rounded),
                 ),
                 validator: (v) =>

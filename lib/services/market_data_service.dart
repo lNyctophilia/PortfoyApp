@@ -97,6 +97,92 @@ class MarketDataService {
   static final StorageService _storageService = StorageService();
   static bool _logoCacheLoaded = false;
 
+  static double? _cachedUsdTryRate;
+  static DateTime? _lastUsdTryFetch;
+
+  static double? _cachedEurTryRate;
+  static DateTime? _lastEurTryFetch;
+
+  /// Güncel USD/TRY kurunu önbellekli olarak getirir
+  static Future<double> getUsdTryRate() async {
+    if (_cachedUsdTryRate != null &&
+        _lastUsdTryFetch != null &&
+        DateTime.now().difference(_lastUsdTryFetch!) < const Duration(minutes: 5)) {
+      return _cachedUsdTryRate!;
+    }
+
+    try {
+      final usdUrl =
+          'https://query1.finance.yahoo.com/v8/finance/chart/USDTRY=X?interval=1d&range=5d';
+      final usdResp =
+          await AppHttpClient.get(usdUrl, timeout: const Duration(seconds: 4));
+      if (usdResp != null && usdResp.statusCode == 200) {
+        final usdData = jsonDecode(usdResp.body) as Map<String, dynamic>;
+        final usdRes =
+            (usdData['chart']?['result'] as List<dynamic>?)?.firstOrNull;
+        final rate =
+            (usdRes?['meta']?['regularMarketPrice'] as num?)?.toDouble();
+        if (rate != null && rate > 0) {
+          _cachedUsdTryRate = rate;
+          _lastUsdTryFetch = DateTime.now();
+          return rate;
+        }
+      }
+    } catch (_) {}
+
+    // Fallback: Truncgil
+    try {
+      final tInfo = await _fetchTruncgilSingle('USD', isCurrency: true);
+      if (tInfo != null && tInfo.currentPrice > 0) {
+        _cachedUsdTryRate = tInfo.currentPrice;
+        _lastUsdTryFetch = DateTime.now();
+        return tInfo.currentPrice;
+      }
+    } catch (_) {}
+
+    return _cachedUsdTryRate ?? 38.0;
+  }
+
+  /// Güncel EUR/TRY kurunu önbellekli olarak getirir
+  static Future<double> getEurTryRate() async {
+    if (_cachedEurTryRate != null &&
+        _lastEurTryFetch != null &&
+        DateTime.now().difference(_lastEurTryFetch!) < const Duration(minutes: 5)) {
+      return _cachedEurTryRate!;
+    }
+
+    try {
+      final eurUrl =
+          'https://query1.finance.yahoo.com/v8/finance/chart/EURTRY=X?interval=1d&range=5d';
+      final eurResp =
+          await AppHttpClient.get(eurUrl, timeout: const Duration(seconds: 4));
+      if (eurResp != null && eurResp.statusCode == 200) {
+        final eurData = jsonDecode(eurResp.body) as Map<String, dynamic>;
+        final eurRes =
+            (eurData['chart']?['result'] as List<dynamic>?)?.firstOrNull;
+        final rate =
+            (eurRes?['meta']?['regularMarketPrice'] as num?)?.toDouble();
+        if (rate != null && rate > 0) {
+          _cachedEurTryRate = rate;
+          _lastEurTryFetch = DateTime.now();
+          return rate;
+        }
+      }
+    } catch (_) {}
+
+    // Fallback: Truncgil
+    try {
+      final tInfo = await _fetchTruncgilSingle('EUR', isCurrency: true);
+      if (tInfo != null && tInfo.currentPrice > 0) {
+        _cachedEurTryRate = tInfo.currentPrice;
+        _lastEurTryFetch = DateTime.now();
+        return tInfo.currentPrice;
+      }
+    } catch (_) {}
+
+    return _cachedEurTryRate ?? 41.0;
+  }
+
   static Future<void> ensureLogoCacheLoaded() async {
     if (_logoCacheLoaded) return;
     _logoCacheLoaded = true;
@@ -692,6 +778,14 @@ class MarketDataService {
       final stockName = (meta['shortName'] as String?) ??
           (meta['longName'] as String?) ??
           displaySymbol;
+      final currency = (meta['currency'] as String?)?.toUpperCase() ?? 'TRY';
+
+      double fxRate = 1.0;
+      if (currency == 'USD') {
+        fxRate = await getUsdTryRate();
+      } else if (currency == 'EUR') {
+        fxRate = await getEurTryRate();
+      }
 
       final timestamps = (result['timestamp'] as List<dynamic>?) ?? [];
       final quote = (result['indicators']?['quote'] as List<dynamic>?)?.firstOrNull;
@@ -703,16 +797,17 @@ class MarketDataService {
         final cp = closePrices[i];
         if (ts is num && cp is num) {
           final d = DateTime.fromMillisecondsSinceEpoch(ts.toInt() * 1000);
-          priceHistory[DateTime(d.year, d.month, d.day)] = cp.toDouble();
+          priceHistory[DateTime(d.year, d.month, d.day)] = cp.toDouble() * fxRate;
         }
       }
 
       final sortedDates = priceHistory.keys.toList()..sort();
       double currentPrice = (meta['regularMarketPrice'] as num?)?.toDouble() ?? 0.0;
       if (currentPrice <= 0 && sortedDates.isNotEmpty) {
-        currentPrice = priceHistory[sortedDates.last] ?? 0.0;
+        currentPrice = (priceHistory[sortedDates.last] ?? 0.0) / fxRate;
       }
       if (currentPrice <= 0) return null;
+      currentPrice = currentPrice * fxRate;
 
       double? purchasePrice;
       if (purchaseDate != null) {
@@ -898,10 +993,21 @@ class MarketDataService {
 
     // 2. Ons ve Döviz geçmişi üzerinden tam tarihsel grafik ve yüzdesel değişimler
     final history = await _fetchCommodityHistory(itemKey);
+
+    double currentPrice = info?.currentPrice ?? 0.0;
+
+    // Ons Altın USD cinsinden geldiğinde güncel kurla TL'ye çevrilir
+    if (itemKey == 'ons') {
+      final usdRate = await getUsdTryRate();
+      if (currentPrice > 0) currentPrice *= usdRate;
+      for (final key in history.keys.toList()) {
+        history[key] = (history[key] ?? 0.0) * usdRate;
+      }
+    }
+
     final sortedDates = history.keys.toList()..sort();
     final latestHistoryPrice = sortedDates.isNotEmpty ? (history[sortedDates.last] ?? 0.0) : 0.0;
 
-    double currentPrice = info?.currentPrice ?? 0.0;
     if (currentPrice <= 0 && latestHistoryPrice > 0) {
       currentPrice = latestHistoryPrice;
     }
@@ -1228,21 +1334,7 @@ class MarketDataService {
       }
 
       // USDTRY kuru
-      double usdTryRate = 40.0;
-      try {
-        final usdUrl =
-            'https://query1.finance.yahoo.com/v8/finance/chart/USDTRY=X?interval=1d&range=5d';
-        final usdResp =
-            await AppHttpClient.get(usdUrl, timeout: const Duration(seconds: 3));
-        if (usdResp != null && usdResp.statusCode == 200) {
-          final usdData = jsonDecode(usdResp.body) as Map<String, dynamic>;
-          final usdRes =
-              (usdData['chart']?['result'] as List<dynamic>?)?.firstOrNull;
-          final rate =
-              (usdRes?['meta']?['regularMarketPrice'] as num?)?.toDouble();
-          if (rate != null && rate > 0) usdTryRate = rate;
-        }
-      } catch (_) {}
+      final usdTryRate = await getUsdTryRate();
 
       final priceHistory = <DateTime, double>{};
       for (final entry in cryptoUsdHistory.entries) {

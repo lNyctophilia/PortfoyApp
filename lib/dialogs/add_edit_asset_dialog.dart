@@ -768,6 +768,9 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                           controller: _quantityController,
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
+                          inputFormatters: [
+                            TurkishNumberInputFormatter(maxDecimals: 6),
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'Adet / Miktar *',
                             hintText: 'Örn: 1000',
@@ -794,6 +797,9 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                           controller: _purchasePriceController,
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
+                          inputFormatters: [
+                            TurkishNumberInputFormatter(maxDecimals: 7),
+                          ],
                           onChanged: (val) {
                             setState(() {
                               _isPurchasePriceManual = val.trim().isNotEmpty;
@@ -831,6 +837,9 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                           controller: _currentPriceController,
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
+                          inputFormatters: [
+                            TurkishNumberInputFormatter(maxDecimals: 7),
+                          ],
                           onChanged: (val) {
                             setState(() {
                               _isCurrentPriceManual = val.trim().isNotEmpty;

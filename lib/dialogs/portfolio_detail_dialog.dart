@@ -285,7 +285,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                     Row(
                                       children: [
                                         const Text(
-                                          'Toplam Portföy Değeri',
+                                          'Portföy Değeri',
                                           style: TextStyle(
                                             color: AppTheme.textMuted,
                                             fontSize: 12,

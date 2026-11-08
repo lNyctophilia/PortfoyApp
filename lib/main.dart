@@ -231,12 +231,12 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                 final isMobile = constraints.maxWidth < 700;
                 final summaryCards = [
                   _buildHeaderSummaryCard(
-                    title: 'Toplam Portföy Değeri',
+                    title: 'Portföy Değeri',
                     badge: (hasStopaj || mode == ReturnCalculationMode.reel)
                         ? NetGrossBadge(mode: mode)
                         : null,
                     value: Formatters.currency(provider.displayGrandTotalValue),
-                    subtitle: 'Toplam Maliyet: ${Formatters.currency(provider.grandTotalCost)}',
+                    subtitle: 'Maliyet: ${Formatters.currency(provider.grandTotalCost)}',
                     icon: Icons.account_balance_rounded,
                     iconColor: AppTheme.primaryLight,
                   ),
@@ -244,13 +244,8 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                     title: 'Toplam Kâr / Zarar',
                     badge: NetGrossBadge(mode: mode),
                     value: Formatters.currency(provider.displayGrandTotalProfit),
-                    subtitle: Formatters.percent(
-                        provider.displayGrandTotalProfitPercent),
-                    subtitleColor: mode == ReturnCalculationMode.reel
-                        ? (provider.displayGrandTotalProfitPercent >= 0
-                            ? AppTheme.profit
-                            : AppTheme.loss)
-                        : null,
+                    trailingValue:
+                        '(${Formatters.percent(provider.displayGrandTotalProfitPercent)})',
                     icon: isProfit
                         ? Icons.trending_up_rounded
                         : Icons.trending_down_rounded,
@@ -271,7 +266,6 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                           ? provider.grandTotalNetRealizedProfit
                           : provider.grandTotalRealizedProfit,
                     ),
-                    subtitle: 'Kapatılan İşlemler',
                     icon: provider.grandTotalNetRealizedProfit >= 0
                         ? Icons.check_circle_outline_rounded
                         : Icons.highlight_off_rounded,
@@ -336,19 +330,6 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                                   side: const BorderSide(color: AppTheme.borderSubtle),
                                   foregroundColor: AppTheme.textPrimary,
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Tooltip(
-                              message: 'Portföyleri Sırala',
-                              child: OutlinedButton(
-                                onPressed: () => AdaptiveNavigation.openReorderPortfolios(context),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                                  side: const BorderSide(color: AppTheme.borderSubtle),
-                                  foregroundColor: AppTheme.textPrimary,
-                                ),
-                                child: const Icon(Icons.swap_vert_rounded, size: 18),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -546,6 +527,8 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                                 onToggleVisibility: () {
                                   provider.togglePortfolioVisibility(portfolio.id);
                                 },
+                                onReorder: () =>
+                                    AdaptiveNavigation.openReorderPortfolios(context),
                               );
                             },
                           );
@@ -610,35 +593,6 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
             icon: const Icon(Icons.settings_outlined, size: 20),
             color: AppTheme.textSecondary,
           ),
-          PopupMenuButton<String>(
-            tooltip: 'Seçenekler',
-            icon: const Icon(Icons.more_vert_rounded, size: 20),
-            color: AppTheme.surfaceElevated,
-            onSelected: (value) {
-              if (value == 'reorder') {
-                AdaptiveNavigation.openReorderPortfolios(context);
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'reorder',
-                child: Row(
-                  children: [
-                    Icon(Icons.swap_vert_rounded, size: 18, color: AppTheme.textPrimary),
-                    SizedBox(width: 10),
-                    Text(
-                      'Portföyleri Sırala',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
           const SizedBox(width: 4),
         ],
       ),
@@ -702,6 +656,8 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                               onToggleVisibility: () {
                                 provider.togglePortfolioVisibility(portfolio.id);
                               },
+                              onReorder: () =>
+                                  AdaptiveNavigation.openReorderPortfolios(context),
                             ),
                           );
                         }),
@@ -743,7 +699,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Toplam Varlık Değeri',
+                'Portföy Değeri',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -807,7 +763,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Toplam Maliyet',
+                      'Maliyet',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppTheme.textMuted,
@@ -870,7 +826,8 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
   Widget _buildHeaderSummaryCard({
     required String title,
     required String value,
-    required String subtitle,
+    String? trailingValue,
+    String? subtitle,
     required IconData icon,
     required Color iconColor,
     Color? valueColor,
@@ -925,28 +882,48 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    value,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        value,
+                        style: TextStyle(
+                          color: valueColor ?? AppTheme.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (trailingValue != null && trailingValue.isNotEmpty) ...[
+                        const SizedBox(width: 5),
+                        Text(
+                          trailingValue,
+                          style: TextStyle(
+                            color: valueColor ?? AppTheme.textPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (subtitle != null && subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 1),
+                  Text(
+                    subtitle,
                     style: TextStyle(
-                      color: valueColor ?? AppTheme.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      color: subtitleColor ?? AppTheme.textSecondary,
+                      fontSize: 11,
+                      fontWeight: subtitleColor != null
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: subtitleColor ?? AppTheme.textSecondary,
-                    fontSize: 11,
-                    fontWeight: subtitleColor != null
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                ],
               ],
             ),
           ),
