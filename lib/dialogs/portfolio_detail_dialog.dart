@@ -835,8 +835,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                 .id ==
             tx.id;
         final isSatis = tx.type == TransactionType.satis;
-        final isProfit = tx.realizedProfit >= 0;
-        final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
         final typeColor = isSatis ? AppTheme.loss : AppTheme.profit;
 
         final typeBadge = Container(
@@ -871,20 +869,23 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
 
         Widget? profitBadgeWidget;
         if (isSatis) {
-          profitBadgeWidget = Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            decoration: BoxDecoration(
-              color: profitColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: profitColor.withValues(alpha: 0.3)),
-            ),
-            child: Builder(
-              builder: (context) {
-                final showNetValues = context.watch<PortfolioProvider>().showNetValues;
-                final hasStopaj = tx.category == AssetCategory.fon && tx.withholdingTax > 0;
-                final displayProfit = (hasStopaj && showNetValues) ? tx.netRealizedProfit : tx.realizedProfit;
-                final displayPercent = (hasStopaj && showNetValues) ? tx.netProfitPercent : tx.profitPercent;
-                return Wrap(
+          profitBadgeWidget = Builder(
+            builder: (context) {
+              final showNetValues = context.watch<PortfolioProvider>().showNetValues;
+              final hasStopaj = tx.withholdingTax > 0;
+              final displayProfit = (hasStopaj && showNetValues) ? tx.netRealizedProfit : tx.realizedProfit;
+              final displayPercent = (hasStopaj && showNetValues) ? tx.netProfitPercent : tx.profitPercent;
+              final isProfit = displayProfit >= 0;
+              final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                decoration: BoxDecoration(
+                  color: profitColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: profitColor.withValues(alpha: 0.3)),
+                ),
+                child: Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
                   alignment: WrapAlignment.end,
                   spacing: 4,
@@ -906,9 +907,9 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                       ),
                     ),
                   ],
-                );
-              },
-            ),
+                ),
+              );
+            },
           );
         }
 

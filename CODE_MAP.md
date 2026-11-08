@@ -59,20 +59,20 @@
   - **Lines 1026-1284:** _buildSatisForm() - Minimalist sale form with consolidated asset info, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-red "Toplam" revenue card.
 - **File:** `lib/dialogs/asset_status_dialog.dart`
   - **Lines 1-35:** Imports, AssetStatusDialog declaration with isFullScreen flag, and state setup.
-  - **Lines 36-130:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar and Add Transaction action on mobile or responsive Dialog shell on desktop (without redundant bottom action bars).
-  - **Lines 131-448:** Header metrics, profit/loss banner, horizontal scrollable metrics bar, category type badge (FIFO badge removed), and tab selector.
-  - **Lines 449-591:** Metric items, dividers, and tab buttons (_buildMetricItem, _buildDivider, _buildTabButton).
-  - **Lines 592-771:** _buildLotsTab() - Detailed list of open/closed purchase lots with holding durations, costs, returns.
-  - **Lines 772-950:** _buildSalesTab() - Realized sales history, sell prices, capital gains, withholding taxes.
-  - **Lines 951-1066:** Helper widgets, sub-stats, and formatters.
+  - **Lines 36-114:** build() method: Adaptive layout rendering full-screen Scaffold with clean AppBar (without Add Transaction button) on mobile or responsive Dialog shell on desktop.
+  - **Lines 115-435:** Header metrics with 'Adet' (number-only value) and 'Ort. Maliyet', profit/loss banner, horizontal scrollable metrics bar, category type badge, and tab selector.
+  - **Lines 436-583:** Metric items with centered alignment, dividers, and tab buttons (_buildMetricItem, _buildDivider, _buildTabButton).
+  - **Lines 584-763:** _buildLotsTab() - Detailed list of open/closed purchase lots with holding durations, costs, returns.
+  - **Lines 764-942:** _buildSalesTab() - Realized sales history, sell prices, capital gains, dynamic net/gross withholding tax badges.
+  - **Lines 943-1056:** Helper widgets, sub-stats, and formatters.
 - **File:** `lib/dialogs/portfolio_detail_dialog.dart`
   - **Lines 1-31:** Imports, PortfolioDetailDialog declaration with isFullScreen flag, and state setup.
   - **Lines 32-186:** build() method - Adaptive screen shell: full-screen Scaffold with AppBar on mobile vs responsive Dialog shell on desktop.
   - **Lines 187-248:** _buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, and close icon.
   - **Lines 249-663:** _buildDetailContent() - Core stretched content: 'Portföy Değeri' header metric with clean value, aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount, Gerçekleşen K/Z), period performance, distribution bar, and tab bar switcher.
   - **Lines 664-763:** _buildAssetsTab() - Clean full-width search input, empty state, and full-width AssetItemTile list opening status via AdaptiveNavigation.openAssetStatus.
-  - **Lines 764-1104:** _buildTransactionsTab() - Chronological transaction history cards with green Alış and red Satış type badges, minimalist sales profit badge without 'Kâr/Oran' labels showing currency with parenthetical percent, and Geri Al action.
-  - **Lines 1105-1171:** _confirmUndoTransaction() and _confirmDeleteAsset().
+  - **Lines 764-1105:** _buildTransactionsTab() - Chronological transaction history cards with green Alış and red Satış type badges, sales profit badge dynamically calculating Net and Gross returns based on returnMode / showNetValues with matching profit/loss colors, and Geri Al action.
+  - **Lines 1106-1172:** _confirmUndoTransaction() and _confirmDeleteAsset().
 - **File:** `lib/dialogs/reorder_portfolios_dialog.dart`
   - **Lines 1-28:** Imports, ReorderPortfoliosDialog declaration with isBottomSheet flag.
   - **Lines 29-87:** build() method - Adaptive shell rendering draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog on desktop.
@@ -300,6 +300,10 @@
   - **Lines 93-240:** Header with portfolio name, description, and popup menu actions.
   - **Lines 241-325:** Total portfolio value, cost, profit/loss banner, and period return badges.
   - **Lines 326-406:** Category distribution bar, asset allocation summary, and footer action area.
+- **File:** `test/asset_status_and_transaction_history_test.dart`
+  - **Lines 1-105:** Mock HTTP network overrides and client stubs for SVG logo requests.
+  - **Lines 106-190:** AssetStatusDialog widget tests verifying removal of 'İşlem Ekle' on mobile, 'Adet' label, pure number value, 'Ort. Maliyet' label, and centered metric alignment.
+  - **Lines 191-283:** Transaction history unit and widget tests verifying PortfolioTransaction calculation and PortfolioDetailDialog dynamic Net vs Gross badge rendering.
 - **File:** `test/period_performance_test.dart`
   - **Lines 1-95:** Unit & widget tests verifying PeriodPerformanceRow.fromAsset data mapping, 7-period rendering on desktop with expanded layout, and responsive mobile scroll behavior.
 - **File:** `test/transaction_undo_and_disambiguation_test.dart`

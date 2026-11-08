@@ -111,19 +111,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
               ),
             ],
           ),
-          actions: [
-            TextButton.icon(
-              onPressed: () {
-                AdaptiveNavigation.openAddTransaction(
-                  context,
-                  portfolio: currentPortfolio,
-                  initialAsset: currentAsset,
-                );
-              },
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('İşlem Ekle'),
-            ),
-          ],
         ),
         body: SafeArea(
           child: Column(
@@ -144,57 +131,57 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   child: Row(
                     children: [
                       _buildMetricItem(
-                        'Kalan Miktar',
-                      '${_formatQty(fifoResult.remainingQuantity)} Adet',
-                      icon: Icons.inventory_2_outlined,
-                    ),
-                    _buildDivider(),
-                    _buildMetricItem(
-                      'Ort. Kalan Maliyet',
-                      Formatters.currency(fifoResult.averageRemainingCost),
-                      icon: Icons.price_change_outlined,
-                    ),
-                    _buildDivider(),
-                    _buildMetricItem(
-                      'Güncel Fiyat',
-                      Formatters.currency(displayCurrentPrice),
-                      icon: Icons.show_chart_rounded,
-                    ),
-                    _buildDivider(),
-                    _buildMetricItem(
-                      'Kalan Kâr / Zarar',
-                      '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
-                      valueColor: profitColor,
-                      icon: Icons.insights_rounded,
-                    ),
-                    if (fifoResult.totalRealizedProfit != 0) ...[
-                      _buildDivider(),
-                      Builder(
-                        builder: (context) {
-                          final hasRealizedStopaj = currentAsset.category ==
-                                  AssetCategory.fon &&
-                              fifoResult.totalRealizedProfit > 0 &&
-                              currentAsset.effectiveWithholdingTaxRate > 0;
-                          final netRealized = fifoResult.totalRealizedProfit -
-                              fifoResult.totalRealizedProfit *
-                                  (currentAsset.effectiveWithholdingTaxRate / 100);
-                          final displayRealized =
-                              (hasRealizedStopaj && showNetValues)
-                                  ? netRealized
-                                  : fifoResult.totalRealizedProfit;
-
-                          return _buildMetricItem(
-                            'Gerçekleşen Kâr',
-                            Formatters.currency(displayRealized),
-                            valueColor: fifoResult.totalRealizedProfit >= 0
-                                ? AppTheme.profit
-                                : AppTheme.loss,
-                            icon: Icons.monetization_on_outlined,
-                          );
-                        },
+                        'Adet',
+                        _formatQty(fifoResult.remainingQuantity),
+                        icon: Icons.inventory_2_outlined,
                       ),
+                      _buildDivider(),
+                      _buildMetricItem(
+                        'Ort. Maliyet',
+                        Formatters.currency(fifoResult.averageRemainingCost),
+                        icon: Icons.price_change_outlined,
+                      ),
+                      _buildDivider(),
+                      _buildMetricItem(
+                        'Güncel Fiyat',
+                        Formatters.currency(displayCurrentPrice),
+                        icon: Icons.show_chart_rounded,
+                      ),
+                      _buildDivider(),
+                      _buildMetricItem(
+                        'Kalan Kâr / Zarar',
+                        '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
+                        valueColor: profitColor,
+                        icon: Icons.insights_rounded,
+                      ),
+                      if (fifoResult.totalRealizedProfit != 0) ...[
+                        _buildDivider(),
+                        Builder(
+                          builder: (context) {
+                            final hasRealizedStopaj = currentAsset.category ==
+                                    AssetCategory.fon &&
+                                fifoResult.totalRealizedProfit > 0 &&
+                                currentAsset.effectiveWithholdingTaxRate > 0;
+                            final netRealized = fifoResult.totalRealizedProfit -
+                                fifoResult.totalRealizedProfit *
+                                    (currentAsset.effectiveWithholdingTaxRate / 100);
+                            final displayRealized =
+                                (hasRealizedStopaj && showNetValues)
+                                    ? netRealized
+                                    : fifoResult.totalRealizedProfit;
+
+                            return _buildMetricItem(
+                              'Gerçekleşen Kâr',
+                              Formatters.currency(displayRealized),
+                              valueColor: displayRealized >= 0
+                                  ? AppTheme.profit
+                                  : AppTheme.loss,
+                              icon: Icons.monetization_on_outlined,
+                            );
+                          },
+                        ),
+                      ],
                     ],
-                  ],
                 ),
                 ),
               ),
@@ -347,57 +334,57 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   child: Row(
                     children: [
                       _buildMetricItem(
-                        'Kalan Miktar',
-                      '${_formatQty(fifoResult.remainingQuantity)} Adet',
-                      icon: Icons.inventory_2_outlined,
-                    ),
-                    _buildDivider(),
-                    _buildMetricItem(
-                      'Ort. Kalan Maliyet',
-                      Formatters.currency(fifoResult.averageRemainingCost),
-                      icon: Icons.price_change_outlined,
-                    ),
-                    _buildDivider(),
-                    _buildMetricItem(
-                      'Güncel Fiyat',
-                      Formatters.currency(displayCurrentPrice),
-                      icon: Icons.show_chart_rounded,
-                    ),
-                    _buildDivider(),
-                    _buildMetricItem(
-                      'Kalan Kâr / Zarar',
-                      '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
-                      valueColor: profitColor,
-                      icon: Icons.insights_rounded,
-                    ),
-                    if (fifoResult.totalRealizedProfit != 0) ...[
-                      _buildDivider(),
-                      Builder(
-                        builder: (context) {
-                          final hasRealizedStopaj = currentAsset.category ==
-                                  AssetCategory.fon &&
-                              fifoResult.totalRealizedProfit > 0 &&
-                              currentAsset.effectiveWithholdingTaxRate > 0;
-                          final netRealized = fifoResult.totalRealizedProfit -
-                              fifoResult.totalRealizedProfit *
-                                  (currentAsset.effectiveWithholdingTaxRate / 100);
-                          final displayRealized =
-                              (hasRealizedStopaj && showNetValues)
-                                  ? netRealized
-                                  : fifoResult.totalRealizedProfit;
-
-                          return _buildMetricItem(
-                            'Gerçekleşen Kâr',
-                            Formatters.currency(displayRealized),
-                            valueColor: fifoResult.totalRealizedProfit >= 0
-                                ? AppTheme.profit
-                                : AppTheme.loss,
-                            icon: Icons.monetization_on_outlined,
-                          );
-                        },
+                        'Adet',
+                        _formatQty(fifoResult.remainingQuantity),
+                        icon: Icons.inventory_2_outlined,
                       ),
+                      _buildDivider(),
+                      _buildMetricItem(
+                        'Ort. Maliyet',
+                        Formatters.currency(fifoResult.averageRemainingCost),
+                        icon: Icons.price_change_outlined,
+                      ),
+                      _buildDivider(),
+                      _buildMetricItem(
+                        'Güncel Fiyat',
+                        Formatters.currency(displayCurrentPrice),
+                        icon: Icons.show_chart_rounded,
+                      ),
+                      _buildDivider(),
+                      _buildMetricItem(
+                        'Kalan Kâr / Zarar',
+                        '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
+                        valueColor: profitColor,
+                        icon: Icons.insights_rounded,
+                      ),
+                      if (fifoResult.totalRealizedProfit != 0) ...[
+                        _buildDivider(),
+                        Builder(
+                          builder: (context) {
+                            final hasRealizedStopaj = currentAsset.category ==
+                                    AssetCategory.fon &&
+                                fifoResult.totalRealizedProfit > 0 &&
+                                currentAsset.effectiveWithholdingTaxRate > 0;
+                            final netRealized = fifoResult.totalRealizedProfit -
+                                fifoResult.totalRealizedProfit *
+                                    (currentAsset.effectiveWithholdingTaxRate / 100);
+                            final displayRealized =
+                                (hasRealizedStopaj && showNetValues)
+                                    ? netRealized
+                                    : fifoResult.totalRealizedProfit;
+
+                            return _buildMetricItem(
+                              'Gerçekleşen Kâr',
+                              Formatters.currency(displayRealized),
+                              valueColor: displayRealized >= 0
+                                  ? AppTheme.profit
+                                  : AppTheme.loss,
+                              icon: Icons.monetization_on_outlined,
+                            );
+                          },
+                        ),
+                      ],
                     ],
-                  ],
                 ),
                 ),
               ),
@@ -455,65 +442,66 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     Color? subtitleColor,
     Widget? badge,
   }) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 12, color: AppTheme.textMuted),
-                const SizedBox(width: 4),
-              ],
-              Flexible(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.textMuted,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (badge != null) ...[
-                const SizedBox(width: 4),
-                badge,
-              ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 12, color: AppTheme.textMuted),
+              const SizedBox(width: 4),
             ],
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppTheme.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+            if (badge != null) ...[
+              const SizedBox(width: 4),
+              badge,
+            ],
+          ],
+        ),
+        const SizedBox(height: 3),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.center,
+          child: Text(
+            value,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: valueColor ?? AppTheme.textPrimary,
+            ),
           ),
-          const SizedBox(height: 3),
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 2),
           FittedBox(
             fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
+            alignment: Alignment.center,
             child: Text(
-              value,
+              subtitle,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: valueColor ?? AppTheme.textPrimary,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: subtitleColor ?? AppTheme.textSecondary,
               ),
             ),
           ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: subtitleColor ?? AppTheme.textSecondary,
-                ),
-              ),
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 
@@ -859,38 +847,40 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                       ),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isProfit ? AppTheme.profitBg : AppTheme.lossBg,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Builder(
-                      builder: (context) {
-                        final hasStopaj = tx.category == AssetCategory.fon &&
-                            saleRecord.realizedProfit > 0 &&
-                            tx.effectiveWithholdingTaxRate > 0;
-                        final netRealized = hasStopaj
-                            ? saleRecord.realizedProfit -
-                                saleRecord.realizedProfit *
-                                    (tx.effectiveWithholdingTaxRate / 100)
-                            : saleRecord.realizedProfit;
-                        final netPct = (hasStopaj &&
-                                saleRecord.unitCost > 0 &&
-                                tx.quantity > 0)
-                            ? (netRealized /
-                                    (saleRecord.unitCost * tx.quantity)) *
-                                100
-                            : saleRecord.realizedProfitPercent;
+                  Builder(
+                    builder: (context) {
+                      final hasStopaj = tx.category == AssetCategory.fon &&
+                          saleRecord.realizedProfit > 0 &&
+                          tx.effectiveWithholdingTaxRate > 0;
+                      final netRealized = hasStopaj
+                          ? saleRecord.realizedProfit -
+                              saleRecord.realizedProfit *
+                                  (tx.effectiveWithholdingTaxRate / 100)
+                          : saleRecord.realizedProfit;
+                      final netPct = (hasStopaj &&
+                              saleRecord.unitCost > 0 &&
+                              tx.quantity > 0)
+                          ? (netRealized /
+                                  (saleRecord.unitCost * tx.quantity)) *
+                              100
+                          : saleRecord.realizedProfitPercent;
 
-                        final showNetValues = widget.provider.showNetValues;
-                        final displayRealized = (hasStopaj && showNetValues) ? netRealized : saleRecord.realizedProfit;
-                        final displayPct = (hasStopaj && showNetValues) ? netPct : saleRecord.realizedProfitPercent;
+                      final showNetValues = widget.provider.showNetValues;
+                      final displayRealized = (hasStopaj && showNetValues) ? netRealized : saleRecord.realizedProfit;
+                      final displayPct = (hasStopaj && showNetValues) ? netPct : saleRecord.realizedProfitPercent;
+                      final isSaleProfit = displayRealized >= 0;
+                      final saleProfitColor = isSaleProfit ? AppTheme.profit : AppTheme.loss;
 
-                        return Row(
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSaleProfit ? AppTheme.profitBg : AppTheme.lossBg,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
@@ -898,13 +888,13 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: profitColor,
+                                color: saleProfitColor,
                               ),
                             ),
                           ],
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

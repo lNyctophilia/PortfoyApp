@@ -74,7 +74,7 @@ class PortfolioTransaction {
 
   double get withholdingTax =>
       (type == TransactionType.satis &&
-              category == AssetCategory.fon &&
+              effectiveWithholdingTaxRate > 0 &&
               realizedProfit > 0)
           ? realizedProfit * (effectiveWithholdingTaxRate / 100)
           : 0.0;
