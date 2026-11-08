@@ -9,6 +9,7 @@ class AssetSuggestion {
   final AssetCategory category;
   final String? iconUrl;
   final String? subtitle;
+  final bool isByf;
 
   const AssetSuggestion({
     required this.symbol,
@@ -16,6 +17,7 @@ class AssetSuggestion {
     required this.category,
     this.iconUrl,
     this.subtitle,
+    this.isByf = false,
   });
 }
 
@@ -114,8 +116,11 @@ class AssetCatalogService {
     {'code': 'VFP', 'name': 'Vakıf Portföy Para Piyasası (TL) Fonu', 'sub': 'Vakıf Portföy • Para Piyasası'},
 
     // TEB Portföy
+    {'code': 'TPZ', 'name': 'TEB Portföy Kira Sertifikaları (Döviz) Katılım Fonu', 'sub': 'TEB Portföy • Katılım Sukuk'},
     {'code': 'TKP', 'name': 'TEB Portföy Hisse Senedi Fonu (Hisse Senedi Yoğun)', 'sub': 'TEB Portföy • Hisse Yoğun'},
     {'code': 'TEP', 'name': 'TEB Portföy Birinci Para Piyasası Fonu', 'sub': 'TEB Portföy • Para Piyasası'},
+    {'code': 'TPF', 'name': 'TEB Portföy Eurobond Borçlanma Araçları Fonu', 'sub': 'TEB Portföy • Eurobond'},
+    {'code': 'TGE', 'name': 'TEB Portföy Emtia Yabancı BYF Fon Sepeti Fonu', 'sub': 'TEB Portföy • Emtia BYF'},
 
     // Oyak Portföy
     {'code': 'OYP', 'name': 'Oyak Portföy Birinci Hisse Senedi Fonu', 'sub': 'Oyak Portföy • Hisse Yoğun'},
@@ -133,6 +138,13 @@ class AssetCatalogService {
   // 2. POPÜLER BIST & GLOBAL HİSSELERİ (Yerel Hızlı Arama)
   // -------------------------------------------------------------
   static const List<Map<String, String>> _knownStocks = [
+    // Popüler Borsa Yatırım Fonları (BYF / ETF)
+    {'symbol': 'GLDTR', 'name': 'QNB Portföy Altın Katılım Borsa Yatırım Fonu', 'sub': 'BIST • BYF/Altın', 'isByf': 'true'},
+    {'symbol': 'ZGOLD', 'name': 'Ziraat Portföy Altın Borsa Yatırım Fonu', 'sub': 'BIST • BYF/Altın', 'isByf': 'true'},
+    {'symbol': 'SPY', 'name': 'SPDR S&P 500 ETF Trust', 'sub': 'NYSE • BYF/ETF', 'isByf': 'true'},
+    {'symbol': 'QQQ', 'name': 'Invesco QQQ Trust (Nasdaq 100 ETF)', 'sub': 'NASDAQ • BYF/ETF', 'isByf': 'true'},
+    {'symbol': 'VOO', 'name': 'Vanguard S&P 500 ETF', 'sub': 'NYSE • BYF/ETF', 'isByf': 'true'},
+
     // BIST 30 & Popüler BIST
     {'symbol': 'THYAO', 'name': 'Türk Hava Yolları', 'sub': 'BIST • Havacılık'},
     {'symbol': 'ASELS', 'name': 'Aselsan Elektronik', 'sub': 'BIST • Savunma Sanayii'},
@@ -372,8 +384,8 @@ class AssetCatalogService {
 
     // category == null: tüm kategorilerde eşzamanlı ara
     final searchFutures = await Future.wait([
-      _searchStocks(cleanQ),
       _searchFunds(cleanQ),
+      _searchStocks(cleanQ),
       _searchCryptos(cleanQ),
       _searchCommodities(cleanQ),
       _searchCurrencies(cleanQ),
@@ -384,7 +396,7 @@ class AssetCatalogService {
 
     for (final list in searchFutures) {
       for (final item in list) {
-        final key = item.symbol.trim().toUpperCase();
+        final key = '${item.category.name}_${item.isByf}_${item.symbol.trim().toUpperCase()}';
         if (!seen.contains(key)) {
           seen.add(key);
           combined.add(item);
@@ -511,19 +523,22 @@ class AssetCatalogService {
       final sym = item['symbol']!;
       final name = item['name']!;
       final sub = item['sub']!;
+      final isByf = item['isByf'] == 'true';
 
       if (q.isEmpty ||
           _cleanText(sym).contains(q) ||
           _cleanText(name).contains(q) ||
           _cleanText(sub).contains(q)) {
         seen.add(sym.toUpperCase());
-        final logo = MarketDataService.getKnownAssetLogo(sym, AssetCategory.hisse, name);
+        final itemCat = isByf ? AssetCategory.fon : AssetCategory.hisse;
+        final logo = MarketDataService.getKnownAssetLogo(sym, itemCat, name);
         results.add(AssetSuggestion(
           symbol: sym,
           name: name,
-          category: AssetCategory.hisse,
+          category: itemCat,
           iconUrl: logo,
           subtitle: sub,
+          isByf: isByf,
         ));
       }
     }
@@ -560,9 +575,11 @@ class AssetCatalogService {
 
               AssetCategory itemCat = AssetCategory.hisse;
               String sub = '$ex • Hisse';
+              bool isByf = false;
               if (type == 'fund' || type == 'etf') {
                 itemCat = AssetCategory.fon;
-                sub = '$ex • Fon';
+                sub = '$ex • BYF/ETF';
+                isByf = true;
               } else if (type == 'crypto') {
                 itemCat = AssetCategory.kripto;
                 sub = 'Kripto Para';
@@ -584,6 +601,7 @@ class AssetCatalogService {
                 category: itemCat,
                 iconUrl: logoUrl,
                 subtitle: sub,
+                isByf: isByf,
               ));
             }
           }
@@ -622,9 +640,11 @@ class AssetCatalogService {
 
                 AssetCategory itemCat = AssetCategory.hisse;
                 String sub = '$ex • Hisse';
+                bool isByf = false;
                 if (type == 'fund' || type == 'etf') {
                   itemCat = AssetCategory.fon;
-                  sub = '$ex • Fon';
+                  sub = '$ex • BYF/ETF';
+                  isByf = true;
                 } else if (type == 'crypto') {
                   itemCat = AssetCategory.kripto;
                   sub = 'Kripto Para';
@@ -646,6 +666,7 @@ class AssetCatalogService {
                   category: itemCat,
                   iconUrl: logoUrl,
                   subtitle: sub,
+                  isByf: isByf,
                 ));
               }
             }

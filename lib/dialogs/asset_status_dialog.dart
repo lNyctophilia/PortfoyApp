@@ -8,7 +8,6 @@ import '../utils/fifo_calculator.dart';
 import '../utils/formatters.dart';
 import '../widgets/asset_logo.dart';
 import '../models/return_mode.dart';
-import '../widgets/net_gross_badge.dart';
 import '../providers/portfolio_provider.dart';
 
 class AssetStatusDialog extends StatefulWidget {
@@ -160,9 +159,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                       'Güncel Fiyat',
                       Formatters.currency(displayCurrentPrice),
                       icon: Icons.show_chart_rounded,
-                      badge: (hasStopaj || mode == ReturnCalculationMode.reel)
-                          ? NetGrossBadge(mode: mode, fontSize: 8.5)
-                          : null,
                     ),
                     _buildDivider(),
                     _buildMetricItem(
@@ -170,9 +166,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                       '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
                       valueColor: profitColor,
                       icon: Icons.insights_rounded,
-                      badge: (hasStopaj || mode == ReturnCalculationMode.reel)
-                          ? NetGrossBadge(mode: mode, fontSize: 8.5)
-                          : null,
                     ),
                     if (fifoResult.totalRealizedProfit != 0) ...[
                       _buildDivider(),
@@ -197,10 +190,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                                 ? AppTheme.profit
                                 : AppTheme.loss,
                             icon: Icons.monetization_on_outlined,
-                            badge: hasRealizedStopaj
-                                ? NetGrossBadge(
-                                    isNet: showNetValues, fontSize: 8.5)
-                                : null,
                           );
                         },
                       ),
@@ -460,9 +449,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                       'Güncel Fiyat',
                       Formatters.currency(displayCurrentPrice),
                       icon: Icons.show_chart_rounded,
-                      badge: (hasStopaj || mode == ReturnCalculationMode.reel)
-                          ? NetGrossBadge(mode: mode, fontSize: 8.5)
-                          : null,
                     ),
                     _buildDivider(),
                     _buildMetricItem(
@@ -470,9 +456,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                       '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
                       valueColor: profitColor,
                       icon: Icons.insights_rounded,
-                      badge: (hasStopaj || mode == ReturnCalculationMode.reel)
-                          ? NetGrossBadge(mode: mode, fontSize: 8.5)
-                          : null,
                     ),
                     if (fifoResult.totalRealizedProfit != 0) ...[
                       _buildDivider(),
@@ -497,10 +480,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                                 ? AppTheme.profit
                                 : AppTheme.loss,
                             icon: Icons.monetization_on_outlined,
-                            badge: hasRealizedStopaj
-                                ? NetGrossBadge(
-                                    isNet: showNetValues, fontSize: 8.5)
-                                : null,
                           );
                         },
                       ),
@@ -1078,10 +1057,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                                 color: profitColor,
                               ),
                             ),
-                            if (hasStopaj) ...[
-                              const SizedBox(width: 4),
-                              NetGrossBadge(isNet: showNetValues, fontSize: 8.5),
-                            ],
                           ],
                         );
                       },

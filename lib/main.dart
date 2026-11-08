@@ -223,7 +223,6 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth >= 960;
-                final hasStopaj = provider.grandTotalWithholdingTax > 0;
                 final hasRealizedStopaj =
                     provider.grandTotalRealizedWithholdingTax > 0;
                 final mode = provider.returnMode;
@@ -232,9 +231,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                 final summaryCards = [
                   _buildHeaderSummaryCard(
                     title: 'Portföy Değeri',
-                    badge: (hasStopaj || mode == ReturnCalculationMode.reel)
-                        ? NetGrossBadge(mode: mode)
-                        : null,
+                    badge: NetGrossBadge(mode: mode),
                     value: Formatters.currency(provider.displayGrandTotalValue),
                     subtitle: 'Maliyet: ${Formatters.currency(provider.grandTotalCost)}',
                     icon: Icons.account_balance_rounded,
@@ -242,7 +239,6 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                   ),
                   _buildHeaderSummaryCard(
                     title: 'Toplam Kâr / Zarar',
-                    badge: NetGrossBadge(mode: mode),
                     value: Formatters.currency(provider.displayGrandTotalProfit),
                     trailingValue:
                         '(${Formatters.percent(provider.displayGrandTotalProfitPercent)})',
@@ -254,13 +250,6 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                   ),
                   _buildHeaderSummaryCard(
                     title: 'Gerçekleşen Kâr / Zarar',
-                    badge: hasRealizedStopaj
-                        ? NetGrossBadge(
-                            mode: mode == ReturnCalculationMode.brut
-                                ? ReturnCalculationMode.brut
-                                : ReturnCalculationMode.net,
-                          )
-                        : null,
                     value: Formatters.currency(
                       (hasRealizedStopaj && mode != ReturnCalculationMode.brut)
                           ? provider.grandTotalNetRealizedProfit
@@ -474,7 +463,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
             child: provider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : portfolios.isEmpty
-                    ? _buildEmptyState(context)
+                    ? _buildEmptyState(context, isMobile: false)
                     : LayoutBuilder(
                         builder: (context, constraints) {
                           // Ekran genişliğine göre masaüstü ızgara kolonları (1, 2 veya 3 kolon)
@@ -549,7 +538,6 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
     Color profitColor,
   ) {
     final mode = provider.returnMode;
-    final hasStopaj = provider.grandTotalWithholdingTax > 0;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -564,11 +552,6 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
           ),
         ),
         actions: [
-          if (hasStopaj || mode == ReturnCalculationMode.reel)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: NetGrossBadge(mode: mode),
-            ),
           IconButton(
             tooltip: 'Yenile',
             onPressed: provider.isRefreshing ? null : () => _refreshAllData(),
@@ -602,7 +585,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
           child: provider.isLoading
               ? const Center(child: CircularProgressIndicator())
               : portfolios.isEmpty
-                  ? _buildEmptyState(context)
+                  ? _buildEmptyState(context, isMobile: true)
                   : ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -668,10 +651,14 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddPortfolioDialog(context),
-        icon: const Icon(Icons.add_rounded, size: 20),
+        icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
         label: const Text(
           'Yeni Portföy',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
         ),
       ),
     );
@@ -706,8 +693,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                   color: AppTheme.textMuted,
                 ),
               ),
-              if (provider.grandTotalWithholdingTax > 0 || mode == ReturnCalculationMode.reel)
-                NetGrossBadge(mode: mode),
+              NetGrossBadge(mode: mode),
             ],
           ),
           const SizedBox(height: 6),
@@ -932,7 +918,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, {bool isMobile = false}) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
@@ -974,21 +960,25 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Aşağıdaki butondan yeni bir portföy oluşturabilirsin.',
+                    Text(
+                      isMobile
+                          ? 'Sağ alttaki butondan yeni bir portföy oluşturabilirsin.'
+                          : 'Aşağıdaki butondan yeni bir portföy oluşturabilirsin.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
                         color: AppTheme.textMuted,
                         height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    ElevatedButton.icon(
-                      onPressed: () => _showAddPortfolioDialog(context),
-                      icon: const Icon(Icons.add_rounded),
-                      label: const Text('Yeni Portföy Oluştur'),
-                    ),
+                    if (!isMobile) ...[
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: () => _showAddPortfolioDialog(context),
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Yeni Portföy Oluştur'),
+                      ),
+                    ],
                   ],
                 ),
               ),

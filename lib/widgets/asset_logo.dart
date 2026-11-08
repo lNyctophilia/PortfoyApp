@@ -29,7 +29,8 @@ class AssetLogo extends StatefulWidget {
 }
 
 class _AssetLogoState extends State<AssetLogo> {
-  String? _resolvedUrl;
+  final List<String> _candidateUrls = [];
+  int _candidateIndex = 0;
   bool _isFetching = false;
 
   @override
@@ -43,29 +44,53 @@ class _AssetLogoState extends State<AssetLogo> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.iconUrl != widget.iconUrl ||
         oldWidget.symbol != widget.symbol ||
-        oldWidget.category != widget.category) {
+        oldWidget.category != widget.category ||
+        oldWidget.name != widget.name) {
       _resolveLogo();
     }
   }
 
   void _resolveLogo() {
-    if (widget.iconUrl != null && widget.iconUrl!.trim().isNotEmpty) {
-      _resolvedUrl = widget.iconUrl!.trim();
-      return;
+    _candidateUrls.clear();
+    _candidateIndex = 0;
+
+    void addCandidate(String? url) {
+      if (url != null && url.trim().isNotEmpty) {
+        final u = url.trim();
+        if (!_candidateUrls.contains(u)) {
+          _candidateUrls.add(u);
+        }
+      }
     }
 
+    // 1. Doğrudan widget üzerinden gelen iconUrl
+    addCandidate(widget.iconUrl);
+
+    // 2. Fon kategorisi için kurum adayları (TEB, İş, Akbank vb.)
+    if (widget.category == AssetCategory.fon) {
+      final candidates = MarketDataService.resolveFundLogoCandidates(
+        widget.symbol,
+        widget.name ?? '',
+      );
+      for (final c in candidates) {
+        addCandidate(c);
+      }
+    }
+
+    // 3. Bilinen varlık logosu
     final known = MarketDataService.getKnownAssetLogo(
       widget.symbol,
       widget.category,
       widget.name,
     );
+    addCandidate(known);
 
-    if (known != null && known.isNotEmpty) {
-      _resolvedUrl = known;
+    if (_candidateUrls.isNotEmpty) {
+      if (mounted) setState(() {});
       return;
     }
 
-    _resolvedUrl = null;
+    // 4. Henüz aday bulunamadıysa arka planda API'den sorgula
     if (widget.symbol.trim().isNotEmpty && !_isFetching) {
       _isFetching = true;
       MarketDataService.fetchAssetLogo(
@@ -76,15 +101,25 @@ class _AssetLogoState extends State<AssetLogo> {
         if (mounted) {
           setState(() {
             _isFetching = false;
-            if (fetched != null && fetched.isNotEmpty) {
-              _resolvedUrl = fetched;
-            }
+            addCandidate(fetched);
           });
         }
       }).catchError((_) {
         if (mounted) {
           setState(() {
             _isFetching = false;
+          });
+        }
+      });
+    }
+  }
+
+  void _tryNextCandidate() {
+    if (_candidateIndex + 1 < _candidateUrls.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _candidateIndex++;
           });
         }
       });
@@ -114,7 +149,9 @@ class _AssetLogoState extends State<AssetLogo> {
       return fallback;
     }
 
-    final effectiveUrl = _resolvedUrl;
+    final effectiveUrl = (_candidateIndex < _candidateUrls.length)
+        ? _candidateUrls[_candidateIndex]
+        : null;
 
     // Emtia için tam boyutlu, ortalı altın vektör kartı oluşturucu
     Widget buildGoldCard() {
@@ -210,16 +247,22 @@ class _AssetLogoState extends State<AssetLogo> {
                     ),
                   ),
                 ),
-                errorBuilder: (context, error, stackTrace) => Center(
-                  child: cat.buildIcon(size: widget.iconSize, color: cat.color),
-                ),
+                errorBuilder: (context, error, stackTrace) {
+                  _tryNextCandidate();
+                  return Center(
+                    child: cat.buildIcon(size: widget.iconSize, color: cat.color),
+                  );
+                },
               )
             : Image.network(
                 effectiveUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Center(
-                  child: cat.buildIcon(size: widget.iconSize, color: cat.color),
-                ),
+                errorBuilder: (context, error, stackTrace) {
+                  _tryNextCandidate();
+                  return Center(
+                    child: cat.buildIcon(size: widget.iconSize, color: cat.color),
+                  );
+                },
               ),
       ),
     );

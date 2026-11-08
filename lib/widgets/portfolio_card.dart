@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/portfolio.dart';
-import '../models/return_mode.dart';
 import '../providers/portfolio_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 import 'category_distribution_bar.dart';
-import 'net_gross_badge.dart';
 import 'period_performance_badge.dart';
 
 class PortfolioCard extends StatefulWidget {
@@ -50,7 +48,6 @@ class _PortfolioCardState extends State<PortfolioCard> {
     final p = widget.portfolio;
     final provider = context.watch<PortfolioProvider>();
     final mode = provider.returnMode;
-    final hasStopaj = p.totalWithholdingTax > 0;
     final inflationRates = provider.assetInflationRates;
     final displayValue = p.valueForMode(mode);
     final displayProfit = p.profitForMode(mode, inflationRates);
@@ -271,21 +268,13 @@ class _PortfolioCardState extends State<PortfolioCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            const Text(
-                              'Portföy Değeri',
-                              style: TextStyle(
-                                color: AppTheme.textMuted,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            if (hasStopaj || mode == ReturnCalculationMode.reel) ...[
-                              const SizedBox(width: 6),
-                              NetGrossBadge(mode: mode),
-                            ],
-                          ],
+                        const Text(
+                          'Portföy Değeri',
+                          style: TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         FittedBox(

@@ -200,8 +200,8 @@ class MarketDataService {
     }
   }
 
-  /// Fon unvanından veya kodundan kurucu banka / aracı kurum logosunu tespit eder
-  static String? resolveFundLogo(String fundCode, String fundTitle) {
+  /// Fon unvanından veya kodundan alternatif logo URL adaylarını döndürür
+  static List<String> resolveFundLogoCandidates(String fundCode, String fundTitle) {
     final t = fundTitle
         .toUpperCase()
         .replaceAll('İ', 'I')
@@ -212,145 +212,242 @@ class MarketDataService {
         .replaceAll('Ç', 'C');
     final code = fundCode.trim().toUpperCase();
 
-    // 1. İş Portföy / İş Bankası
+    // 1. TEB Portföy / Türk Ekonomi Bankası
+    if (t.contains('TEB') ||
+        t.contains('TURK EKONOMI') ||
+        t.contains('BNP') ||
+        ['TPZ', 'TKP', 'TEP', 'TPF', 'TGE', 'TKF', 'TDF', 'TDB', 'TTA', 'TTB', 'TTC', 'TTD', 'TZL'].contains(code)) {
+      return const [
+        'https://cdn.worldvectorlogo.com/logos/teb.svg',
+        'https://s3-symbol-logo.tradingview.com/paribas.svg',
+      ];
+    }
+
+    // 2. İş Portföy / İş Bankası
     if (t.contains('IS PORTFOY') ||
         t.contains('IS BANKASI') ||
         ['TI2', 'TI3', 'TI4', 'TTE', 'TET', 'TLE', 'TLP', 'TMG', 'TAU', 'IST', 'IHK', 'IEY'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/is-bankasi.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/is-bankasi.svg',
+      ];
     }
 
-    // 2. Ak Portföy / Akbank
+    // 3. Ak Portföy / Akbank
     if (t.contains('AK PORTFOY') ||
         t.contains('AKBANK') ||
         ['AFT', 'AFA', 'AES', 'AFS', 'AGH', 'AK2', 'AK3', 'AK4', 'ALE', 'ALR', 'APB'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/akbank.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/akbank.svg',
+      ];
     }
 
-    // 3. Yapı Kredi Portföy
+    // 4. Yapı Kredi Portföy
     if (t.contains('YAPI KREDI') ||
         t.contains('YAPI VE KREDI') ||
         ['YAC', 'YTD', 'YPG', 'YHK', 'YAS', 'YAY', 'YAZ', 'YEF', 'YBE'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/yapi-ve-kredi.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/yapi-ve-kredi.svg',
+      ];
     }
 
-    // 4. Garanti Portföy / Garanti BBVA
+    // 5. Garanti Portföy / Garanti BBVA
     if (t.contains('GARANTI') ||
         ['GL1', 'GBV', 'GMR', 'GMA', 'GPY', 'GTA', 'GTL', 'GTZ', 'GPN', 'GPB', 'GZL', 'GKV', 'GKK', 'GAF', 'GOH', 'GPO', 'GNZ', 'GEL', 'GSY', 'GBL'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/garanti.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/garanti.svg',
+      ];
     }
 
-    // 5. QNB Finans Portföy
+    // 6. QNB Finans Portföy
     if (t.contains('QNB') ||
         t.contains('FINANS') ||
-        ['FNC', 'FBK', 'FYO'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/qnb-finansbank.svg';
+        ['FNC', 'FBK', 'FYO', 'QFD', 'QFP', 'QFI', 'QFS', 'QPA'].contains(code)) {
+      return const [
+        'https://s3-symbol-logo.tradingview.com/qnb-finansbank.svg',
+      ];
     }
 
-    // 6. Ziraat Portföy / Ziraat Bankası
+    // 7. Ziraat Portföy / Ziraat Bankası
     if (t.contains('ZIRAAT') ||
         ['ZPE', 'ZPF', 'ZRE', 'ZKP', 'ZEL', 'ZAS', 'ZCN'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/ziraat-gyo.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/ziraat-gyo.svg',
+      ];
     }
 
-    // 7. Vakıf Portföy / Vakıfbank
+    // 8. Vakıf Portföy / Vakıfbank
     if (t.contains('VAKIF') ||
         ['VAK', 'VK6', 'VPU', 'VRB', 'VRT'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/vakiflar-bankasi.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/vakiflar-bankasi.svg',
+      ];
     }
 
-    // 8. Halk Portföy / Halkbank
+    // 9. Halk Portföy / Halkbank
     if (t.contains('HALK') ||
         ['HVT', 'HLK', 'HDK', 'HSY'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/t-halk-bankasi.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/t-halk-bankasi.svg',
+      ];
     }
 
-    // 9. Deniz Portföy / Denizbank
+    // 10. Kuveyt Türk / KT Portföy
+    if (t.contains('KUVEYT') ||
+        t.contains('KT PORTFOY') ||
+        ['KZL', 'KPD', 'KTM', 'KTK', 'KLU', 'KPU', 'KGV', 'KTV'].contains(code)) {
+      return const [
+        'https://s3-symbol-logo.tradingview.com/kuveyt-turk.svg',
+        'https://s3-symbol-logo.tradingview.com/albaraka-turk.svg',
+      ];
+    }
+
+    // 11. Deniz Portföy / Denizbank
     if (t.contains('DENIZ') ||
         ['DZT', 'DLY', 'DBH'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/deniz-gyo.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/deniz-gyo.svg',
+      ];
     }
 
-    // 10. Albaraka Portföy / Katılım
+    // 12. Albaraka Portföy / Katılım
     if (t.contains('ALBARAKA') ||
         ['ALB', 'RBH', 'KTV'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/albaraka-turk.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/albaraka-turk.svg',
+      ];
     }
 
-    // 11. Oyak Portföy
+    // 13. Oyak Portföy
     if (t.contains('OYAK') ||
         ['OYO', 'OYP', 'OKP'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/oyak-cimento.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/oyak-cimento.svg',
+      ];
     }
 
-    // 12. Gedik Portföy
+    // 14. Gedik Portföy
     if (t.contains('GEDIK') ||
         ['GDK', 'GDP', 'GKP'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/gedik-yatirim.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/gedik-yatirim.svg',
+      ];
     }
 
-    // 13. İnfo Portföy
+    // 15. İnfo Portföy
     if (t.contains('INFO') ||
         ['INF', 'IFP'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/info-yatirim.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/info-yatirim.svg',
+      ];
     }
 
-    // 14. Global MD Portföy / Actus
+    // 16. Hedef Portföy
+    if (t.contains('HEDEF') ||
+        ['HDF', 'HKH', 'HMG', 'HYV'].contains(code)) {
+      return const [
+        'https://s3-symbol-logo.tradingview.com/hedef-girisim.svg',
+      ];
+    }
+
+    // 17. Tacirler Portföy
+    if (t.contains('TACIRLER') ||
+        ['TCD', 'TCB', 'TCA', 'TFI'].contains(code)) {
+      return const [
+        'https://s3-symbol-logo.tradingview.com/tacirler-yatirim.svg',
+      ];
+    }
+
+    // 18. Fiba Portföy / Fibabanka
+    if (t.contains('FIBA') ||
+        ['FIB', 'FPC', 'FPK', 'FPS', 'FBC'].contains(code)) {
+      return const [
+        'https://s3-symbol-logo.tradingview.com/fibabanka.svg',
+      ];
+    }
+
+    // 19. Global MD Portföy / Actus
     if (t.contains('GLOBAL') ||
         t.contains('ACTUS') ||
         ['GBL', 'ACT'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/global-yat-holding.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/global-yat-holding.svg',
+      ];
     }
 
-    // 15. Osmanlı Portföy
+    // 20. Osmanlı Portföy
     if (t.contains('OSMANLI') ||
         ['OSM', 'OPB'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/osmanli-menkul.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/osmanli-menkul.svg',
+      ];
     }
 
-    // 16. Ata Portföy
+    // 21. Ata Portföy
     if (t.contains('ATA') ||
         ['AAS', 'AED', 'AES'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/ata-gyo.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/ata-gyo.svg',
+      ];
     }
 
-    // 17. Marmara Capital
+    // 22. Marmara Capital
     if (t.contains('MARMARA') || code == 'MAC') {
-      return 'https://s3-symbol-logo.tradingview.com/marmara-as.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/marmara-as.svg',
+      ];
     }
 
-    // 18. Azimut Portföy
+    // 23. Azimut Portföy
     if (t.contains('AZIMUT') ||
         ['GSP', 'GEO', 'GZL'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/azimut.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/azimut.svg',
+      ];
     }
 
-    // 19. Ünlü Portföy
+    // 24. Ünlü Portföy
     if (t.contains('UNLU') ||
         ['UNL', 'UPD'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/unlu-yatirim-holding.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/unlu-yatirim-holding.svg',
+      ];
     }
 
-    // 20. TSKB Portföy
+    // 25. TSKB Portföy
     if (t.contains('TSKB')) {
-      return 'https://s3-symbol-logo.tradingview.com/t-s-k-b.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/t-s-k-b.svg',
+      ];
     }
 
-    // 21. Nurol Portföy
+    // 26. Nurol Portföy
     if (t.contains('NUROL')) {
-      return 'https://s3-symbol-logo.tradingview.com/nurol.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/nurol.svg',
+      ];
     }
 
-    // 22. A1 Portföy
+    // 27. A1 Portföy
     if (t.contains('A1') || ['ACF'].contains(code)) {
-      return 'https://s3-symbol-logo.tradingview.com/a1-capital-yatirim.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/a1-capital-yatirim.svg',
+      ];
     }
 
-    // 23. Tera Portföy
+    // 28. Tera Portföy
     if (t.contains('TERA')) {
-      return 'https://s3-symbol-logo.tradingview.com/tera-yatirim-menkul-degerler.svg';
+      return const [
+        'https://s3-symbol-logo.tradingview.com/tera-yatirim-menkul-degerler.svg',
+      ];
     }
 
-    return null;
+    return const [];
+  }
+
+  /// Fon unvanından veya kodundan kurucu banka / aracı kurum logosunu tespit eder
+  static String? resolveFundLogo(String fundCode, String fundTitle) {
+    final list = resolveFundLogoCandidates(fundCode, fundTitle);
+    return list.isNotEmpty ? list.first : null;
   }
 
   /// Bilinen varlıklar (Fonlar, Döviz, Emtia, Popüler Hisseler) için anlık logo tespiti
@@ -581,9 +678,13 @@ class MarketDataService {
       switch (category) {
         case AssetCategory.fon:
           result = await _fetchTefasFund(cleanSymbol.toUpperCase(), purchaseDate);
+          // Eğer TEFAS'ta bulunamadıysa BIST veya Yabancı Borsa Yatırım Fonu (BYF/ETF) olabilir
+          result ??= await _fetchBistStock(cleanSymbol, purchaseDate);
           break;
         case AssetCategory.hisse:
           result = await _fetchBistStock(cleanSymbol, purchaseDate);
+          // Eğer hisse olarak bulunamadıysa TEFAS fonu olarak kontrol et
+          result ??= await _fetchTefasFund(cleanSymbol.toUpperCase(), purchaseDate);
           break;
         case AssetCategory.doviz:
           result = await _fetchCurrency(cleanSymbol, purchaseDate);

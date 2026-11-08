@@ -7,7 +7,6 @@ import '../models/portfolio_asset.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 import '../models/return_mode.dart';
-import 'net_gross_badge.dart';
 import '../services/inflation_service.dart';
 
 class AssetItemTile extends StatelessWidget {
@@ -80,8 +79,6 @@ class AssetItemTile extends StatelessWidget {
       statYearlyProfit = calcA(asset.yearlyProfit, periodInflation.yearly);
     }
 
-    final hasStopaj =
-        asset.category == AssetCategory.fon && asset.withholdingTaxAmount > 0;
     final displayValue = asset.valueForMode(mode);
 
 
@@ -231,10 +228,6 @@ class AssetItemTile extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (hasStopaj || mode == ReturnCalculationMode.reel) ...[
-                        NetGrossBadge(mode: mode),
-                        const SizedBox(width: 5),
-                      ],
                       Flexible(
                         child: FittedBox(
                           fit: BoxFit.scaleDown,

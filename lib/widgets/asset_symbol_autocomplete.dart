@@ -177,29 +177,67 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
         final targetWidth = math.min(size.width.clamp(200.0, 520.0), screenWidth - 32);
         final accentColor = widget.category?.color ?? AppTheme.primaryLight;
 
-        // Kategorilere göre grupla (Yalnızca aramayla eşleşen en az 1 sonucu olan kategoriler)
-        const preferredOrder = [
-          AssetCategory.fon,
-          AssetCategory.hisse,
-          AssetCategory.kripto,
-          AssetCategory.emtia,
-          AssetCategory.doviz,
-        ];
+        // Kategorilere göre bölümler (BYF'ler ayrı bir bölüm olarak listelenir)
+        final sections = <Map<String, dynamic>>[];
 
-        final grouped = <AssetCategory, List<AssetSuggestion>>{};
-        for (final cat in preferredOrder) {
-          final items = _suggestions.where((s) => s.category == cat).toList();
-          if (items.isNotEmpty) {
-            grouped[cat] = items;
-          }
+        final tefasFunds = _suggestions.where((s) => s.category == AssetCategory.fon && !s.isByf).toList();
+        if (tefasFunds.isNotEmpty) {
+          sections.add({
+            'title': 'Yatırım Fonu (TEFAS)',
+            'icon': AssetCategory.fon.buildIcon(size: 13, color: AssetCategory.fon.color),
+            'color': AssetCategory.fon.color,
+            'items': tefasFunds,
+          });
         }
-        for (final s in _suggestions) {
-          if (!grouped.containsKey(s.category)) {
-            final items = _suggestions.where((item) => item.category == s.category).toList();
-            if (items.isNotEmpty) {
-              grouped[s.category] = items;
-            }
-          }
+
+        final byfItems = _suggestions.where((s) => s.isByf).toList();
+        if (byfItems.isNotEmpty) {
+          sections.add({
+            'title': 'Borsa Yatırım Fonu (BYF / ETF)',
+            'icon': const Icon(Icons.layers_rounded, size: 13, color: Color(0xFF64DFDF)),
+            'color': const Color(0xFF64DFDF),
+            'items': byfItems,
+          });
+        }
+
+        final stockItems = _suggestions.where((s) => s.category == AssetCategory.hisse && !s.isByf).toList();
+        if (stockItems.isNotEmpty) {
+          sections.add({
+            'title': AssetCategory.hisse.displayName,
+            'icon': AssetCategory.hisse.buildIcon(size: 13, color: AssetCategory.hisse.color),
+            'color': AssetCategory.hisse.color,
+            'items': stockItems,
+          });
+        }
+
+        final cryptoItems = _suggestions.where((s) => s.category == AssetCategory.kripto).toList();
+        if (cryptoItems.isNotEmpty) {
+          sections.add({
+            'title': AssetCategory.kripto.displayName,
+            'icon': AssetCategory.kripto.buildIcon(size: 13, color: AssetCategory.kripto.color),
+            'color': AssetCategory.kripto.color,
+            'items': cryptoItems,
+          });
+        }
+
+        final emtiaItems = _suggestions.where((s) => s.category == AssetCategory.emtia).toList();
+        if (emtiaItems.isNotEmpty) {
+          sections.add({
+            'title': AssetCategory.emtia.displayName,
+            'icon': AssetCategory.emtia.buildIcon(size: 13, color: AssetCategory.emtia.color),
+            'color': AssetCategory.emtia.color,
+            'items': emtiaItems,
+          });
+        }
+
+        final dovizItems = _suggestions.where((s) => s.category == AssetCategory.doviz).toList();
+        if (dovizItems.isNotEmpty) {
+          sections.add({
+            'title': AssetCategory.doviz.displayName,
+            'icon': AssetCategory.doviz.buildIcon(size: 13, color: AssetCategory.doviz.color),
+            'color': AssetCategory.doviz.color,
+            'items': dovizItems,
+          });
         }
 
         return Positioned(
@@ -245,15 +283,15 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                           padding: EdgeInsets.zero,
                           shrinkWrap: true,
                           children: [
-                            for (final entry in grouped.entries) ...[
-                              // Kategori Başlığı (Section Header)
+                            for (final section in sections) ...[
+                              // Bölüm Başlığı (Section Header)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: entry.key.color.withValues(alpha: 0.08),
+                                  color: (section['color'] as Color).withValues(alpha: 0.08),
                                   border: Border(
                                     bottom: BorderSide(
-                                      color: entry.key.color.withValues(alpha: 0.15),
+                                      color: (section['color'] as Color).withValues(alpha: 0.15),
                                       width: 0.8,
                                     ),
                                     top: BorderSide(
@@ -264,14 +302,14 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                 ),
                                 child: Row(
                                   children: [
-                                    entry.key.buildIcon(size: 13, color: entry.key.color),
+                                    section['icon'] as Widget,
                                     const SizedBox(width: 6),
                                     Text(
-                                      entry.key.displayName,
+                                      section['title'] as String,
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
-                                        color: entry.key.color,
+                                        color: section['color'] as Color,
                                         letterSpacing: 0.3,
                                       ),
                                     ),
@@ -279,15 +317,15 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                                       decoration: BoxDecoration(
-                                        color: entry.key.color.withValues(alpha: 0.16),
+                                        color: (section['color'] as Color).withValues(alpha: 0.16),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
-                                        '${entry.value.length}',
+                                        '${(section['items'] as List<AssetSuggestion>).length}',
                                         style: TextStyle(
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.w700,
-                                          color: entry.key.color,
+                                          color: section['color'] as Color,
                                         ),
                                       ),
                                     ),
@@ -295,15 +333,15 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                 ),
                               ),
 
-                              // Bu kategoriye ait varlıklar (Sade, rozetsiz, minimal)
-                              for (final item in entry.value)
+                              // Bu kategoriye ait varlıklar
+                              for (final item in (section['items'] as List<AssetSuggestion>))
                                 InkWell(
                                   onTap: () {
                                     _hideOverlay();
                                     _focusNode.unfocus();
                                     widget.onSelected(item);
                                   },
-                                  hoverColor: entry.key.color.withValues(alpha: 0.08),
+                                  hoverColor: (section['color'] as Color).withValues(alpha: 0.08),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     decoration: const BoxDecoration(
@@ -331,13 +369,39 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Text(
-                                                item.symbol,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 13.5,
-                                                  color: Colors.white,
-                                                ),
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    item.symbol,
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.w700,
+                                                      fontSize: 13.5,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                  if (item.subtitle != null && item.subtitle!.isNotEmpty) ...[
+                                                    const SizedBox(width: 6),
+                                                    Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                                      decoration: BoxDecoration(
+                                                        color: (section['color'] as Color).withValues(alpha: 0.15),
+                                                        borderRadius: BorderRadius.circular(4),
+                                                        border: Border.all(
+                                                          color: (section['color'] as Color).withValues(alpha: 0.3),
+                                                          width: 0.6,
+                                                        ),
+                                                      ),
+                                                      child: Text(
+                                                        item.subtitle!,
+                                                        style: TextStyle(
+                                                          fontSize: 9,
+                                                          fontWeight: FontWeight.w600,
+                                                          color: section['color'] as Color,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
@@ -356,7 +420,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                         Icon(
                                           Icons.north_west_rounded,
                                           size: 14,
-                                          color: entry.key.color.withValues(alpha: 0.65),
+                                          color: (section['color'] as Color).withValues(alpha: 0.65),
                                         ),
                                       ],
                                     ),

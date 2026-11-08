@@ -816,47 +816,77 @@ class PortfolioProvider extends ChangeNotifier {
             a.symbol.toUpperCase() == cleanSymbol,
       );
 
-      final tempPortfolio = portfolio.copyWith(
-        transactions: updatedTransactions,
-        assets: updatedAssets,
-      );
-      final fifoResult = FifoCalculator.calculate(
-        tempPortfolio,
-        cleanSymbol,
-        assetFallback: aIndex != -1 ? updatedAssets[aIndex] : null,
-      );
-
-      if (fifoResult.remainingQuantity > 0.00001) {
+      if (transaction.type == TransactionType.alis) {
         if (aIndex != -1) {
-          updatedAssets[aIndex] = updatedAssets[aIndex].copyWith(
-            quantity: fifoResult.remainingQuantity,
-            purchasePrice: fifoResult.averageRemainingCost > 0
-                ? fifoResult.averageRemainingCost
-                : updatedAssets[aIndex].purchasePrice,
-          );
-        } else {
-          updatedAssets.add(
-            PortfolioAsset(
-              id: transaction.assetId ??
-                  'asset_${DateTime.now().millisecondsSinceEpoch}',
-              name: transaction.name,
-              symbol: cleanSymbol,
-              category: transaction.category,
-              purchaseDate: transaction.date,
+          final existing = updatedAssets[aIndex];
+          final remainingQty = existing.quantity - transaction.quantity;
+          if (remainingQty <= 0.00001) {
+            updatedAssets.removeAt(aIndex);
+          } else {
+            // Kalan alis islemlerine gore agirlikli ortalama maliyet hesapla
+            final remainingAlisTx = updatedTransactions
+                .where((t) =>
+                    t.type == TransactionType.alis &&
+                    t.symbol.toUpperCase() == cleanSymbol)
+                .toList();
+
+            double newAvgCost = existing.purchasePrice;
+            if (remainingAlisTx.isNotEmpty) {
+              final totalCost = remainingAlisTx.fold(
+                  0.0, (sum, t) => sum + (t.price * t.quantity));
+              final totalQty = remainingAlisTx.fold(
+                  0.0, (sum, t) => sum + t.quantity);
+              if (totalQty > 0) {
+                newAvgCost = totalCost / totalQty;
+              }
+            }
+
+            updatedAssets[aIndex] = existing.copyWith(
+              quantity: remainingQty,
+              purchasePrice: newAvgCost,
+            );
+          }
+        }
+      } else if (transaction.type == TransactionType.satis) {
+        // Satis islemi geri alindiginda, FifoCalculator ile kalan lot ve maliyeti guncelle
+        final tempPortfolio = portfolio.copyWith(
+          transactions: updatedTransactions,
+          assets: updatedAssets,
+        );
+        final fifoResult = FifoCalculator.calculate(
+          tempPortfolio,
+          cleanSymbol,
+          assetFallback: aIndex != -1 ? updatedAssets[aIndex] : null,
+        );
+
+        if (fifoResult.remainingQuantity > 0.00001) {
+          if (aIndex != -1) {
+            updatedAssets[aIndex] = updatedAssets[aIndex].copyWith(
+              quantity: fifoResult.remainingQuantity,
               purchasePrice: fifoResult.averageRemainingCost > 0
                   ? fifoResult.averageRemainingCost
-                  : (transaction.costPrice > 0
-                      ? transaction.costPrice
-                      : transaction.price),
-              quantity: fifoResult.remainingQuantity,
-              currentPrice: transaction.price,
-              iconUrl: transaction.iconUrl,
-            ),
-          );
-        }
-      } else {
-        if (aIndex != -1) {
-          updatedAssets.removeAt(aIndex);
+                  : updatedAssets[aIndex].purchasePrice,
+            );
+          } else {
+            updatedAssets.add(
+              PortfolioAsset(
+                id: transaction.assetId ??
+                    'asset_${DateTime.now().millisecondsSinceEpoch}',
+                name: transaction.name,
+                symbol: cleanSymbol,
+                category: transaction.category,
+                purchaseDate: transaction.date,
+                purchasePrice: fifoResult.averageRemainingCost > 0
+                    ? fifoResult.averageRemainingCost
+                    : (transaction.costPrice > 0
+                        ? transaction.costPrice
+                        : transaction.price),
+                quantity: fifoResult.remainingQuantity,
+                currentPrice: transaction.price,
+                iconUrl: transaction.iconUrl,
+              ),
+            );
+          }
         }
       }
     }

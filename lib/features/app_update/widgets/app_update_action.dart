@@ -100,6 +100,7 @@ class _AppUpdateActionState extends State<AppUpdateAction> {
           builder: (context, setModalState) {
             return Dialog(
               backgroundColor: AppColors.surface,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: const BorderSide(color: AppColors.divider),
@@ -147,7 +148,6 @@ class _AppUpdateActionState extends State<AppUpdateAction> {
                         child: Column(
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text(
                                   'Mevcut Sürüm:',
@@ -156,19 +156,24 @@ class _AppUpdateActionState extends State<AppUpdateAction> {
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
-                                Text(
-                                  info.currentVersion,
-                                  style: const TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.textPrimary,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    info.currentVersion,
+                                    textAlign: TextAlign.end,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text(
                                   'Yeni Sürüm:',
@@ -177,12 +182,18 @@ class _AppUpdateActionState extends State<AppUpdateAction> {
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
-                                Text(
-                                  info.serverVersion,
-                                  style: const TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.accentLight,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    info.serverVersion,
+                                    textAlign: TextAlign.end,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.accentLight,
+                                    ),
                                   ),
                                 ),
                               ],

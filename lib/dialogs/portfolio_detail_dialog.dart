@@ -10,7 +10,6 @@ import '../utils/formatters.dart';
 import '../widgets/asset_item_tile.dart';
 import '../widgets/category_distribution_bar.dart';
 import '../models/return_mode.dart';
-import '../widgets/net_gross_badge.dart';
 import '../widgets/period_performance_badge.dart';
 import '../core/navigation/adaptive_navigation.dart';
 import 'add_transaction_dialog.dart';
@@ -282,21 +281,13 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                 final metricValueWidget = Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          'Portföy Değeri',
-                                          style: TextStyle(
-                                            color: AppTheme.textMuted,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        if (portfolio.totalWithholdingTax > 0 || mode == ReturnCalculationMode.reel) ...[
-                                          const SizedBox(width: 6),
-                                          NetGrossBadge(mode: mode),
-                                        ],
-                                      ],
+                                    const Text(
+                                      'Portföy Değeri',
+                                      style: TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     FittedBox(
@@ -325,21 +316,13 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                 final metricProfitWidget = Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          'Açık Kâr / Zarar',
-                                          style: TextStyle(
-                                            color: AppTheme.textMuted,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        if (portfolio.totalWithholdingTax > 0 || mode == ReturnCalculationMode.reel) ...[
-                                          const SizedBox(width: 6),
-                                          NetGrossBadge(mode: mode),
-                                        ],
-                                      ],
+                                    const Text(
+                                      'Açık Kâr / Zarar',
+                                      style: TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     FittedBox(
@@ -376,21 +359,13 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                 final metricRealizedWidget = Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          'Gerçekleşen Kâr / Zarar',
-                                          style: TextStyle(
-                                            color: AppTheme.textMuted,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        if (portfolio.realizedWithholdingTax > 0) ...[
-                                          const SizedBox(width: 6),
-                                          NetGrossBadge(mode: mode),
-                                        ],
-                                      ],
+                                    const Text(
+                                      'Gerçekleşen Kâr / Zarar',
+                                      style: TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     FittedBox(
@@ -935,10 +910,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                             color: profitColor,
                           ),
                         ),
-                        if (hasStopaj) ...[
-                          const SizedBox(width: 4),
-                          NetGrossBadge(isNet: showNetValues, fontSize: 8.5),
-                        ],
                       ],
                     ),
                     Text(
