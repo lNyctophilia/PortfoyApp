@@ -285,7 +285,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                 ];
 
                 final actionButtons = SizedBox(
-                  width: 210,
+                  width: 250,
                   height: 84,
                   child: Column(
                     children: [
@@ -340,6 +340,19 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                             ),
                             const SizedBox(width: 8),
                             Tooltip(
+                              message: 'Portföyleri Sırala',
+                              child: OutlinedButton(
+                                onPressed: () => AdaptiveNavigation.openReorderPortfolios(context),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  side: const BorderSide(color: AppTheme.borderSubtle),
+                                  foregroundColor: AppTheme.textPrimary,
+                                ),
+                                child: const Icon(Icons.swap_vert_rounded, size: 18),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Tooltip(
                               message: 'Ayarlar',
                               child: OutlinedButton(
                                 onPressed: () {
@@ -350,7 +363,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                                   );
                                 },
                                 style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
                                   side: const BorderSide(color: AppTheme.borderSubtle),
                                   foregroundColor: AppTheme.textPrimary,
                                 ),
@@ -596,6 +609,35 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
             },
             icon: const Icon(Icons.settings_outlined, size: 20),
             color: AppTheme.textSecondary,
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'Seçenekler',
+            icon: const Icon(Icons.more_vert_rounded, size: 20),
+            color: AppTheme.surfaceElevated,
+            onSelected: (value) {
+              if (value == 'reorder') {
+                AdaptiveNavigation.openReorderPortfolios(context);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'reorder',
+                child: Row(
+                  children: [
+                    Icon(Icons.swap_vert_rounded, size: 18, color: AppTheme.textPrimary),
+                    SizedBox(width: 10),
+                    Text(
+                      'Portföyleri Sırala',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(width: 4),
         ],

@@ -30,6 +30,7 @@
   - **Lines 111-140:** openAssetStatus - Responsive router opening full-screen status page on phone or modal Dialog on desktop.
   - **Lines 141-165:** openAddEditAsset - Responsive router opening full-screen asset editor on phone or modal Dialog on desktop.
   - **Lines 166-186:** openAddEditPortfolio - Responsive router opening sleek bottom sheet on phone or modal Dialog on desktop.
+  - **Lines 187-207:** openReorderPortfolios - Responsive router opening reorder bottom sheet on phone or modal Dialog on desktop.
 - **File:** `lib/dialogs/add_edit_asset_dialog.dart`
   - **Lines 1-58:** Imports, AddEditAssetDialog declaration with isFullScreen flag, and state controllers.
   - **Lines 59-132:** State initialization (initState), teardown (dispose), and numeric formatters.
@@ -46,16 +47,16 @@
   - **Lines 123-182:** build() method - Adaptive layout rendering as a draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog shell on desktop.
 - **File:** `lib/dialogs/add_transaction_dialog.dart`
   - **Lines 1-76:** Imports, AddTransactionDialog declaration with isFullScreen flag, initialAsset, initialType, and state variables.
-  - **Lines 77-166:** initState(), dispose(), price/number parsing and formatting helpers.
+  - **Lines 77-166:** initState(), dispose(), price/number parsing and formatting helpers with 6-7 decimal precision (_formatPrice).
   - **Lines 167-261:** Buy (Alis) transaction logic: suggestion selection, market data fetching.
   - **Lines 262-398:** Custom calendar picker dialog (_showCalendarPicker()) and buy date selection (_pickAlisDate()).
   - **Lines 399-496:** Sell (Satis) transaction logic: asset selection from portfolio, historical price lookup, and date picker.
   - **Lines 497-586:** _saveTransaction() - FIFO validation, cost estimation, transaction persistence, and asset updating.
   - **Lines 587-645:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop with 'İşlem Ekle' title.
   - **Lines 646-677:** _buildDesktopHeader() - PC header row with icon, 'İşlem Ekle' title, and close button.
-  - **Lines 678-860:** _buildFormContent() - Form switcher (Alis/Satis tabs with green/red theme) and actions (save buttons with Alis/Satis colors).
-  - **Lines 861-1028:** _buildAlisForm() - Minimalist purchase form with clean inline code/name, centered date, TL icon, and centered soft-green "Toplam" cost card.
-  - **Lines 1029-1287:** _buildSatisForm() - Minimalist sale form with consolidated asset info, centered date, TL icon, and centered soft-red "Toplam" revenue card.
+  - **Lines 678-854:** _buildFormContent() - Form switcher (Alis/Satis tabs) and text-only save buttons without icons.
+  - **Lines 855-1022:** _buildAlisForm() - Minimalist purchase form with clean inline code/name, centered date, TL icon, and centered soft-green "Toplam" cost card.
+  - **Lines 1023-1283:** _buildSatisForm() - Minimalist sale form with consolidated asset info, centered date, TL icon, and centered soft-red "Toplam" revenue card.
 - **File:** `lib/dialogs/asset_status_dialog.dart`
   - **Lines 1-35:** Imports, AssetStatusDialog declaration with isFullScreen flag, and state setup.
   - **Lines 36-165:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar and Add Transaction action on mobile or responsive Dialog shell on desktop.
@@ -65,14 +66,19 @@
   - **Lines 745-953:** _buildSalesTab() - Realized sales history, sell prices, capital gains, withholding taxes.
   - **Lines 954-1247:** Helper widgets and sub-stats.
 - **File:** `lib/dialogs/portfolio_detail_dialog.dart`
-  - **Lines 1-35:** Imports, PortfolioDetailDialog declaration with isFullScreen flag, and state setup.
-  - **Lines 36-235:** build() method - Adaptive screen shell: full-screen Scaffold with AppBar, back arrow, and RefreshIndicator on mobile vs responsive Dialog shell with desktop header and constraints on desktop.
-  - **Lines 236-357:** _buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, update prices trigger, edit button, and close icon.
-  - **Lines 358-765:** _buildDetailContent() - Core content: aggregate metric cards, historical period performance, category allocation distribution bar, tab bar switcher, and AdaptiveNavigation triggers.
-  - **Lines 766-810:** _buildTabButton() - Tab switch button between Assets and Transactions.
-  - **Lines 811-985:** _buildAssetsTab() - List of portfolio assets, adaptive search/filter row, empty state, and AdaptiveNavigation asset management actions.
-  - **Lines 986-1346:** _buildTransactionsTab() - Chronological transaction history cards, transaction badges, details with responsive layout.
-  - **Lines 1347-1464:** Transaction undo/delete confirmations (_confirmUndoTransaction, _confirmDeleteTransaction), filter chips, and asset deletion modal (_confirmDeleteAsset).
+  - **Lines 1-34:** Imports, PortfolioDetailDialog declaration with isFullScreen flag, and state setup.
+  - **Lines 35-188:** build() method - Adaptive screen shell: full-screen Scaffold with AppBar on mobile vs responsive Dialog shell on desktop.
+  - **Lines 189-247:** _buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, and close icon.
+  - **Lines 248-649:** _buildDetailContent() - Core content: aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount, Gerçekleşen K/Z), period performance, distribution bar, and tab bar switcher.
+  - **Lines 650-689:** _buildTabButton() - Tab switch button between Assets and Transactions.
+  - **Lines 690-852:** _buildAssetsTab() - Clean full-width search input, empty state, and AssetItemTile list.
+  - **Lines 853-1153:** _buildTransactionsTab() - Chronological transaction history cards with formatPrice precision, and Geri Al action enabled only on the latest transaction for that asset.
+  - **Lines 1154-1213:** _confirmUndoTransaction() and _confirmDeleteAsset().
+- **File:** `lib/dialogs/reorder_portfolios_dialog.dart`
+  - **Lines 1-28:** Imports, ReorderPortfoliosDialog declaration with isBottomSheet flag.
+  - **Lines 29-87:** build() method - Adaptive shell rendering draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog on desktop.
+  - **Lines 88-115:** _buildHeader() - Header with 'Portföyleri Sırala' title and 'Bitti' button.
+  - **Lines 116-200:** _buildReorderableList() - ReorderableListView with drag handles, portfolio name, asset count, and total valuation.
 - **File:** `lib/features/app_update/models/update_info.dart`
   - **Lines 1-19:** UpdateInfo data class representing version check result, server version, build time, and error status.
 - **File:** `lib/features/app_update/services/app_update_service.dart`
@@ -125,11 +131,11 @@
   - **Lines 41-72:** PortfoyApp root widget, MultiProvider setup, and MaterialApp configuration with AuthGateWrapper home child.
   - **Lines 73-194:** PortfolioHomeScreen stateful shell, keyboard shortcut listener (F5 refresh), refresh logic, and dialog triggers.
   - **Lines 195-212:** build() method: Responsive branch rendering _buildMobileView (<720px) or _buildDesktopView (>=720px).
-  - **Lines 213-548:** _buildDesktopView() - Full desktop PC layout with aggregate stats top bar, action buttons, and multi-column portfolio GridView using AdaptiveNavigation.
-  - **Lines 549-650:** _buildMobileView() - Dedicated mobile layout with mobile AppBar, NetGrossBadge, pull-to-refresh (RefreshIndicator), mobile summary card, thumb-friendly list of portfolio cards, and FloatingActionButton.
-  - **Lines 651-785:** _buildMobileSummaryCard() - Apple-minimalist summary card for smartphones.
-  - **Lines 786-855:** _buildHeaderSummaryCard() - Desktop aggregate portfolio performance metric tiles.
-  - **Lines 856-982:** _buildEmptyState() - Centered responsive placeholder illustration and prompt when no portfolios exist.
+  - **Lines 213-570:** _buildDesktopView() - Full desktop PC layout with aggregate stats top bar, reorder button, and multi-column portfolio GridView using AdaptiveNavigation.
+  - **Lines 571-692:** _buildMobileView() - Dedicated mobile layout with mobile AppBar (3-dots popup menu with 'Portföyleri Sırala'), pull-to-refresh (RefreshIndicator), mobile summary card, thumb-friendly list of portfolio cards, and FloatingActionButton.
+  - **Lines 693-827:** _buildMobileSummaryCard() - Apple-minimalist summary card for smartphones.
+  - **Lines 828-897:** _buildHeaderSummaryCard() - Desktop aggregate portfolio performance metric tiles.
+  - **Lines 898-1024:** _buildEmptyState() - Centered responsive placeholder illustration and prompt when no portfolios exist.
 - **File:** `lib/models/asset_category.dart`
   - **Lines 1-10:** Enum declaration AssetCategory (hisse, tefas, kripto, emtia, doviz, eurobond, fon).
   - **Lines 11-25:** Getter displayName for localized Turkish category names.
@@ -169,10 +175,10 @@
   - **Lines 416-461:** Data loading (loadData()), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
   - **Lines 462-509:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
   - **Lines 510-559:** Missing asset icon resolution & backfill helper (_backfillMissingAssetIcons()).
-  - **Lines 560-613:** Category filtering setter and portfolio CRUD operations (addPortfolio, updatePortfolio, togglePortfolioVisibility, deletePortfolio).
-  - **Lines 614-652:** Direct asset management (addAsset, updateAsset, deleteAsset).
-  - **Lines 653-837:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
-  - **Lines 838-974:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
+  - **Lines 560-648:** Category filtering setter and portfolio CRUD operations (addPortfolio, updatePortfolio, togglePortfolioVisibility, deletePortfolio, reorderPortfolios).
+  - **Lines 649-687:** Direct asset management (addAsset, updateAsset, deleteAsset).
+  - **Lines 688-872:** Transaction handling (addTransaction with FIFO calculations, deleteTransaction with rollback logic).
+  - **Lines 873-990:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()).
 - **File:** `lib/screens/settings_screen.dart`
   - **Lines 1-16:** Imports and SettingsScreen declaration.
   - **Lines 17-47:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
@@ -186,14 +192,12 @@
   - **Lines 930-951:** _buildTufeBadge() - Mini badge rendering inflation percentage for specific periods (1Y, 6M, 3M).
 - **File:** `lib/services/asset_catalog_service.dart`
   - **Lines 1-21:** Imports and AssetSuggestion model class.
-  - **Lines 22-274:** Static catalogs for funds (including GPN and Garanti Portföy funds), stocks, cryptos, commodities, and currencies.
+  - **Lines 22-274:** Static catalogs for funds (with verified active TEFAS funds including VFP), stocks, cryptos, commodities, and currencies.
   - **Lines 275-348:** findCurated() - Helper resolving curated metadata, verified Turkish names, and correct category badges.
   - **Lines 349-424:** Search query normalizer (_cleanText) and unified search() entry point with cross-category deduplication and relevance sorting.
-  - **Lines 425-518:** _searchFunds() - Multi-token fund query matcher, TEFAS API lookup with browser headers and periyod:1, and 3-letter TEFAS code fallback suggestion generator.
-  - **Lines 519-680:** _searchStocks() - Query matcher and online lookup for BIST & Global stocks via TradingView with accurate category mapping and futures filtering.
-  - **Lines 681-750:** _searchCryptos() - Query matcher for cryptocurrencies via TradingView.
-  - **Lines 751-773:** _searchCommodities() - Query matcher for precious metals and gold types.
-  - **Lines 774-797:** _searchCurrencies() - Query matcher for fiat currencies.
+  - **Lines 425-504:** _searchFunds() - Multi-token fund query matcher and live TEFAS API lookup without fake fund fallbacks.
+  - **Lines 505-666:** _searchStocks() - Query matcher and online lookup for BIST & Global stocks via TradingView with accurate category mapping and futures filtering.
+  - **Lines 667-783:** Cryptos, commodities, and currencies search.
 - **File:** `lib/services/auth_service.dart`
   - **Lines 1-30:** Imports, AuthService singleton declaration, and state getters.
   - **Lines 31-90:** signInWithGoogle() - Cross-platform Google sign-in with web popup, friendly error translations, and mobile credential exchange.
@@ -255,14 +259,14 @@
   - **Lines 19-37:** Currency and percentage string formatters (currency, compactCurrency, percent).
   - **Lines 38-58:** Date and relative time formatters (date, monthYear, daysAgo).
   - **Lines 59-112:** Holding duration text formatter (formatDuration calculating days, months, and years in Turkish).
-  - **Lines 113-130:** Decimal price and quantity formatters (formatPrice, formatNumber).
-  - **Lines 131-163:** Robust string-to-double parser handling Turkish comma decimals (parseDouble).
+  - **Lines 113-125:** formatPrice - Decimal price formatter displaying 6 or 7 digits after comma.
+  - **Lines 126-158:** formatNumber and parseDouble.
 - **File:** `lib/widgets/asset_item_tile.dart`
-  - **Lines 1-27:** Imports and AssetItemTile declaration with callback definitions (onTap, onDelete, onEdit).
-  - **Lines 28-108:** build() method: Card container, ink response, layout shell, and value calculation setups.
-  - **Lines 109-350:** LayoutBuilder adaptive header: 2-row layout on mobile (<520px) vs 1-row layout on desktop, logo, symbol/category Wrap, name, and action buttons.
-  - **Lines 351-405:** Desktop 1-row layout, status button, and value/profit widgets with FittedBox scaling.
-  - **Lines 406-472:** _buildSmallStat() - Helper widget for compact secondary metric rows, and scrollable horizontal period list.
+  - **Lines 1-25:** Imports and AssetItemTile declaration with onDelete and onStatus callbacks (edit removed).
+  - **Lines 26-106:** build() method: Card container, ink response, layout shell, and value calculation setups.
+  - **Lines 107-338:** LayoutBuilder adaptive header: logo, symbol/category Wrap, name, and single delete button.
+  - **Lines 339-393:** Desktop 1-row layout with status button and profit badges.
+  - **Lines 394-459:** _buildSmallStat() - Helper widget for compact secondary metric rows, and scrollable horizontal period list.
 - **File:** `lib/widgets/asset_logo.dart`
   - **Lines 1-30:** Imports, constants, and AssetLogo widget declaration.
   - **Lines 31-94:** _AssetLogoState lifecycle, SVG icon detection, and logo resolution dispatch (_resolveLogo()).
@@ -270,11 +274,10 @@
   - **Lines 120-227:** buildGoldCard() - Vector gold ingot badge for gold and precious metal assets.
 - **File:** `lib/widgets/asset_symbol_autocomplete.dart`
   - **Lines 1-43:** Imports and AssetSymbolAutocomplete declaration with assetName, labelText, prefixIcon, and showRefreshButton support.
-  - **Lines 44-80:** _AssetSymbolAutocompleteState declaration, focus node listeners, and lifecycle hooks (initState, dispose).
-  - **Lines 81-165:** Event handling (_onFocusChanged, _onControllerChanged), debounced search invocation (_performSearch).
-  - **Lines 166-444:** _showOverlay() - Category-grouped dropdown overlay with minimal section headers (Fon, Hisse, Kripto, etc.), clutter-free item rows without badges.
-  - **Lines 445-450:** _hideOverlay() - Overlay dismissal helper.
-  - **Lines 451-530:** build() method - TextFormField with dynamic question mark hint icon when empty, clean inline code & name display (no parentheses, smaller text) when unfocused, and clear action.
+  - **Lines 44-165:** State initialization, focus listeners, and debounced search.
+  - **Lines 166-407:** _showOverlay() - Category-grouped dropdown overlay with minimal section headers and live search progress indicator without redundant label/count bars.
+  - **Lines 408-413:** _hideOverlay() - Overlay dismissal helper.
+  - **Lines 414-493:** build() method - TextFormField with magnifying glass search prefix icon when empty and clean inline code & name display.
 - **File:** `lib/widgets/category_distribution_bar.dart`
   - **Lines 1-33:** Imports, CategoryDistributionBar declaration, and color palette definition.
   - **Lines 34-160:** build() method: Multi-segmented horizontal progress bar, compact responsive legend badges with percentages and monetary values.

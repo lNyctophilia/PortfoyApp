@@ -13,7 +13,6 @@ import '../models/return_mode.dart';
 import '../widgets/net_gross_badge.dart';
 import '../widgets/period_performance_badge.dart';
 import '../core/navigation/adaptive_navigation.dart';
-import 'add_edit_asset_dialog.dart';
 import 'add_transaction_dialog.dart';
 import 'asset_status_dialog.dart';
 class PortfolioDetailDialog extends StatefulWidget {
@@ -30,7 +29,6 @@ class PortfolioDetailDialog extends StatefulWidget {
 }
 class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
   int _selectedTab = 0; // 0: Varlıklar, 1: İşlem Geçmişi
-  AssetCategory? _filterCategory;
   String _search = '';
   @override
   Widget build(BuildContext context) {
@@ -73,12 +71,10 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       );
     }
     final filteredAssets = portfolio.assets.where((a) {
-      final matchesCat =
-          _filterCategory == null || a.category == _filterCategory;
       final matchesSearch = _search.isEmpty ||
           a.name.toLowerCase().contains(_search.toLowerCase()) ||
           a.symbol.toLowerCase().contains(_search.toLowerCase());
-      return matchesCat && matchesSearch;
+      return matchesSearch;
     }).toList();
     final mode = provider.returnMode;
     final inflationRates = provider.assetInflationRates;
@@ -124,41 +120,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                 ),
             ],
           ),
-          actions: [
-            IconButton(
-              tooltip: 'Fiyatları Güncelle',
-              onPressed: provider.isRefreshing
-                  ? null
-                  : () => provider.refreshPortfolioPrices(portfolio.id),
-              icon: provider.isRefreshing
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.refresh_rounded, size: 20),
-              color: AppTheme.textSecondary,
-            ),
-            IconButton(
-              tooltip: 'Portföyü Düzenle',
-              onPressed: () {
-                AdaptiveNavigation.openAddEditPortfolio(
-                  context,
-                  portfolio: portfolio,
-                  onSave: (name, desc) {
-                    provider.updatePortfolio(
-                      id: portfolio.id,
-                      name: name,
-                      description: desc,
-                    );
-                  },
-                );
-              },
-              icon: const Icon(Icons.edit_outlined, size: 20),
-              color: AppTheme.textSecondary,
-            ),
-            const SizedBox(width: 4),
-          ],
         ),
         body: SafeArea(
           child: RefreshIndicator(
@@ -277,73 +238,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                       ],
                     ),
                   ),
-                  if (isMobile) ...[
-                    IconButton(
-                      tooltip: 'Fiyatları Güncelle',
-                      onPressed: provider.isRefreshing
-                          ? null
-                          : () => provider.refreshPortfolioPrices(portfolio.id),
-                      icon: provider.isRefreshing
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.refresh_rounded, size: 20),
-                      color: AppTheme.textSecondary,
-                    ),
-                    IconButton(
-                      tooltip: 'Portföyü Düzenle',
-                      onPressed: () {
-                        AdaptiveNavigation.openAddEditPortfolio(
-      context,
-      portfolio: portfolio,
-      onSave: (name, desc) {
-        provider.updatePortfolio(
-          id: portfolio.id,
-          name: name,
-          description: desc,
-        );
-      },
-    );
-                      },
-                      icon: const Icon(Icons.edit_outlined, size: 20),
-                      color: AppTheme.textSecondary,
-                    ),
-                  ] else ...[
-                    OutlinedButton.icon(
-                      onPressed: provider.isRefreshing
-                          ? null
-                          : () => provider.refreshPortfolioPrices(portfolio.id),
-                      icon: provider.isRefreshing
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.refresh_rounded, size: 16),
-                      label: Text(provider.isRefreshing ? 'Güncelleniyor...' : 'Fiyatları Güncelle'),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        AdaptiveNavigation.openAddEditPortfolio(
-      context,
-      portfolio: portfolio,
-      onSave: (name, desc) {
-        provider.updatePortfolio(
-          id: portfolio.id,
-          name: name,
-          description: desc,
-        );
-      },
-    );
-                      },
-                      icon: const Icon(Icons.edit_outlined, size: 16),
-                      label: const Text('Portföyü Düzenle'),
-                    ),
-                  ],
-                  const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(Icons.close_rounded, size: 22),
                     onPressed: () => Navigator.of(context).pop(),
@@ -419,7 +313,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      'Toplam Maliyet: ${Formatters.currency(portfolio.totalCost)}',
+                                      'Maliyet: ${Formatters.currency(portfolio.totalCost)}',
                                       style: const TextStyle(
                                         color: AppTheme.textSecondary,
                                         fontSize: 11,
@@ -453,15 +347,9 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                       alignment: Alignment.centerLeft,
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                                        textBaseline: TextBaseline.alphabetic,
                                         children: [
-                                          Icon(
-                                            isProfit
-                                                ? Icons.trending_up_rounded
-                                                : Icons.trending_down_rounded,
-                                            color: profitColor,
-                                            size: 18,
-                                          ),
-                                          const SizedBox(width: 4),
                                           Text(
                                             Formatters.currency(displayProfit),
                                             style: TextStyle(
@@ -470,16 +358,16 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                               fontWeight: FontWeight.w800,
                                             ),
                                           ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            '(${Formatters.percent(displayProfitPercent)})',
+                                            style: TextStyle(
+                                              color: profitColor,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                         ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Getiri: ${Formatters.percent(displayProfitPercent)}',
-                                      style: TextStyle(
-                                        color: profitColor,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ],
@@ -536,14 +424,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                             ),
                                           ),
                                         ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    const Text(
-                                      'Kapatılan Satış İşlemleri',
-                                      style: TextStyle(
-                                        color: AppTheme.textSecondary,
-                                        fontSize: 11,
                                       ),
                                     ),
                                   ],
@@ -811,15 +691,16 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       List<PortfolioAsset> filteredAssets, PortfolioProvider provider, bool isMobile) {
     return Column(
       children: [
-        if (isMobile) ...[
-          SizedBox(
-            height: 38,
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: SizedBox(
+            height: 40,
             child: TextField(
               onChanged: (v) => setState(() => _search = v),
               decoration: InputDecoration(
                 hintText: 'Varlık ara...',
                 prefixIcon: const Icon(Icons.search, size: 18),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 suffixIcon: _search.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear, size: 16),
@@ -829,67 +710,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: [
-                _buildFilterChip('Tümü', null),
-                const SizedBox(width: 6),
-                ...AssetCategory.values.map(
-                  (c) => Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: _buildFilterChip(c.displayName, c),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ] else ...[
-          Row(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: Row(
-                    children: [
-                      _buildFilterChip('Tümü', null),
-                      const SizedBox(width: 6),
-                      ...AssetCategory.values.map(
-                        (c) => Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: _buildFilterChip(c.displayName, c),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 180,
-                height: 38,
-                child: TextField(
-                  onChanged: (v) => setState(() => _search = v),
-                  decoration: InputDecoration(
-                    hintText: 'Varlık ara...',
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                    suffixIcon: _search.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 16),
-                            onPressed: () => setState(() => _search = ''),
-                          )
-                        : null,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-        const SizedBox(height: 12),
+        ),
         // Varlık Listesi
         if (filteredAssets.isEmpty)
           Padding(
@@ -907,7 +728,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   Text(
                     portfolio.assets.isEmpty
                         ? 'Bu portföyde henüz varlık yok'
-                        : 'Aramaya veya filtreye uygun varlık bulunamadı',
+                        : 'Aramaya uygun varlık bulunamadı',
                     style: const TextStyle(
                       color: AppTheme.textMuted,
                       fontSize: 14,
@@ -955,20 +776,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                       portfolio: portfolio,
                       asset: asset,
                       provider: provider,
-                    ),
-                  );
-                },
-                onEdit: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => AddEditAssetDialog(
-                      asset: asset,
-                      onSave: (updatedAsset) {
-                        provider.updateAsset(
-                          portfolio.id,
-                          updatedAsset,
-                        );
-                      },
                     ),
                   );
                 },
@@ -1049,6 +856,12 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
       itemCount: portfolio.transactions.length,
       itemBuilder: (context, index) {
         final tx = portfolio.transactions[index];
+        final isLatestForAsset = portfolio.transactions
+                .firstWhere(
+                  (t) => t.symbol.toUpperCase() == tx.symbol.toUpperCase(),
+                )
+                .id ==
+            tx.id;
         final isSatis = tx.type == TransactionType.satis;
         final isProfit = tx.realizedProfit >= 0;
         final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
@@ -1195,25 +1008,16 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.undo_rounded, size: 18),
-                      tooltip: 'Geri Al',
-                      color: AppTheme.warning,
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.all(6),
-                      constraints: const BoxConstraints(),
-                      onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
-                    ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, size: 18),
-                      tooltip: 'Sil',
-                      color: AppTheme.loss,
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.all(6),
-                      constraints: const BoxConstraints(),
-                      onPressed: () => _confirmDeleteTransaction(context, provider, portfolio.id, tx),
-                    ),
+                    if (isLatestForAsset)
+                      IconButton(
+                        icon: const Icon(Icons.undo_rounded, size: 18),
+                        tooltip: 'Geri Al',
+                        color: AppTheme.warning,
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.all(6),
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
+                      ),
                   ],
                 ),
                 const Padding(
@@ -1227,7 +1031,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${Formatters.currency(tx.price)} × ${tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2)} Adet',
+                          '${Formatters.formatPrice(tx.price)} ₺ × ${tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2)} Adet',
                           style: const TextStyle(
                             fontSize: 11,
                             color: AppTheme.textSecondary,
@@ -1304,7 +1108,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${Formatters.currency(tx.price)} × ${tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2)} Adet',
+                    '${Formatters.formatPrice(tx.price)} ₺ × ${tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2)} Adet',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
@@ -1325,19 +1129,15 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                 const SizedBox(width: 16),
                 profitBadgeWidget,
               ],
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.undo_rounded, size: 20),
-                tooltip: 'İşlemi Geri Al (Varlık & K/Z iade edilir)',
-                color: AppTheme.warning,
-                onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, size: 20),
-                tooltip: 'İşlemi Sil (Varlıklar korunur, K/Z silinir)',
-                color: AppTheme.loss,
-                onPressed: () => _confirmDeleteTransaction(context, provider, portfolio.id, tx),
-              ),
+              if (isLatestForAsset) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.undo_rounded, size: 20),
+                  tooltip: 'İşlemi Geri Al',
+                  color: AppTheme.warning,
+                  onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
+                ),
+              ],
             ],
           ),
         );
@@ -1382,57 +1182,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           ),
         ],
       ),
-    );
-  }
-  void _confirmDeleteTransaction(
-    BuildContext context,
-    PortfolioProvider provider,
-    String portfolioId,
-    PortfolioTransaction transaction,
-  ) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('İşlemi Sil'),
-        content: Text(
-          '${transaction.symbol} (${transaction.type.label}) kaydı işlem geçmişinden silinecektir.\n\n• Portföydeki varlık adetleriniz DEÄİÅMEYECEKTİR (işlem gerçekleşmiş sayılır).\n• Bu işleme ait gerçekleşen kâr/zarar silinecektir.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('İptal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.loss),
-            onPressed: () {
-              provider.deleteTransaction(portfolioId, transaction.id,
-                  reverseHoldings: false);
-              Navigator.of(ctx).pop();
-            },
-            child: const Text('Sil'),
-          ),
-        ],
-      ),
-    );
-  }
-  Widget _buildFilterChip(String label, AssetCategory? cat) {
-    final isSelected = _filterCategory == cat;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) => setState(() => _filterCategory = cat),
-      showCheckmark: false,
-      selectedColor: AppTheme.primary.withValues(alpha: 0.2),
-      backgroundColor: AppTheme.surfaceLight,
-      labelStyle: TextStyle(
-        fontSize: 12,
-        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-        color: isSelected ? AppTheme.primaryLight : AppTheme.textSecondary,
-      ),
-      side: BorderSide(
-        color: isSelected ? AppTheme.primary : AppTheme.borderSubtle,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
     );
   }
   void _confirmDeleteAsset(BuildContext context, PortfolioProvider provider,

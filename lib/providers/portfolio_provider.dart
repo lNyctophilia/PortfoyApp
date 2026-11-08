@@ -630,6 +630,22 @@ class PortfolioProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> reorderPortfolios(int oldIndex, int newIndex, {bool alreadyAdjusted = false}) async {
+    if (!alreadyAdjusted && oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    if (oldIndex < 0 ||
+        oldIndex >= _portfolios.length ||
+        newIndex < 0 ||
+        newIndex >= _portfolios.length) {
+      return;
+    }
+    final item = _portfolios.removeAt(oldIndex);
+    _portfolios.insert(newIndex, item);
+    await _persistPortfolios();
+    notifyListeners();
+  }
+
   Future<void> addAsset(String portfolioId, PortfolioAsset asset) async {
     final index = _portfolios.indexWhere((p) => p.id == portfolioId);
     if (index != -1) {

@@ -111,7 +111,7 @@ class AssetCatalogService {
     // Vakıf Portföy
     {'code': 'VK6', 'name': 'Vakıf Portföy Katılım Fonu', 'sub': 'Vakıf Portföy • Katılım'},
     {'code': 'VAK', 'name': 'Vakıf Portföy Hisse Senedi Fonu', 'sub': 'Vakıf Portföy • Hisse Yoğun'},
-    {'code': 'VPU', 'name': 'Vakıf Portföy Para Piyasası Fonu', 'sub': 'Vakıf Portföy • Para Piyasası'},
+    {'code': 'VFP', 'name': 'Vakıf Portföy Para Piyasası (TL) Fonu', 'sub': 'Vakıf Portföy • Para Piyasası'},
 
     // TEB Portföy
     {'code': 'TKP', 'name': 'TEB Portföy Hisse Senedi Fonu (Hisse Senedi Yoğun)', 'sub': 'TEB Portföy • Hisse Yoğun'},
@@ -496,20 +496,6 @@ class AssetCatalogService {
           }
         }
       } catch (_) {}
-
-      // Sonuç bulunamadıysa bile 3 harfli sembol için doğrudan TEFAS fon önerisi sun
-      if (!results.any((r) => r.symbol.toUpperCase() == cleanUpper) &&
-          RegExp(r'^[A-Z0-9]{3}$').hasMatch(cleanUpper)) {
-        results.add(
-          AssetSuggestion(
-            symbol: cleanUpper,
-            name: '$cleanUpper Yatırım Fonu',
-            category: AssetCategory.fon,
-            iconUrl: MarketDataService.resolveFundLogo(cleanUpper, ''),
-            subtitle: 'TEFAS • Yatırım Fonu',
-          ),
-        );
-      }
     }
 
     return results.take(15).toList();

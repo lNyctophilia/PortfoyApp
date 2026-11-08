@@ -112,14 +112,9 @@ class Formatters {
 
   static String formatPrice(double val) {
     if (val == 0) return '0';
-    String str;
-    if (val >= 100) {
-      str = val.toStringAsFixed(2);
-    } else if (val >= 1) {
-      str = val.toStringAsFixed(4);
-    } else {
-      str = val.toStringAsFixed(6);
-    }
+    // 7. hane sıfır değilse 7 basamak, aksi halde 6 basamak
+    final s7 = val.toStringAsFixed(7);
+    final str = (!s7.endsWith('0')) ? s7 : val.toStringAsFixed(6);
     return str.replaceAll('.', ',');
   }
 

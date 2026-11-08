@@ -5,6 +5,7 @@ import '../../dialogs/add_edit_portfolio_dialog.dart';
 import '../../dialogs/add_transaction_dialog.dart';
 import '../../dialogs/asset_status_dialog.dart';
 import '../../dialogs/portfolio_detail_dialog.dart';
+import '../../dialogs/reorder_portfolios_dialog.dart';
 import '../../models/portfolio.dart';
 import '../../models/portfolio_asset.dart';
 import '../../models/portfolio_transaction.dart';
@@ -180,6 +181,25 @@ class AdaptiveNavigation {
           onSave: onSave,
           isBottomSheet: false,
         ),
+      );
+    }
+  }
+
+  /// Portföy Sıralama Ekranını açar.
+  /// PC'de: Popup modal olarak açılır.
+  /// Telefonda: Akıcı modal alt çekmece (Bottom Sheet) olarak açılır.
+  static Future<T?> openReorderPortfolios<T>(BuildContext context) {
+    if (isMobile(context)) {
+      return showModalBottomSheet<T>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => const ReorderPortfoliosDialog(isBottomSheet: true),
+      );
+    } else {
+      return showDialog<T>(
+        context: context,
+        builder: (_) => const ReorderPortfoliosDialog(isBottomSheet: false),
       );
     }
   }

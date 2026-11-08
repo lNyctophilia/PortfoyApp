@@ -232,49 +232,12 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Üst Bilgi Barı
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        color: accentColor.withValues(alpha: 0.08),
-                        child: Row(
-                          children: [
-                            widget.category?.buildIcon(size: 14, color: accentColor) ??
-                                const Icon(Icons.travel_explore_rounded,
-                                    size: 14, color: AppTheme.primaryLight),
-                            const SizedBox(width: 6),
-                            Text(
-                              widget.category != null
-                                  ? '${widget.category!.displayName} Önerileri'
-                                  : 'Varlık Önerileri',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: accentColor,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                            const Spacer(),
-                            if (_isSearching)
-                              SizedBox(
-                                width: 12,
-                                height: 12,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 1.5,
-                                  color: accentColor,
-                                ),
-                              )
-                            else
-                              Text(
-                                '${_suggestions.length} sonuç',
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: AppTheme.textSecondary,
-                                ),
-                              ),
-                          ],
+                      if (_isSearching)
+                        LinearProgressIndicator(
+                          minHeight: 2,
+                          backgroundColor: Colors.transparent,
+                          valueColor: AlwaysStoppedAnimation<Color>(accentColor),
                         ),
-                      ),
-                      const Divider(height: 1, thickness: 1, color: AppTheme.border),
 
                       // Gruplanmış Öneri Listesi
                       Flexible(
@@ -450,7 +413,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
               prefixIcon: widget.prefixIcon ??
                   (isEmpty
                       ? const Icon(
-                          Icons.question_mark_rounded,
+                          Icons.search_rounded,
                           size: 18,
                           color: AppColors.textHint,
                         )

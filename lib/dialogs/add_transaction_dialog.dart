@@ -143,8 +143,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
   String _formatPrice(double val) {
     if (val == 0) return '0';
-    if (val >= 100) return val.toStringAsFixed(2);
-    if (val >= 1) return val.toStringAsFixed(4);
+    final s7 = val.toStringAsFixed(7);
+    if (!s7.endsWith('0')) {
+      return s7;
+    }
     return val.toStringAsFixed(6);
   }
 
@@ -828,23 +830,17 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         child: const Text('İptal'),
                       ),
                       const SizedBox(width: 12),
-                      ElevatedButton.icon(
+                      ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
                               isAlis ? AppTheme.profit : AppTheme.loss,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 22, vertical: 14),
+                              horizontal: 24, vertical: 14),
                         ),
                         onPressed: (!isAlis && widget.portfolio.assets.isEmpty)
                             ? null
                             : _saveTransaction,
-                        icon: Icon(
-                          isAlis
-                              ? Icons.add_rounded
-                              : Icons.check_circle_outline_rounded,
-                          size: 18,
-                        ),
-                        label: Text(
+                        child: Text(
                           isAlis ? 'Alışı Kaydet' : 'Satışı Kaydet',
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),

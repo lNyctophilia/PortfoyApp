@@ -12,14 +12,12 @@ import '../services/inflation_service.dart';
 
 class AssetItemTile extends StatelessWidget {
   final PortfolioAsset asset;
-  final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback? onStatus;
 
   const AssetItemTile({
     super.key,
     required this.asset,
-    required this.onEdit,
     required this.onDelete,
     this.onStatus,
   });
@@ -284,17 +282,6 @@ class AssetItemTile extends StatelessWidget {
               final actionButtonsWidget = Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    tooltip: 'Varlığı Düzenle',
-                    color: AppTheme.textSecondary,
-                    hoverColor: AppTheme.primaryLight.withValues(alpha: 0.12),
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.all(7),
-                    constraints: const BoxConstraints(),
-                    onPressed: onEdit,
-                  ),
-                  const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 18),
                     tooltip: 'Varlığı Sil',
