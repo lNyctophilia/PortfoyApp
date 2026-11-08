@@ -92,6 +92,7 @@ class AssetItemTile extends StatelessWidget {
     final cat = asset.category;
 
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
@@ -347,11 +348,9 @@ class AssetItemTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Flexible(
-                    child: valueAndProfitWidget,
-                  ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 20),
+                  valueAndProfitWidget,
+                  const SizedBox(width: 14),
                   actionButtonsWidget,
                 ],
               );
@@ -369,28 +368,18 @@ class AssetItemTile extends StatelessWidget {
             child: Row(
               children: [
                 _buildSmallStat('1G', statDailyPercent, statDailyProfit, mode),
-                if (asset.hasWeeklyData) ...[
-                  const SizedBox(width: 4),
-                  _buildSmallStat('1H', statWeeklyPercent, statWeeklyProfit, mode),
-                ],
-                if (asset.hasMonthlyData) ...[
-                  const SizedBox(width: 4),
-                  _buildSmallStat('1A', statMonthlyPercent, statMonthlyProfit, mode),
-                ],
-                if (asset.hasThreeMonthlyData) ...[
-                  const SizedBox(width: 4),
-                  _buildSmallStat('3A', statThreeMonthlyPercent, statThreeMonthlyProfit, mode),
-                ],
-                if (asset.hasSixMonthlyData) ...[
-                  const SizedBox(width: 4),
-                  _buildSmallStat('6A', statSixMonthlyPercent, statSixMonthlyProfit, mode),
-                ],
-                if (asset.hasYearlyData) ...[
-                  const SizedBox(width: 4),
-                  _buildSmallStat('1Y', statYearlyPercent, statYearlyProfit, mode),
-                ],
-                const SizedBox(width: 4),
-                _buildSmallStat('Ömür', displayPercent, displayProfit, mode),
+                const SizedBox(width: 5),
+                _buildSmallStat('1H', asset.hasWeeklyData ? statWeeklyPercent : 0.0, asset.hasWeeklyData ? statWeeklyProfit : 0.0, mode),
+                const SizedBox(width: 5),
+                _buildSmallStat('1A', asset.hasMonthlyData ? statMonthlyPercent : 0.0, asset.hasMonthlyData ? statMonthlyProfit : 0.0, mode),
+                const SizedBox(width: 5),
+                _buildSmallStat('3A', asset.hasThreeMonthlyData ? statThreeMonthlyPercent : 0.0, asset.hasThreeMonthlyData ? statThreeMonthlyProfit : 0.0, mode),
+                const SizedBox(width: 5),
+                _buildSmallStat('6A', asset.hasSixMonthlyData ? statSixMonthlyPercent : 0.0, asset.hasSixMonthlyData ? statSixMonthlyProfit : 0.0, mode),
+                const SizedBox(width: 5),
+                _buildSmallStat('1Y', asset.hasYearlyData ? statYearlyPercent : 0.0, asset.hasYearlyData ? statYearlyProfit : 0.0, mode),
+                const SizedBox(width: 5),
+                _buildSmallStat('Ömür Boyu', displayPercent, displayProfit, mode),
               ],
             ),
           ),
@@ -400,15 +389,32 @@ class AssetItemTile extends StatelessWidget {
   }
 
   Widget _buildSmallStat(String label, double val, [double? profit, ReturnCalculationMode mode = ReturnCalculationMode.brut]) {
-    final isPos = val >= 0;
-    final col = isPos ? AppTheme.profit : AppTheme.loss;
-    final bg = isPos ? AppTheme.profitBg : AppTheme.lossBg;
+    final isNeutral = val.abs() < 0.0001 && (profit == null || profit.abs() < 0.01);
+    final isPos = val > 0;
+    final Color col;
+    final Color bg;
+    final Color borderColor;
+
+    if (isNeutral) {
+      col = AppTheme.textMuted;
+      bg = AppTheme.surfaceLight.withValues(alpha: 0.5);
+      borderColor = AppTheme.borderSubtle;
+    } else if (isPos) {
+      col = AppTheme.profit;
+      bg = AppTheme.profitBg;
+      borderColor = col.withValues(alpha: 0.2);
+    } else {
+      col = AppTheme.loss;
+      bg = AppTheme.lossBg;
+      borderColor = col.withValues(alpha: 0.2);
+    }
+
     final statWidget = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: col.withValues(alpha: 0.2)),
+        border: Border.all(color: borderColor),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
@@ -425,28 +431,37 @@ class AssetItemTile extends StatelessWidget {
               ),
             ),
             Text(
-              Formatters.percent(val),
+              isNeutral ? '%0,00' : Formatters.percent(val),
               style: TextStyle(
                 color: col,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
               ),
             ),
+            if (profit != null) ...[
+              const SizedBox(width: 3),
+              Text(
+                isNeutral ? '₺0,00' : Formatters.currency(profit),
+                style: TextStyle(
+                  color: col,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
 
     final modeSuffix = mode == ReturnCalculationMode.reel ? ' (Reel)' : '';
-    if (profit != null) {
-      return Expanded(
-        child: Tooltip(
-          message: '$label$modeSuffix Kâr/Zarar: ${Formatters.currency(profit)} (${Formatters.percent(val)})',
-          child: statWidget,
-        ),
-      );
-    }
+    final tooltipMsg = profit != null
+        ? '$label$modeSuffix Kâr/Zarar: ${isNeutral ? '₺0,00 (%0,00)' : '${Formatters.currency(profit)} (${Formatters.percent(val)})'}'
+        : '$label$modeSuffix: ${isNeutral ? '%0,00' : Formatters.percent(val)}';
 
-    return Expanded(child: statWidget);
+    return Tooltip(
+      message: tooltipMsg,
+      child: statWidget,
+    );
   }
 }

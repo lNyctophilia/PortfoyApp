@@ -183,7 +183,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
         final tefasFunds = _suggestions.where((s) => s.category == AssetCategory.fon && !s.isByf).toList();
         if (tefasFunds.isNotEmpty) {
           sections.add({
-            'title': 'Yatırım Fonu (TEFAS)',
+            'title': 'Yatırım Fonu',
             'icon': AssetCategory.fon.buildIcon(size: 13, color: AssetCategory.fon.color),
             'color': AssetCategory.fon.color,
             'items': tefasFunds,
@@ -193,7 +193,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
         final byfItems = _suggestions.where((s) => s.isByf).toList();
         if (byfItems.isNotEmpty) {
           sections.add({
-            'title': 'Borsa Yatırım Fonu (BYF / ETF)',
+            'title': 'Borsa Yatırım Fonu',
             'icon': const Icon(Icons.layers_rounded, size: 13, color: Color(0xFF64DFDF)),
             'color': const Color(0xFF64DFDF),
             'items': byfItems,
@@ -313,22 +313,6 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                         letterSpacing: 0.3,
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: (section['color'] as Color).withValues(alpha: 0.16),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        '${(section['items'] as List<AssetSuggestion>).length}',
-                                        style: TextStyle(
-                                          fontSize: 9.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: section['color'] as Color,
-                                        ),
-                                      ),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -369,39 +353,13 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                    item.symbol,
-                                                    style: const TextStyle(
-                                                      fontWeight: FontWeight.w700,
-                                                      fontSize: 13.5,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                  if (item.subtitle != null && item.subtitle!.isNotEmpty) ...[
-                                                    const SizedBox(width: 6),
-                                                    Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                                      decoration: BoxDecoration(
-                                                        color: (section['color'] as Color).withValues(alpha: 0.15),
-                                                        borderRadius: BorderRadius.circular(4),
-                                                        border: Border.all(
-                                                          color: (section['color'] as Color).withValues(alpha: 0.3),
-                                                          width: 0.6,
-                                                        ),
-                                                      ),
-                                                      child: Text(
-                                                        item.subtitle!,
-                                                        style: TextStyle(
-                                                          fontSize: 9,
-                                                          fontWeight: FontWeight.w600,
-                                                          color: section['color'] as Color,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ],
+                                              Text(
+                                                item.symbol,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 13.5,
+                                                  color: Colors.white,
+                                                ),
                                               ),
                                               const SizedBox(height: 2),
                                               Text(

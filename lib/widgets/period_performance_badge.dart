@@ -69,41 +69,46 @@ class PeriodPerformanceRow extends StatelessWidget {
         compact: compact,
         mode: mode,
         dailyPercent:
-            calcRealPercent(p.dailyChangePercent, periodInflation.daily),
-        dailyAmount: calcRealAmount(p.dailyProfit, periodInflation.daily),
+            calcRealPercent(p.dailyChangePercent, periodInflation.daily) ?? 0.0,
+        dailyAmount: calcRealAmount(p.dailyProfit, periodInflation.daily) ?? 0.0,
         weeklyPercent: p.hasWeeklyData
-            ? calcRealPercent(p.weeklyChangePercent, periodInflation.weekly)
-            : null,
+            ? (calcRealPercent(p.weeklyChangePercent, periodInflation.weekly) ?? 0.0)
+            : 0.0,
         weeklyAmount: p.hasWeeklyData
-            ? calcRealAmount(p.weeklyProfit, periodInflation.weekly)
-            : null,
+            ? (calcRealAmount(p.weeklyProfit, periodInflation.weekly) ?? 0.0)
+            : 0.0,
         monthlyPercent: p.hasMonthlyData
-            ? calcRealPercent(p.monthlyChangePercent, periodInflation.monthly)
-            : null,
+            ? (calcRealPercent(p.monthlyChangePercent, periodInflation.monthly) ?? 0.0)
+            : 0.0,
         monthlyAmount: p.hasMonthlyData
-            ? calcRealAmount(p.monthlyProfit, periodInflation.monthly)
-            : null,
+            ? (calcRealAmount(p.monthlyProfit, periodInflation.monthly) ?? 0.0)
+            : 0.0,
         threeMonthlyPercent: p.hasThreeMonthlyData
-            ? calcRealPercent(
-                p.threeMonthlyChangePercent, periodInflation.threeMonthly)
-            : null,
+            ? (calcRealPercent(
+                    p.threeMonthlyChangePercent, periodInflation.threeMonthly) ??
+                0.0)
+            : 0.0,
         threeMonthlyAmount: p.hasThreeMonthlyData
-            ? calcRealAmount(
-                p.threeMonthlyProfit, periodInflation.threeMonthly)
-            : null,
+            ? (calcRealAmount(
+                    p.threeMonthlyProfit, periodInflation.threeMonthly) ??
+                0.0)
+            : 0.0,
         sixMonthlyPercent: p.hasSixMonthlyData
-            ? calcRealPercent(
-                p.sixMonthlyChangePercent, periodInflation.sixMonthly)
-            : null,
+            ? (calcRealPercent(
+                    p.sixMonthlyChangePercent, periodInflation.sixMonthly) ??
+                0.0)
+            : 0.0,
         sixMonthlyAmount: p.hasSixMonthlyData
-            ? calcRealAmount(p.sixMonthlyProfit, periodInflation.sixMonthly)
-            : null,
+            ? (calcRealAmount(p.sixMonthlyProfit, periodInflation.sixMonthly) ??
+                0.0)
+            : 0.0,
         yearlyPercent: p.hasYearlyData
-            ? calcRealPercent(p.yearlyChangePercent, periodInflation.yearly)
-            : null,
+            ? (calcRealPercent(p.yearlyChangePercent, periodInflation.yearly) ??
+                0.0)
+            : 0.0,
         yearlyAmount: p.hasYearlyData
-            ? calcRealAmount(p.yearlyProfit, periodInflation.yearly)
-            : null,
+            ? (calcRealAmount(p.yearlyProfit, periodInflation.yearly) ?? 0.0)
+            : 0.0,
         allTimePercent: p.realTotalProfitPercent(assetInflationRates),
         allTimeAmount: p.realTotalProfit(assetInflationRates),
       );
@@ -115,18 +120,18 @@ class PeriodPerformanceRow extends StatelessWidget {
         mode: mode,
         dailyPercent: p.dailyChangePercent,
         dailyAmount: p.dailyProfit,
-        weeklyPercent: p.hasWeeklyData ? p.weeklyChangePercent : null,
-        weeklyAmount: p.hasWeeklyData ? p.weeklyProfit : null,
-        monthlyPercent: p.hasMonthlyData ? p.monthlyChangePercent : null,
-        monthlyAmount: p.hasMonthlyData ? p.monthlyProfit : null,
+        weeklyPercent: p.hasWeeklyData ? p.weeklyChangePercent : 0.0,
+        weeklyAmount: p.hasWeeklyData ? p.weeklyProfit : 0.0,
+        monthlyPercent: p.hasMonthlyData ? p.monthlyChangePercent : 0.0,
+        monthlyAmount: p.hasMonthlyData ? p.monthlyProfit : 0.0,
         threeMonthlyPercent:
-            p.hasThreeMonthlyData ? p.threeMonthlyChangePercent : null,
-        threeMonthlyAmount: p.hasThreeMonthlyData ? p.threeMonthlyProfit : null,
+            p.hasThreeMonthlyData ? p.threeMonthlyChangePercent : 0.0,
+        threeMonthlyAmount: p.hasThreeMonthlyData ? p.threeMonthlyProfit : 0.0,
         sixMonthlyPercent:
-            p.hasSixMonthlyData ? p.sixMonthlyChangePercent : null,
-        sixMonthlyAmount: p.hasSixMonthlyData ? p.sixMonthlyProfit : null,
-        yearlyPercent: p.hasYearlyData ? p.yearlyChangePercent : null,
-        yearlyAmount: p.hasYearlyData ? p.yearlyProfit : null,
+            p.hasSixMonthlyData ? p.sixMonthlyChangePercent : 0.0,
+        sixMonthlyAmount: p.hasSixMonthlyData ? p.sixMonthlyProfit : 0.0,
+        yearlyPercent: p.hasYearlyData ? p.yearlyChangePercent : 0.0,
+        yearlyAmount: p.hasYearlyData ? p.yearlyProfit : 0.0,
         allTimePercent: p.netTotalProfitPercent,
         allTimeAmount: p.netTotalProfit,
       );
@@ -137,18 +142,18 @@ class PeriodPerformanceRow extends StatelessWidget {
       mode: mode,
       dailyPercent: p.dailyChangePercent,
       dailyAmount: p.dailyProfit,
-      weeklyPercent: p.hasWeeklyData ? p.weeklyChangePercent : null,
-      weeklyAmount: p.hasWeeklyData ? p.weeklyProfit : null,
-      monthlyPercent: p.hasMonthlyData ? p.monthlyChangePercent : null,
-      monthlyAmount: p.hasMonthlyData ? p.monthlyProfit : null,
+      weeklyPercent: p.hasWeeklyData ? p.weeklyChangePercent : 0.0,
+      weeklyAmount: p.hasWeeklyData ? p.weeklyProfit : 0.0,
+      monthlyPercent: p.hasMonthlyData ? p.monthlyChangePercent : 0.0,
+      monthlyAmount: p.hasMonthlyData ? p.monthlyProfit : 0.0,
       threeMonthlyPercent:
-          p.hasThreeMonthlyData ? p.threeMonthlyChangePercent : null,
-      threeMonthlyAmount: p.hasThreeMonthlyData ? p.threeMonthlyProfit : null,
+          p.hasThreeMonthlyData ? p.threeMonthlyChangePercent : 0.0,
+      threeMonthlyAmount: p.hasThreeMonthlyData ? p.threeMonthlyProfit : 0.0,
       sixMonthlyPercent:
-          p.hasSixMonthlyData ? p.sixMonthlyChangePercent : null,
-      sixMonthlyAmount: p.hasSixMonthlyData ? p.sixMonthlyProfit : null,
-      yearlyPercent: p.hasYearlyData ? p.yearlyChangePercent : null,
-      yearlyAmount: p.hasYearlyData ? p.yearlyProfit : null,
+          p.hasSixMonthlyData ? p.sixMonthlyChangePercent : 0.0,
+      sixMonthlyAmount: p.hasSixMonthlyData ? p.sixMonthlyProfit : 0.0,
+      yearlyPercent: p.hasYearlyData ? p.yearlyChangePercent : 0.0,
+      yearlyAmount: p.hasYearlyData ? p.yearlyProfit : 0.0,
       allTimePercent: p.totalProfitPercent,
       allTimeAmount: p.totalProfit,
     );
@@ -156,27 +161,26 @@ class PeriodPerformanceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gap = compact ? 4.0 : 8.0;
+    const gap = 6.0;
     final metricTiles = <Widget>[];
 
     void addPeriod(String title, double? percent, double? amount) {
-      if (percent == null) return;
       metricTiles.add(
         _buildMetricTile(
           title: title,
-          percent: percent,
+          percent: percent ?? 0.0,
           amount: amount,
         ),
       );
     }
 
-    addPeriod(compact ? '1G' : 'Günlük', dailyPercent, dailyAmount);
-    addPeriod(compact ? '1H' : 'Haftalık', weeklyPercent, weeklyAmount);
-    addPeriod(compact ? '1A' : '1 Ay', monthlyPercent, monthlyAmount);
-    addPeriod(compact ? '3A' : '3 Ay', threeMonthlyPercent, threeMonthlyAmount);
-    addPeriod(compact ? '6A' : '6 Ay', sixMonthlyPercent, sixMonthlyAmount);
-    addPeriod(compact ? '1Y' : '1 Yıl', yearlyPercent, yearlyAmount);
-    addPeriod(compact ? 'Ömür' : 'Ömür Boyu', allTimePercent, allTimeAmount);
+    addPeriod('1G', dailyPercent, dailyAmount);
+    addPeriod('1H', weeklyPercent, weeklyAmount);
+    addPeriod('1A', monthlyPercent, monthlyAmount);
+    addPeriod('3A', threeMonthlyPercent, threeMonthlyAmount);
+    addPeriod('6A', sixMonthlyPercent, sixMonthlyAmount);
+    addPeriod('1Y', yearlyPercent, yearlyAmount);
+    addPeriod('Ömür Boyu', allTimePercent, allTimeAmount);
 
     if (metricTiles.isEmpty) {
       return const SizedBox.shrink();
@@ -184,9 +188,11 @@ class PeriodPerformanceRow extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final minRequiredWidth = metricTiles.length * (compact ? 44.0 : 82.0) + (metricTiles.length - 1) * gap;
-        // Eğer alan dar ise yatay kaydırılabilir yap (özellikle mobil telefonlar için)
-        if (constraints.maxWidth < minRequiredWidth || !compact) {
+        // Her kutucuk yan yana yüzde + TL tutarı ile ~115px genişlik ister.
+        final minRequiredWidth = metricTiles.length * 115.0 + (metricTiles.length - 1) * gap;
+
+        // Alan yetersizse (özellikle mobil veya dar portföy kartlarında) yatay kaydırılabilir yap
+        if (constraints.maxWidth < minRequiredWidth) {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -194,10 +200,10 @@ class PeriodPerformanceRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 for (int i = 0; i < metricTiles.length; i++) ...[
-                  if (i > 0) SizedBox(width: gap),
+                  if (i > 0) const SizedBox(width: gap),
                   ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: compact ? 44 : 76,
+                    constraints: const BoxConstraints(
+                      minWidth: 108,
                     ),
                     child: metricTiles[i],
                   ),
@@ -207,11 +213,11 @@ class PeriodPerformanceRow extends StatelessWidget {
           );
         }
 
-        // Geniş ekranda tüm alana dengeli dağıt
+        // Geniş ekranda tüm alana dengeli ve ferah dağıt
         return Row(
           children: [
             for (int i = 0; i < metricTiles.length; i++) ...[
-              if (i > 0) SizedBox(width: gap),
+              if (i > 0) const SizedBox(width: gap),
               Expanded(child: metricTiles[i]),
             ],
           ],
@@ -225,20 +231,41 @@ class PeriodPerformanceRow extends StatelessWidget {
     required double percent,
     double? amount,
   }) {
-    final isPositive = percent >= 0;
-    final color = isPositive ? AppTheme.profit : AppTheme.loss;
-    final bg = isPositive ? AppTheme.profitBg : AppTheme.lossBg;
+    final isNeutral = percent.abs() < 0.0001 && (amount == null || amount.abs() < 0.01);
+    final isPositive = percent > 0;
+
+    final Color color;
+    final Color bg;
+    final Color borderColor;
+    final IconData iconData;
+
+    if (isNeutral) {
+      color = AppTheme.textMuted;
+      bg = AppTheme.surfaceLight.withValues(alpha: 0.6);
+      borderColor = AppTheme.borderSubtle;
+      iconData = Icons.remove_rounded;
+    } else if (isPositive) {
+      color = AppTheme.profit;
+      bg = AppTheme.profitBg;
+      borderColor = color.withValues(alpha: 0.25);
+      iconData = Icons.arrow_drop_up_rounded;
+    } else {
+      color = AppTheme.loss;
+      bg = AppTheme.lossBg;
+      borderColor = color.withValues(alpha: 0.25);
+      iconData = Icons.arrow_drop_down_rounded;
+    }
 
     final tile = Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 3 : 6,
-        vertical: compact ? 6 : 8,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 6,
       ),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: color.withValues(alpha: 0.25),
+          color: borderColor,
           width: 1,
         ),
       ),
@@ -251,51 +278,49 @@ class PeriodPerformanceRow extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               title,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppTheme.textMuted,
-                fontSize: compact ? 10 : 11,
+                fontSize: 10.5,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.2,
               ),
               maxLines: 1,
             ),
           ),
-          if (amount != null && !compact) ...[
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                Formatters.currency(amount),
-                style: TextStyle(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
-                  isPositive
-                      ? Icons.arrow_drop_up_rounded
-                      : Icons.arrow_drop_down_rounded,
+                  iconData,
                   color: color,
-                  size: compact ? 15 : 18,
+                  size: isNeutral ? 13 : 16,
                 ),
                 Text(
-                  Formatters.percent(percent, includeSign: false),
+                  isNeutral
+                      ? '%0,00'
+                      : Formatters.percent(percent, includeSign: false),
                   style: TextStyle(
                     color: color,
-                    fontSize: compact ? 11 : 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+                if (amount != null) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    isNeutral ? '₺0,00' : Formatters.currency(amount),
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

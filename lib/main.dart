@@ -845,6 +845,8 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Flexible(
                       child: Text(
@@ -858,10 +860,7 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (badge != null) ...[
-                      const SizedBox(width: 6),
-                      badge,
-                    ],
+                    ?badge,
                   ],
                 ),
                 const SizedBox(height: 2),

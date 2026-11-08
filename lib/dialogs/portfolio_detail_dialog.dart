@@ -263,7 +263,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     bool isMobile,
   ) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
                       // ÖZET KARTLARI (DEÄER, KAZANÇ, TARİHSEL VERİLER)
                       Container(
@@ -665,6 +665,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
   Widget _buildAssetsTab(Portfolio portfolio,
       List<PortfolioAsset> filteredAssets, PortfolioProvider provider, bool isMobile) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
@@ -840,31 +841,24 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         final isSatis = tx.type == TransactionType.satis;
         final isProfit = tx.realizedProfit >= 0;
         final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
+        final typeColor = isSatis ? AppTheme.loss : AppTheme.profit;
 
         final typeBadge = Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: isSatis
-                ? (isProfit ? AppTheme.profit : AppTheme.loss).withValues(alpha: 0.15)
-                : AppTheme.primary.withValues(alpha: 0.15),
+            color: typeColor.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSatis
-                  ? (isProfit ? AppTheme.profit : AppTheme.loss).withValues(alpha: 0.4)
-                  : AppTheme.primaryLight.withValues(alpha: 0.4),
+              color: typeColor.withValues(alpha: 0.4),
             ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                isSatis
-                    ? (isProfit ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded)
-                    : Icons.add_shopping_cart_rounded,
+                isSatis ? Icons.sell_rounded : Icons.add_shopping_cart_rounded,
                 size: 13,
-                color: isSatis
-                    ? (isProfit ? AppTheme.profit : AppTheme.loss)
-                    : AppTheme.primaryLight,
+                color: typeColor,
               ),
               const SizedBox(width: 4),
               Text(
@@ -872,9 +866,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: isSatis
-                      ? (isProfit ? AppTheme.profit : AppTheme.loss)
-                      : AppTheme.primaryLight,
+                  color: typeColor,
                 ),
               ),
             ],
@@ -929,6 +921,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
 
         if (isMobile) {
           return Container(
+            width: double.infinity,
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -1027,6 +1020,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         }
 
         return Container(
+          width: double.infinity,
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(

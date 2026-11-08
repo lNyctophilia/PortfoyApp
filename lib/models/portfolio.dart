@@ -169,46 +169,46 @@ class Portfolio {
   }
 
   double get weeklyProfit =>
-      assets.fold(0.0, (sum, asset) => sum + asset.weeklyProfit);
+      hasWeeklyData ? assets.fold(0.0, (sum, asset) => sum + asset.weeklyProfit) : 0.0;
 
   double get weeklyChangePercent {
-    if (totalValue <= 0) return 0.0;
+    if (!hasWeeklyData || totalValue <= 0) return 0.0;
     final prevValue = totalValue - weeklyProfit;
     return prevValue > 0 ? (weeklyProfit / prevValue) * 100 : 0.0;
   }
 
   double get monthlyProfit =>
-      assets.fold(0.0, (sum, asset) => sum + asset.monthlyProfit);
+      hasMonthlyData ? assets.fold(0.0, (sum, asset) => sum + asset.monthlyProfit) : 0.0;
 
   double get monthlyChangePercent {
-    if (totalValue <= 0) return 0.0;
+    if (!hasMonthlyData || totalValue <= 0) return 0.0;
     final prevValue = totalValue - monthlyProfit;
     return prevValue > 0 ? (monthlyProfit / prevValue) * 100 : 0.0;
   }
 
   double get threeMonthlyProfit =>
-      assets.fold(0.0, (sum, asset) => sum + asset.threeMonthlyProfit);
+      hasThreeMonthlyData ? assets.fold(0.0, (sum, asset) => sum + asset.threeMonthlyProfit) : 0.0;
 
   double get threeMonthlyChangePercent {
-    if (totalValue <= 0) return 0.0;
+    if (!hasThreeMonthlyData || totalValue <= 0) return 0.0;
     final prevValue = totalValue - threeMonthlyProfit;
     return prevValue > 0 ? (threeMonthlyProfit / prevValue) * 100 : 0.0;
   }
 
   double get sixMonthlyProfit =>
-      assets.fold(0.0, (sum, asset) => sum + asset.sixMonthlyProfit);
+      hasSixMonthlyData ? assets.fold(0.0, (sum, asset) => sum + asset.sixMonthlyProfit) : 0.0;
 
   double get sixMonthlyChangePercent {
-    if (totalValue <= 0) return 0.0;
+    if (!hasSixMonthlyData || totalValue <= 0) return 0.0;
     final prevValue = totalValue - sixMonthlyProfit;
     return prevValue > 0 ? (sixMonthlyProfit / prevValue) * 100 : 0.0;
   }
 
   double get yearlyProfit =>
-      assets.fold(0.0, (sum, asset) => sum + asset.yearlyProfit);
+      hasYearlyData ? assets.fold(0.0, (sum, asset) => sum + asset.yearlyProfit) : 0.0;
 
   double get yearlyChangePercent {
-    if (totalValue <= 0) return 0.0;
+    if (!hasYearlyData || totalValue <= 0) return 0.0;
     final prevValue = totalValue - yearlyProfit;
     return prevValue > 0 ? (yearlyProfit / prevValue) * 100 : 0.0;
   }

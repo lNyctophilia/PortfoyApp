@@ -156,19 +156,19 @@ class PortfolioAsset {
       holdingDays < 1 ? totalProfit : _calcPeriodProfit(dailyChangePercent);
 
   double get weeklyProfit =>
-      holdingDays < 7 ? totalProfit : _calcPeriodProfit(weeklyChangePercent);
+      holdingDays < 7 ? 0.0 : _calcPeriodProfit(weeklyChangePercent);
 
   double get monthlyProfit =>
-      holdingDays < 30 ? totalProfit : _calcPeriodProfit(monthlyChangePercent);
+      holdingDays < 30 ? 0.0 : _calcPeriodProfit(monthlyChangePercent);
 
   double get threeMonthlyProfit =>
-      holdingDays < 90 ? totalProfit : _calcPeriodProfit(threeMonthlyChangePercent);
+      holdingDays < 90 ? 0.0 : _calcPeriodProfit(threeMonthlyChangePercent);
 
   double get sixMonthlyProfit =>
-      holdingDays < 180 ? totalProfit : _calcPeriodProfit(sixMonthlyChangePercent);
+      holdingDays < 180 ? 0.0 : _calcPeriodProfit(sixMonthlyChangePercent);
 
   double get yearlyProfit =>
-      holdingDays < 365 ? totalProfit : _calcPeriodProfit(yearlyChangePercent);
+      holdingDays < 365 ? 0.0 : _calcPeriodProfit(yearlyChangePercent);
 
   PortfolioAsset copyWith({
     String? id,
