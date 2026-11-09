@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:portfoy_app/dialogs/add_edit_portfolio_dialog.dart';
 import 'package:portfoy_app/dialogs/asset_status_dialog.dart';
 import 'package:portfoy_app/dialogs/portfolio_detail_dialog.dart';
 import 'package:portfoy_app/models/asset_category.dart';
@@ -9,6 +10,8 @@ import 'package:portfoy_app/models/portfolio_asset.dart';
 import 'package:portfoy_app/models/portfolio_transaction.dart';
 import 'package:portfoy_app/models/return_mode.dart';
 import 'package:portfoy_app/providers/portfolio_provider.dart';
+import 'package:portfoy_app/utils/formatters.dart';
+import 'package:portfoy_app/widgets/asset_item_tile.dart';
 import 'package:portfoy_app/widgets/portfolio_card.dart';
 import 'package:portfoy_app/screens/settings_screen.dart';
 import 'package:provider/provider.dart';
@@ -430,6 +433,160 @@ void main() {
       // The parent RadioGroup container has 1px border on each side: 672 - 2 = 670 width.
       // The mode box outer geometry (including 16 margin on each side) stretches across the full 670px width.
       expect(modeContainerRect.width, 670.0);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    test('Formatters.formatCurrencyPrice formats with exact decimals and Turkish symbols', () {
+      expect(Formatters.formatCurrencyPrice(0.045612), equals('0,045612 ₺'));
+      expect(Formatters.formatCurrencyPrice(1400.76), equals('1.400,76 ₺'));
+      expect(Formatters.formatCurrencyPrice(125.0), equals('125,00 ₺'));
+      expect(Formatters.formatCurrencyPrice(0.0), equals('0,00 ₺'));
+    });
+
+    testWidgets('AddEditPortfolioDialog has label Portföy İsmi without star and no hintText',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AddEditPortfolioDialog(
+              onSave: (_, __) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Portföy İsmi'), findsOneWidget);
+      expect(find.text('Portföy İsmi *'), findsNothing);
+      expect(find.text('Örn: Teknoloji & Büyüme Fonları'), findsNothing);
+      expect(find.text('Örn: BIST ve TEFAS teknoloji ağırlıklı yatırımlar'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('PortfolioDetailDialog transactions empty state does not show subtitle or İlk İşlemi Ekle button',
+        (WidgetTester tester) async {
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+      await provider.addPortfolio(name: 'Boş Portföy');
+      final pId = provider.rawPortfolios.first.id;
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            home: PortfolioDetailDialog(
+              portfolioId: pId,
+              isFullScreen: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Switch to İşlemler tab
+      await tester.tap(find.textContaining('İşlemler').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Bu portföyde henüz işlem kaydı yok'), findsOneWidget);
+      expect(find.text('Satış yaptıkça gerçekleşen kâr ve zararlarınız burada listelenir.'), findsNothing);
+      expect(find.text('İlk İşlemi Ekle'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('AssetItemTile in Reel mode does not render • TÜFE: %',
+        (WidgetTester tester) async {
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+      await provider.setReturnMode(ReturnCalculationMode.reel);
+
+      final asset = PortfolioAsset(
+        id: 'asset_reel',
+        symbol: 'CUSTOMSYM',
+        name: 'Özel Varlık',
+        category: AssetCategory.emtia,
+        quantity: 10,
+        purchasePrice: 200,
+        currentPrice: 250,
+        purchaseDate: DateTime.now(),
+      );
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            home: Scaffold(
+              body: AssetItemTile(
+                asset: asset,
+                onDelete: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('• TÜFE: %'), findsNothing);
+      expect(find.textContaining('TÜFE'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('AssetStatusDialog Lots and Sales tabs adhere to minimal specifications',
+        (WidgetTester tester) async {
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+      final asset = PortfolioAsset(
+        id: 'asset_lots',
+        symbol: 'CUSTOMALTIN',
+        name: 'Özel Altın',
+        category: AssetCategory.emtia,
+        quantity: 50,
+        purchasePrice: 250,
+        currentPrice: 300,
+        purchaseDate: DateTime.now(),
+      );
+      final portfolio = Portfolio(
+        id: 'port_lots',
+        name: 'Altın Portföyü',
+        createdAt: DateTime.now(),
+        assets: [asset],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetStatusDialog(
+            portfolio: portfolio,
+            asset: asset,
+            provider: provider,
+            isFullScreen: true,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 1. Lots tab checks:
+      // No "Tamamı Duruyor" badge
+      expect(find.text('Tamamı Duruyor'), findsNothing);
+      // No "Alınan Miktar"
+      expect(find.text('Alınan Miktar'), findsNothing);
+      // No "Kalan Lot Değeri"
+      expect(find.textContaining('Kalan Lot Değeri'), findsNothing);
+      // No "Kâr/Zarar: " text inside badge
+      expect(find.textContaining('Kâr/Zarar:'), findsNothing);
+      // But P/L value exists
+      expect(find.textContaining('2.500'), findsWidgets);
+
+      // 2. Sales tab check:
+      await tester.tap(find.textContaining('Satış').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Bu varlık için henüz satış yapılmadı'), findsOneWidget);
+      expect(find.text('Satış yaptığınızda FIFO maliyeti ve gerçekleşen kâr burada listelenir.'), findsNothing);
 
       await tester.pumpWidget(const SizedBox());
     });

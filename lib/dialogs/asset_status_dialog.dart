@@ -330,13 +330,13 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
 
     final metricMaliyet = _buildMetricItem(
       'Ort. Maliyet',
-      Formatters.currency(fifoResult.averageRemainingCost),
+      Formatters.formatCurrencyPrice(fifoResult.averageRemainingCost),
       icon: Icons.price_change_outlined,
     );
 
     final metricFiyat = _buildMetricItem(
       'Güncel Fiyat',
-      Formatters.currency(displayCurrentPrice),
+      Formatters.formatCurrencyPrice(displayCurrentPrice),
       icon: Icons.show_chart_rounded,
     );
 
@@ -647,91 +647,69 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Üst Satır: Tarih & Durum Rozeti
+              // Üst Satır: Tarih
               Wrap(
-                alignment: WrapAlignment.spaceBetween,
                 crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8,
-                runSpacing: 6,
+                spacing: 6,
+                runSpacing: 4,
                 children: [
-                  Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: AppTheme.profit.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_downward_rounded,
-                          size: 14,
-                          color: AppTheme.profit,
-                        ),
-                      ),
-                      Text(
-                        'Alış: ${Formatters.date(lot.date)}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        '(${Formatters.daysAgo(lot.date)})',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.textMuted,
-                        ),
-                      ),
-                    ],
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.profit.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_downward_rounded,
+                      size: 14,
+                      color: AppTheme.profit,
+                    ),
                   ),
-                  _buildLotStatusBadge(lot),
+                  Text(
+                    'Alış: ${Formatters.date(lot.date)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    '(${Formatters.daysAgo(lot.date)})',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
 
               // Alış Bilgileri
-              if (isMobile) ...[
-                Row(
-                  children: [
-                    Expanded(child: _buildSubStat('Alınan Miktar', '${_formatQty(lot.originalQuantity)} Adet')),
-                    const SizedBox(width: 10),
-                    Expanded(child: _buildSubStat('Alış Fiyatı', Formatters.currency(lot.purchasePrice))),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(child: _buildSubStat('Toplam Maliyet', Formatters.currency(lot.totalOriginalCost))),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildSubStat(
-                        'Kalan Miktar',
-                        '${_formatQty(lot.remainingQuantity)} Adet',
-                        highlightColor: lot.isFullySold ? AppTheme.textMuted : AppTheme.textPrimary,
-                      ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSubStat(
+                      'Alış Fiyatı',
+                      Formatters.formatCurrencyPrice(lot.purchasePrice),
                     ),
-                  ],
-                ),
-              ] else ...[
-                Row(
-                  children: [
-                    Expanded(child: _buildSubStat('Alınan Miktar', '${_formatQty(lot.originalQuantity)} Adet')),
-                    Expanded(child: _buildSubStat('Alış Fiyatı', Formatters.currency(lot.purchasePrice))),
-                    Expanded(child: _buildSubStat('Toplam Maliyet', Formatters.currency(lot.totalOriginalCost))),
-                    Expanded(
-                      child: _buildSubStat(
-                        'Kalan Miktar',
-                        '${_formatQty(lot.remainingQuantity)} Adet',
-                        highlightColor: lot.isFullySold ? AppTheme.textMuted : AppTheme.textPrimary,
-                      ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildSubStat(
+                      'Toplam Maliyet',
+                      Formatters.currency(lot.totalOriginalCost),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildSubStat(
+                      'Kalan Miktar',
+                      '${_formatQty(lot.remainingQuantity)} Adet',
+                      highlightColor: lot.isFullySold ? AppTheme.textMuted : AppTheme.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
 
               // Kalan Miktar varsa Kâr / Zarar Satırı
               if (!lot.isFullySold) ...[
@@ -739,53 +717,26 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Divider(color: AppTheme.borderSubtle, height: 1),
                 ),
-                Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Kalan Lot Değeri: ',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                        Text(
-                          Formatters.currency(
-                            lot.remainingQuantity * asset.currentPrice,
-                          ),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                      ],
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isProfit ? AppTheme.profitBg : AppTheme.lossBg,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'Kâr/Zarar: ${Formatters.currency(lotProfit)} (${Formatters.percent(lotProfitPercent)})',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: profitColor,
-                        ),
+                    decoration: BoxDecoration(
+                      color: isProfit ? AppTheme.profitBg : AppTheme.lossBg,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${Formatters.currency(lotProfit)} (${Formatters.percent(lotProfitPercent)})',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: profitColor,
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ],
             ],
@@ -814,14 +765,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                 color: AppTheme.textMuted,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Satış yaptığınızda FIFO maliyeti ve gerçekleşen kâr burada listelenir.',
-              style: TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 11,
               ),
             ),
           ],
@@ -947,13 +890,13 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   children: [
                     Expanded(child: _buildSubStat('Satılan Miktar', '${_formatQty(tx.quantity)} Adet')),
                     const SizedBox(width: 10),
-                    Expanded(child: _buildSubStat('Satış Fiyatı', Formatters.currency(tx.price))),
+                    Expanded(child: _buildSubStat('Satış Fiyatı', Formatters.formatCurrencyPrice(tx.price))),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(child: _buildSubStat('FIFO Maliyet', Formatters.currency(saleRecord.unitCost))),
+                    Expanded(child: _buildSubStat('FIFO Maliyet', Formatters.formatCurrencyPrice(saleRecord.unitCost))),
                     const SizedBox(width: 10),
                     Expanded(child: _buildSubStat('Toplam Gelir', Formatters.currency(tx.quantity * tx.price))),
                   ],
@@ -962,8 +905,8 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                 Row(
                   children: [
                     Expanded(child: _buildSubStat('Satılan Miktar', '${_formatQty(tx.quantity)} Adet')),
-                    Expanded(child: _buildSubStat('Satış Fiyatı', Formatters.currency(tx.price))),
-                    Expanded(child: _buildSubStat('FIFO Maliyet Fiyatı', Formatters.currency(saleRecord.unitCost))),
+                    Expanded(child: _buildSubStat('Satış Fiyatı', Formatters.formatCurrencyPrice(tx.price))),
+                    Expanded(child: _buildSubStat('FIFO Maliyet Fiyatı', Formatters.formatCurrencyPrice(saleRecord.unitCost))),
                     Expanded(child: _buildSubStat('Toplam Gelir', Formatters.currency(tx.quantity * tx.price))),
                   ],
                 ),
@@ -987,7 +930,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                         border: Border.all(color: AppTheme.borderSubtle),
                       ),
                       child: Text(
-                        'â†³ ${_formatQty(c.quantityConsumed)} Adet (${Formatters.date(c.lot.date)} alışından @ ${Formatters.currency(c.unitCost)})',
+                        '↳ ${_formatQty(c.quantityConsumed)} Adet (${Formatters.date(c.lot.date)} alışından @ ${Formatters.formatCurrencyPrice(c.unitCost)})',
                         style: const TextStyle(
                           fontSize: 10,
                           color: AppTheme.textMuted,
@@ -1002,59 +945,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
         );
       },
     );
-  }
-
-  Widget _buildLotStatusBadge(AssetLot lot) {
-    if (lot.isFullySold) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: AppTheme.borderSubtle),
-        ),
-        child: const Text(
-          'Tamamı Satıldı (FIFO)',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textMuted,
-          ),
-        ),
-      );
-    } else if (lot.isPartiallySold) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-        decoration: BoxDecoration(
-          color: AppTheme.warning.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          'Kısmen Satıldı (${_formatQty(lot.soldQuantity)} satıldı)',
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.warning,
-          ),
-        ),
-      );
-    } else {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-        decoration: BoxDecoration(
-          color: AppTheme.profit.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: const Text(
-          'Tamamı Duruyor',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.profit,
-          ),
-        ),
-      );
-    }
   }
 
   Widget _buildSubStat(String label, String value, {Color? highlightColor}) {

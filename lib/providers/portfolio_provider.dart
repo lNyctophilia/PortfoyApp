@@ -492,16 +492,14 @@ class PortfolioProvider extends ChangeNotifier {
       final rates = <String, double>{};
       for (final portfolio in _portfolios) {
         for (final asset in portfolio.assets) {
-          final txs = portfolio.transactions
-              .where((t) =>
-                  t.type == TransactionType.alis &&
-                  (t.assetId == asset.id ||
-                      t.symbol.toUpperCase() == asset.symbol.toUpperCase()))
-              .toList();
+          final fifo = FifoCalculator.calculate(
+            portfolio,
+            asset.symbol,
+            assetFallback: asset,
+          );
           DateTime buyDate = asset.purchaseDate;
-          if (txs.isNotEmpty) {
-            txs.sort((a, b) => a.date.compareTo(b.date));
-            buyDate = txs.first.date;
+          if (fifo.activeLots.isNotEmpty) {
+            buyDate = fifo.activeLots.first.date;
           }
           final rate = await InflationService.getInflationSince(buyDate);
           rates[asset.id] = rate;

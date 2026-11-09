@@ -43,8 +43,8 @@
 - **File:** `lib/dialogs/add_edit_portfolio_dialog.dart`
   - **Lines 1-28:** Imports, AddEditPortfolioDialog declaration with isBottomSheet flag, and state setup.
   - **Lines 29-50:** Lifecycle methods (initState, dispose) and form submission logic (_submit).
-  - **Lines 51-122:** _buildFormFields() - Input fields (name, description), validation, and action buttons.
-  - **Lines 123-182:** build() method - Adaptive layout rendering as a draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog shell on desktop.
+  - **Lines 51-120:** _buildFormFields() - Input fields (clean name without star or hintText, clean description without hintText), validation, and action buttons.
+  - **Lines 121-180:** build() method - Adaptive layout rendering as a draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog shell on desktop.
 - **File:** `lib/dialogs/add_transaction_dialog.dart`
   - **Lines 1-76:** Imports, AddTransactionDialog declaration with isFullScreen flag, initialAsset, initialType, and state variables.
   - **Lines 77-166:** initState(), dispose(), Turkish price/number parsing and formatting helpers with precision (_formatPriceGrouped, Formatters.parseDouble).
@@ -62,18 +62,18 @@
   - **Lines 35-113:** build() method: Adaptive layout setup, FIFO calculation, responsive dimensions.
   - **Lines 114-170:** Mobile fullScreen Scaffold with clean AppBar, responsive 2-row _buildSummaryMetricsBar, aligned 16px tab switcher, and content list.
   - **Lines 171-314:** Responsive desktop Dialog shell with header, horizontal 20px _buildSummaryMetricsBar, tab switcher, and content list.
-  - **Lines 315-610:** _buildSummaryMetricsBar (mobile 2-row balanced grid vs desktop stretched row), _buildMetricItem, _buildDivider, _buildTabButton.
-  - **Lines 611-798:** _buildLotsTab() - Detailed list of open/closed purchase lots with adaptive Wrap date/status headers and overflow-free holding durations, costs, and returns with aligned 16px mobile padding.
-  - **Lines 799-1006:** _buildSalesTab() - Realized sales history, sell prices, capital gains, dynamic net/gross withholding tax badges with aligned 16px mobile padding.
-  - **Lines 1007-1097:** _buildLotStatusBadge, _buildSubStat, and formatters.
+  - **Lines 315-610:** _buildSummaryMetricsBar with Formatters.formatCurrencyPrice precision for average cost and current price, _buildMetricItem, _buildDivider, _buildTabButton.
+  - **Lines 611-787:** _buildLotsTab() - Detailed list of open/closed purchase lots with adaptive Wrap date headers, full price precision, 3-stat clean layout (without Alınan Miktar), and right-aligned P/L box without 'Kâr/Zarar:' prefix (without 'Tamamı Duruyor' or 'Kalan Lot Değeri').
+  - **Lines 788-948:** _buildSalesTab() - Realized sales history with clean empty state (without FIFO subtitle), full price precision, and capital gains.
+  - **Lines 949-987:** _buildSubStat, and formatters.
 - **File:** `lib/dialogs/portfolio_detail_dialog.dart`
   - **Lines 1-30:** Imports, PortfolioDetailDialog declaration with isFullScreen flag, and state setup.
   - **Lines 31-185:** build() method - Adaptive screen shell: full-screen Scaffold with AppBar on mobile vs responsive Dialog shell on desktop.
   - **Lines 186-247:** _buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, and close icon.
   - **Lines 248-647:** _buildDetailContent() - Core stretched content: 'Portföy Değeri' header metric with clean value, aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount, Gerçekleşen K/Z), direct PeriodPerformanceRow without redundant title, tightened vertical dividers, distribution bar, and tab bar switcher.
   - **Lines 648-747:** _buildAssetsTab() - Clean full-width search input, empty state, and full-width AssetItemTile list opening status via AdaptiveNavigation.openAssetStatus.
-  - **Lines 748-1089:** _buildTransactionsTab() - Chronological transaction history cards with green Alış and red Satış type badges, sales profit badge dynamically calculating Net and Gross returns based on returnMode / showNetValues with matching profit/loss colors, and Geri Al action.
-  - **Lines 1090-1156:** _confirmUndoTransaction() and _confirmDeleteAsset().
+  - **Lines 748-1056:** _buildTransactionsTab() - Minimalist empty state (icon and title only, without subtitle or 'İlk İşlemi Ekle' button), chronological transaction history cards with green Alış and red Satış type badges, sales profit badge dynamically calculating Net and Gross returns, and Geri Al action.
+  - **Lines 1057-1123:** _confirmUndoTransaction() and _confirmDeleteAsset().
 - **File:** `lib/dialogs/reorder_portfolios_dialog.dart`
   - **Lines 1-28:** Imports, ReorderPortfoliosDialog declaration with isBottomSheet flag.
   - **Lines 29-87:** build() method - Adaptive shell rendering draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog on desktop.
@@ -146,10 +146,10 @@
   - **Lines 1-24:** Imports, Portfolio class declaration, properties, and constructor.
   - **Lines 25-51:** Aggregate getters for asset counts, gross total cost, gross total value, and net values.
   - **Lines 52-112:** Real (inflation-adjusted) return calculations and mode-based profit evaluation methods (profitForMode, valueForMode).
-  - **Lines 113-216:** Realized gains from transactions, holding duration, and neutral-duration sensitive period performance metrics (daily, weekly, monthly, threeMonthly, sixMonthly, yearly returning 0.0 when duration is insufficient).
-  - **Lines 217-299:** Asset allocation breakdown calculations (assetAllocations, categoryPercentages, categoryValues).
-  - **Lines 300-350:** Immutable helper copyWith() and JSON serialization methods (toJson, fromJson).
-  - **Lines 351-365:** AssetAllocationItem model representing category and asset distribution weights.
+  - **Lines 113-230:** Realized gains from transactions, earliestActivePurchaseDate, active holding duration (holdingDays based on active assets), and neutral-duration sensitive period performance metrics (daily, weekly, monthly, threeMonthly, sixMonthly, yearly returning 0.0 when duration is insufficient).
+  - **Lines 231-313:** Asset allocation breakdown calculations (assetAllocations, categoryPercentages, categoryValues).
+  - **Lines 314-364:** Immutable helper copyWith() and JSON serialization methods (toJson, fromJson).
+  - **Lines 365-379:** AssetAllocationItem model representing category and asset distribution weights.
 - **File:** `lib/models/portfolio_asset.dart`
   - **Lines 1-25:** Imports, PortfolioAsset class declaration, and properties.
   - **Lines 26-44:** Constructor definition with default parameter values.
@@ -256,16 +256,16 @@
   - **Lines 19-37:** Currency and percentage string formatters (currency, compactCurrency, percent).
   - **Lines 38-58:** Date and relative time formatters (date, monthYear, daysAgo).
   - **Lines 59-112:** Holding duration text formatter (formatDuration calculating days, months, and years in Turkish).
-  - **Lines 113-160:** formatPriceGrouped and formatPrice - Turkish number formatter with '.' thousand separators and ',' decimal kuruş separators up to 7 decimal precision.
-  - **Lines 161-175:** formatNumber with Turkish grouping.
-  - **Lines 176-190:** parseDouble - Robust Turkish locale number parser handling thousand dots and decimal commas without precision loss.
-  - **Lines 191-307:** TurkishNumberInputFormatter - Dynamic TextInputFormatter automatically grouping integer thousands with '.' without auto-commas, rejecting manual dot keys, and cleanly supporting manual decimal comma with cursor preservation.
+  - **Lines 113-170:** formatPriceGrouped, formatPrice, and formatCurrencyPrice - Turkish number formatter with '.' thousand separators, ',' decimal separators, and full precision support up to 6-7 decimals for unit prices.
+  - **Lines 171-185:** formatNumber with Turkish grouping.
+  - **Lines 186-200:** parseDouble - Robust Turkish locale number parser handling thousand dots and decimal commas without precision loss.
+  - **Lines 201-320:** TurkishNumberInputFormatter - Dynamic TextInputFormatter automatically grouping integer thousands with '.' without auto-commas, rejecting manual dot keys, and cleanly supporting manual decimal comma with cursor preservation.
 - **File:** `lib/widgets/asset_item_tile.dart`
   - **Lines 1-24:** Imports and AssetItemTile declaration with onDelete and onStatus callbacks.
   - **Lines 25-50:** build() method: mode, inflation rates, and display values setup.
-  - **Lines 51-274:** LayoutBuilder adaptive layout: logo, symbol/category Wrap, name, status button, right-aligned value & profit badge, and action buttons.
-  - **Lines 275-304:** Desktop 1-row layout with logo & info on left (Expanded) and price, profit badge, and delete button pinned to the far right.
-  - **Lines 305-321:** Historical period performance section delegating to responsive PeriodPerformanceRow.fromAsset ensuring unified responsive expansion on PC and sleek horizontal scroll on mobile.
+  - **Lines 51-272:** LayoutBuilder adaptive layout: logo, symbol/category Wrap, name, status button, right-aligned clean value & profit badge (without TÜFE label in Reel mode), and action buttons.
+  - **Lines 273-302:** Desktop 1-row layout with logo & info on left (Expanded) and price, profit badge, and delete button pinned to the far right.
+  - **Lines 303-319:** Historical period performance section delegating to responsive PeriodPerformanceRow.fromAsset ensuring unified responsive expansion on PC and sleek horizontal scroll on mobile.
 - **File:** `lib/widgets/asset_logo.dart`
   - **Lines 1-30:** Imports, constants, and AssetLogo widget declaration.
   - **Lines 31-135:** _AssetLogoState lifecycle, SVG icon detection, candidate URLs cascading fallback mechanism (_candidateUrls, _candidateIndex, _tryNextCandidate).
@@ -290,11 +290,11 @@
   - **Lines 28-77:** build() method: Compact badge showing BRUT, NET, or REEL with semantic styling and tooltip.
 - **File:** `lib/widgets/period_performance_badge.dart`
   - **Lines 1-46:** Imports, PeriodPerformanceRow declaration and constructor.
-  - **Lines 47-162:** PeriodPerformanceRow.fromPortfolio() populating all 7 periods with neutral 0.0 values for insufficient holding periods and real inflation support.
-  - **Lines 163-250:** PeriodPerformanceRow.fromAsset() populating all 7 periods with neutral 0.0 values for insufficient holding periods and real inflation support for individual assets.
-  - **Lines 251-306:** build() method: Responsive layout builder with adaptive mobile chip sizing (~68px) or desktop (~60px), expanded Row on PC filling full card width, and falling back to _ScrollablePeriodStrip with mouse wheel support when narrow.
-  - **Lines 307-413:** _buildMetricTile() - Responsive percentage-only metric pill (larger horizontal width, sleek vertical padding 4.0/4.5) with mode tooltips.
-  - **Lines 414-487:** _ScrollablePeriodStrip - Stateful horizontal scroll widget capturing PointerScrollEvent for desktop mouse wheel scrolling with adaptive minWidth constraints (66 mobile, 58 desktop).
+  - **Lines 47-195:** PeriodPerformanceRow.fromPortfolio() populating all 7 periods with neutral 0.0 values for empty portfolios or insufficient holding periods (activeHoldingDays) and real inflation support.
+  - **Lines 196-290:** PeriodPerformanceRow.fromAsset() populating all 7 periods with neutral 0.0 values for insufficient holding periods and real inflation support for individual assets.
+  - **Lines 291-346:** build() method: Responsive layout builder with adaptive mobile chip sizing (~68px) or desktop (~60px), expanded Row on PC filling full card width, and falling back to _ScrollablePeriodStrip with mouse wheel support when narrow.
+  - **Lines 347-453:** _buildMetricTile() - Responsive percentage-only metric pill (larger horizontal width, sleek vertical padding 4.0/4.5) with mode tooltips.
+  - **Lines 454-553:** _ScrollablePeriodStrip - Stateful horizontal scroll widget capturing PointerScrollEvent for desktop mouse wheel scrolling with adaptive minWidth constraints (66 mobile, 58 desktop).
 - **File:** `lib/widgets/portfolio_card.dart`
   - **Lines 1-33:** Imports, PortfolioCard declaration with onReorder callback support.
   - **Lines 34-92:** _PortfolioCardState and build(): immediate-response hover state without frame delay, constant border width preventing subpixel jitter, opaque hitbox, and shadow elevations.
@@ -307,8 +307,9 @@
   - **Lines 106-235:** AssetStatusDialog widget tests verifying removal of 'İşlem Ekle' on mobile, 'Adet' label, pure number value, 'Ort. Maliyet' label, centered metric alignment, mobile 2-row layout without horizontal scroll, desktop stretched single row layout, and removal of redundant historical performance titles.
   - **Lines 236-334:** Transaction history unit and widget tests verifying PortfolioTransaction calculation and PortfolioDetailDialog dynamic Net vs Gross badge rendering.
   - **Lines 335-437:** Unit & widget tests verifying horizontal 16px alignment of summary card, tab buttons, and transaction cards on mobile in AssetStatusDialog, and desktop active mode stretch container in SettingsScreen.
+  - **Lines 438-593:** New UI & minimal tests verifying Formatters.formatCurrencyPrice precision, AddEditPortfolioDialog star and hint removal, transactions empty state cleanup, AssetItemTile reel mode label cleanup, and AssetStatusDialog lots/sales minimal requirements.
 - **File:** `test/period_performance_test.dart`
-  - **Lines 1-95:** Unit & widget tests verifying PeriodPerformanceRow.fromAsset data mapping, 7-period rendering on desktop with expanded layout, and responsive mobile scroll behavior.
+  - **Lines 1-182:** Unit & widget tests verifying PeriodPerformanceRow.fromAsset data mapping, empty portfolio reel mode 0.0 neutrality, same-day asset purchase reel mode holding duration logic, 7-period rendering on desktop with expanded layout, and responsive mobile scroll behavior.
 - **File:** `test/transaction_undo_and_disambiguation_test.dart`
   - **Lines 1-123:** Unit tests covering TEB fund logo candidate resolution, TPZ search disambiguation (TEFAS vs foreign ETF), BYF tagging, and buy transaction rollback (decreasing quantity, weighted average cost recalculation, and asset deletion upon reaching zero).
 - **File:** `web/manifest.json`

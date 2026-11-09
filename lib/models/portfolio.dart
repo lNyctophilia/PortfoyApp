@@ -139,19 +139,33 @@ class Portfolio {
     return minDate ?? createdAt;
   }
 
+  /// Mevcut aktif varlıkların en eski alış tarihi (aktif elde tutma süresi için)
+  DateTime? get earliestActivePurchaseDate {
+    if (assets.isEmpty) return null;
+    DateTime? minDate;
+    for (final asset in assets) {
+      if (minDate == null || asset.purchaseDate.isBefore(minDate)) {
+        minDate = asset.purchaseDate;
+      }
+    }
+    return minDate;
+  }
+
   int get holdingDays {
+    final earliest = earliestActivePurchaseDate;
+    if (earliest == null) return 0;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final earliest = DateTime(
-      earliestPurchaseDate.year,
-      earliestPurchaseDate.month,
-      earliestPurchaseDate.day,
+    final earliestDate = DateTime(
+      earliest.year,
+      earliest.month,
+      earliest.day,
     );
-    final diff = today.difference(earliest).inDays;
+    final diff = today.difference(earliestDate).inDays;
     return diff < 0 ? 0 : diff;
   }
 
-  bool get hasDailyData => true;
+  bool get hasDailyData => assets.isNotEmpty;
   bool get hasWeeklyData => holdingDays >= 7;
   bool get hasMonthlyData => holdingDays >= 30;
   bool get hasThreeMonthlyData => holdingDays >= 90;

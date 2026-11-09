@@ -768,39 +768,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'Satış yaptıkça gerçekleşen kâr ve zararlarınız burada listelenir.',
-                style: TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.profit.withValues(alpha: 0.2),
-                  foregroundColor: AppTheme.profit,
-                  side: const BorderSide(color: AppTheme.profit),
-                ),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => AddTransactionDialog(
-                      portfolio: portfolio,
-                      onSave: (tx, updateHoldings) {
-                        provider.addTransaction(
-                          portfolio.id,
-                          tx,
-                          updateHoldings: updateHoldings,
-                        );
-                      },
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-                label: const Text('İlk İşlemi Ekle'),
-              ),
             ],
           ),
         ),

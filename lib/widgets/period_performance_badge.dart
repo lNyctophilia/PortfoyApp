@@ -52,6 +52,27 @@ class PeriodPerformanceRow extends StatelessWidget {
     PeriodInflationData? periodInflation,
     Map<String, double>? assetInflationRates,
   }) {
+    if (p.assets.isEmpty || p.totalValue <= 0) {
+      return PeriodPerformanceRow(
+        compact: compact,
+        mode: mode,
+        dailyPercent: 0.0,
+        dailyAmount: 0.0,
+        weeklyPercent: 0.0,
+        weeklyAmount: 0.0,
+        monthlyPercent: 0.0,
+        monthlyAmount: 0.0,
+        threeMonthlyPercent: 0.0,
+        threeMonthlyAmount: 0.0,
+        sixMonthlyPercent: 0.0,
+        sixMonthlyAmount: 0.0,
+        yearlyPercent: 0.0,
+        yearlyAmount: 0.0,
+        allTimePercent: p.profitPercentForMode(mode, assetInflationRates),
+        allTimeAmount: p.profitForMode(mode, assetInflationRates),
+      );
+    }
+
     if (mode == ReturnCalculationMode.reel && periodInflation != null) {
       double? calcRealPercent(double? nominal, double inf) {
         if (nominal == null) return null;
@@ -67,12 +88,20 @@ class PeriodPerformanceRow extends StatelessWidget {
         return p.totalValue - (prev * (1.0 + (inf / 100.0)));
       }
 
+      // En eski aktif varlık 1 günden az ise günlük TÜFE düşülmez
+      final hasDailyHolding = p.holdingDays >= 1;
+      final realDailyPercent = hasDailyHolding
+          ? (calcRealPercent(p.dailyChangePercent, periodInflation.daily) ?? 0.0)
+          : p.dailyChangePercent;
+      final realDailyAmount = hasDailyHolding
+          ? (calcRealAmount(p.dailyProfit, periodInflation.daily) ?? 0.0)
+          : p.dailyProfit;
+
       return PeriodPerformanceRow(
         compact: compact,
         mode: mode,
-        dailyPercent:
-            calcRealPercent(p.dailyChangePercent, periodInflation.daily) ?? 0.0,
-        dailyAmount: calcRealAmount(p.dailyProfit, periodInflation.daily) ?? 0.0,
+        dailyPercent: realDailyPercent,
+        dailyAmount: realDailyAmount,
         weeklyPercent: p.hasWeeklyData
             ? (calcRealPercent(p.weeklyChangePercent, periodInflation.weekly) ?? 0.0)
             : 0.0,
@@ -111,8 +140,12 @@ class PeriodPerformanceRow extends StatelessWidget {
         yearlyAmount: p.hasYearlyData
             ? (calcRealAmount(p.yearlyProfit, periodInflation.yearly) ?? 0.0)
             : 0.0,
-        allTimePercent: p.realTotalProfitPercent(assetInflationRates),
-        allTimeAmount: p.realTotalProfit(assetInflationRates),
+        allTimePercent: p.holdingDays < 1
+            ? p.netTotalProfitPercent
+            : p.realTotalProfitPercent(assetInflationRates),
+        allTimeAmount: p.holdingDays < 1
+            ? p.netTotalProfit
+            : p.realTotalProfit(assetInflationRates),
       );
     }
 
@@ -193,36 +226,69 @@ class PeriodPerformanceRow extends StatelessWidget {
         return asset.currentValue - (prev * (1.0 + (inf / 100.0)));
       }
 
-      statDailyPercent = calcP(asset.dailyChangePercent, periodInflation.daily);
-      statDailyProfit = calcA(asset.dailyProfit, periodInflation.daily);
+      // Alış günü 1 günden az ise (bugün alındıysa) günlük TÜFE işletilmez
+      if (asset.holdingDays >= 1) {
+        statDailyPercent = calcP(asset.dailyChangePercent, periodInflation.daily);
+        statDailyProfit = calcA(asset.dailyProfit, periodInflation.daily);
+      } else {
+        statDailyPercent = asset.dailyChangePercent;
+        statDailyProfit = asset.dailyProfit;
+      }
 
-      statWeeklyPercent =
-          calcP(asset.weeklyChangePercent, periodInflation.weekly);
-      statWeeklyProfit = calcA(asset.weeklyProfit, periodInflation.weekly);
+      if (asset.hasWeeklyData) {
+        statWeeklyPercent =
+            calcP(asset.weeklyChangePercent, periodInflation.weekly);
+        statWeeklyProfit = calcA(asset.weeklyProfit, periodInflation.weekly);
+      } else {
+        statWeeklyPercent = 0.0;
+        statWeeklyProfit = 0.0;
+      }
 
-      statMonthlyPercent =
-          calcP(asset.monthlyChangePercent, periodInflation.monthly);
-      statMonthlyProfit = calcA(asset.monthlyProfit, periodInflation.monthly);
+      if (asset.hasMonthlyData) {
+        statMonthlyPercent =
+            calcP(asset.monthlyChangePercent, periodInflation.monthly);
+        statMonthlyProfit = calcA(asset.monthlyProfit, periodInflation.monthly);
+      } else {
+        statMonthlyPercent = 0.0;
+        statMonthlyProfit = 0.0;
+      }
 
-      statThreeMonthlyPercent =
-          calcP(asset.threeMonthlyChangePercent, periodInflation.threeMonthly);
-      statThreeMonthlyProfit =
-          calcA(asset.threeMonthlyProfit, periodInflation.threeMonthly);
+      if (asset.hasThreeMonthlyData) {
+        statThreeMonthlyPercent =
+            calcP(asset.threeMonthlyChangePercent, periodInflation.threeMonthly);
+        statThreeMonthlyProfit =
+            calcA(asset.threeMonthlyProfit, periodInflation.threeMonthly);
+      } else {
+        statThreeMonthlyPercent = 0.0;
+        statThreeMonthlyProfit = 0.0;
+      }
 
-      statSixMonthlyPercent =
-          calcP(asset.sixMonthlyChangePercent, periodInflation.sixMonthly);
-      statSixMonthlyProfit =
-          calcA(asset.sixMonthlyProfit, periodInflation.sixMonthly);
+      if (asset.hasSixMonthlyData) {
+        statSixMonthlyPercent =
+            calcP(asset.sixMonthlyChangePercent, periodInflation.sixMonthly);
+        statSixMonthlyProfit =
+            calcA(asset.sixMonthlyProfit, periodInflation.sixMonthly);
+      } else {
+        statSixMonthlyPercent = 0.0;
+        statSixMonthlyProfit = 0.0;
+      }
 
-      statYearlyPercent =
-          calcP(asset.yearlyChangePercent, periodInflation.yearly);
-      statYearlyProfit = calcA(asset.yearlyProfit, periodInflation.yearly);
+      if (asset.hasYearlyData) {
+        statYearlyPercent =
+            calcP(asset.yearlyChangePercent, periodInflation.yearly);
+        statYearlyProfit = calcA(asset.yearlyProfit, periodInflation.yearly);
+      } else {
+        statYearlyPercent = 0.0;
+        statYearlyProfit = 0.0;
+      }
     }
 
+    final effectiveInflation =
+        asset.holdingDays < 1 ? 0.0 : (assetInflationRate ?? 0.0);
     final displayProfit =
-        asset.profitForMode(mode, assetInflationRate ?? 0.0);
+        asset.profitForMode(mode, effectiveInflation);
     final displayPercent =
-        asset.profitPercentForMode(mode, assetInflationRate ?? 0.0);
+        asset.profitPercentForMode(mode, effectiveInflation);
 
     return PeriodPerformanceRow(
       compact: compact,

@@ -73,8 +73,7 @@ class _AddEditPortfolioDialogState extends State<AddEditPortfolioDialog> {
           controller: _nameController,
           autofocus: true,
           decoration: const InputDecoration(
-            labelText: 'Portföy İsmi *',
-            hintText: 'Örn: Teknoloji & Büyüme Fonları',
+            labelText: 'Portföy İsmi',
             prefixIcon: Icon(Icons.folder_outlined),
           ),
           validator: (value) {
@@ -90,7 +89,6 @@ class _AddEditPortfolioDialogState extends State<AddEditPortfolioDialog> {
           maxLines: 2,
           decoration: const InputDecoration(
             labelText: 'Açıklama (Opsiyonel)',
-            hintText: 'Örn: BIST ve TEFAS teknoloji ağırlıklı yatırımlar',
             prefixIcon: Icon(Icons.notes_rounded),
           ),
         ),

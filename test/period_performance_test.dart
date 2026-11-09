@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:portfoy_app/models/asset_category.dart';
+import 'package:portfoy_app/models/portfolio.dart';
 import 'package:portfoy_app/models/portfolio_asset.dart';
 import 'package:portfoy_app/models/return_mode.dart';
+import 'package:portfoy_app/services/inflation_service.dart';
 import 'package:portfoy_app/widgets/period_performance_badge.dart';
 
 void main() {
@@ -37,6 +39,93 @@ void main() {
       expect(row.sixMonthlyPercent, equals(20.0));
       expect(row.yearlyPercent, equals(25.0));
       expect(row.allTimePercent, equals(testAsset.totalProfitPercent));
+    });
+
+    test('Empty portfolio in Reel mode yields all periods 0.0 (no negative inflation applied)', () {
+      final emptyPortfolio = Portfolio(
+        id: 'empty_port',
+        name: 'Boş Portföy',
+        createdAt: DateTime.now().subtract(const Duration(days: 30)),
+        assets: [],
+      );
+
+      final row = PeriodPerformanceRow.fromPortfolio(
+        emptyPortfolio,
+        mode: ReturnCalculationMode.reel,
+        periodInflation: const PeriodInflationData(
+          daily: 0.06,
+          weekly: 0.43,
+          monthly: 1.85,
+          threeMonthly: 5.62,
+          sixMonthly: 11.45,
+          yearly: 32.50,
+          latestYear: 2026,
+          latestMonth: 10,
+        ),
+      );
+
+      expect(row.dailyPercent, equals(0.0));
+      expect(row.weeklyPercent, equals(0.0));
+      expect(row.monthlyPercent, equals(0.0));
+      expect(row.threeMonthlyPercent, equals(0.0));
+      expect(row.sixMonthlyPercent, equals(0.0));
+      expect(row.yearlyPercent, equals(0.0));
+      expect(row.allTimePercent, equals(0.0));
+    });
+
+    test('Asset and Portfolio bought today in Reel mode do not apply weekly inflation', () {
+      final todayAsset = PortfolioAsset(
+        id: 'asset_today',
+        symbol: 'KCHOL',
+        name: 'Koç Holding',
+        category: AssetCategory.hisse,
+        quantity: 100,
+        purchasePrice: 200,
+        currentPrice: 200,
+        purchaseDate: DateTime.now(),
+        dailyChangePercent: 0.0,
+        weeklyChangePercent: -2.0, // market weekly
+      );
+
+      final todayPortfolio = Portfolio(
+        id: 'today_port',
+        name: 'Bugün Açılan Portföy',
+        createdAt: DateTime.now(),
+        assets: [todayAsset],
+      );
+
+      const inflationData = PeriodInflationData(
+        daily: 0.06,
+        weekly: 0.43,
+        monthly: 1.85,
+        threeMonthly: 5.62,
+        sixMonthly: 11.45,
+        yearly: 32.50,
+        latestYear: 2026,
+        latestMonth: 10,
+      );
+
+      // Portfolio row
+      final pRow = PeriodPerformanceRow.fromPortfolio(
+        todayPortfolio,
+        mode: ReturnCalculationMode.reel,
+        periodInflation: inflationData,
+      );
+
+      expect(pRow.weeklyPercent, equals(0.0)); // <7 days -> neutral 0.0, not negative
+      expect(pRow.monthlyPercent, equals(0.0));
+      expect(pRow.dailyPercent, equals(0.0)); // holdingDays < 1 -> no daily inflation deducted
+
+      // Asset row
+      final aRow = PeriodPerformanceRow.fromAsset(
+        todayAsset,
+        mode: ReturnCalculationMode.reel,
+        periodInflation: inflationData,
+      );
+
+      expect(aRow.weeklyPercent, equals(0.0));
+      expect(aRow.monthlyPercent, equals(0.0));
+      expect(aRow.dailyPercent, equals(0.0));
     });
 
     testWidgets('PeriodPerformanceRow renders on desktop with expanded rows', (tester) async {

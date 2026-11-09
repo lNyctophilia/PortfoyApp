@@ -205,9 +205,7 @@ class AssetItemTile extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        mode == ReturnCalculationMode.reel
-                            ? '${Formatters.currency(displayProfit)} (${Formatters.percent(displayPercent)}) • TÜFE: %${Formatters.percent(inflationRate)}'
-                            : '${Formatters.currency(displayProfit)} (${Formatters.percent(displayPercent)})',
+                        '${Formatters.currency(displayProfit)} (${Formatters.percent(displayPercent)})',
                         style: TextStyle(
                           color: profitColor,
                           fontSize: 11,

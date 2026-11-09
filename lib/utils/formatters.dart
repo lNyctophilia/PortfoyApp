@@ -154,6 +154,20 @@ class Formatters {
     return formatPriceGrouped(val);
   }
 
+  /// Birim fiyat ve maliyetleri Türk formatında gösterir (en az 2, varsa 6-7 basamağa kadar ondalık)
+  static String formatCurrencyPrice(double val) {
+    if (val == 0) return '0,00 ₺';
+    final formatted = formatPriceGrouped(val);
+    if (!formatted.contains(',')) {
+      return '$formatted,00 ₺';
+    }
+    final parts = formatted.split(',');
+    if (parts.length > 1 && parts[1].length == 1) {
+      return '${parts[0]},${parts[1]}0 ₺';
+    }
+    return '$formatted ₺';
+  }
+
   static String formatNumber(double val) {
     if (val == val.roundToDouble()) return formatPriceGrouped(val, maxDecimals: 0);
     return formatPriceGrouped(val, maxDecimals: 4);
