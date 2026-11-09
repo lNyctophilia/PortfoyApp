@@ -135,7 +135,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                     child: _buildTabButton(
                       0,
                       isMobile ? 'Alış Lotları' : 'Alış Lotları & Maliyetler',
-                      fifoResult.allLots.length,
                       Icons.history_rounded,
                       isMobile: isMobile,
                     ),
@@ -145,7 +144,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                     child: _buildTabButton(
                       1,
                       isMobile ? 'Satış Geçmişi' : 'Satış & Gerçekleşen Kâr',
-                      fifoResult.saleRecords.length,
                       Icons.sell_outlined,
                       isMobile: isMobile,
                     ),
@@ -278,7 +276,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                     child: _buildTabButton(
                       0,
                       isMobile ? 'Alış Lotları' : 'Alış Lotları & Maliyetler',
-                      fifoResult.allLots.length,
                       Icons.history_rounded,
                       isMobile: isMobile,
                     ),
@@ -288,7 +285,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                     child: _buildTabButton(
                       1,
                       isMobile ? 'Satış Geçmişi' : 'Satış & Gerçekleşen Kâr',
-                      fifoResult.saleRecords.length,
                       Icons.sell_outlined,
                       isMobile: isMobile,
                     ),
@@ -545,7 +541,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     );
   }
 
-  Widget _buildTabButton(int index, String label, int count, IconData icon, {bool isMobile = false}) {
+  Widget _buildTabButton(int index, String label, IconData icon, {bool isMobile = false}) {
     final isSelected = _selectedTab == index;
     final tabColor = index == 0 ? AppTheme.profit : AppTheme.loss;
 
@@ -583,24 +579,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? tabColor.withValues(alpha: 0.25)
-                    : AppTheme.surfaceElevated,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                count.toString(),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: isSelected ? tabColor : AppTheme.textMuted,
-                ),
               ),
             ),
           ],
@@ -669,41 +647,77 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 6,
-                  runSpacing: 4,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: AppTheme.profit.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_downward_rounded,
-                        size: 13,
-                        color: AppTheme.profit,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: AppTheme.profit.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_downward_rounded,
+                              size: 13,
+                              color: AppTheme.profit,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text.rich(
+                              TextSpan(
+                                text: 'Alış: ${Formatters.date(lot.date)} ',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: '(${Formatters.daysAgo(lot.date)})',
+                                    style: const TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.normal,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      'Alış: ${Formatters.date(lot.date)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
+                    const SizedBox(width: 8),
+                    if (profitPill != null)
+                      profitPill
+                    else if (lot.isFullySold)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Tükendi',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
                       ),
-                    ),
-                    Text(
-                      '(${Formatters.daysAgo(lot.date)})',
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(color: AppTheme.borderSubtle, height: 1),
+                ),
                 Row(
                   children: [
                     Expanded(
@@ -712,39 +726,29 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                         Formatters.formatCurrencyPrice(lot.purchasePrice),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    _buildItemDivider(),
                     Expanded(
                       child: _buildSubStat(
-                        'Toplam Maliyet',
-                        Formatters.currency(lot.totalOriginalCost),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildSubStat(
-                        'Kalan Miktar',
+                        'Adet',
                         '${_formatQty(lot.remainingQuantity)} Adet',
                         highlightColor: lot.isFullySold ? AppTheme.textMuted : AppTheme.textPrimary,
                       ),
                     ),
+                    _buildItemDivider(),
+                    Expanded(
+                      child: _buildSubStat(
+                        'Maliyet',
+                        Formatters.currency(lot.totalOriginalCost),
+                      ),
+                    ),
                   ],
                 ),
-                if (profitPill != null) ...[
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Divider(color: AppTheme.borderSubtle, height: 1),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: profitPill,
-                  ),
-                ],
               ],
             ),
           );
         }
 
-        // PC / Masaüstü Görünümü
+        // PC / Masaüstü Görünümü (2 Katmanlı Düzen)
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -759,68 +763,105 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   : AppTheme.borderSubtle,
             ),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppTheme.profit.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.arrow_downward_rounded,
-                  size: 14,
-                  color: AppTheme.profit,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Alış: ${Formatters.date(lot.date)}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.profit.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_downward_rounded,
+                            size: 14,
+                            color: AppTheme.profit,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              text: 'Alış: ${Formatters.date(lot.date)} ',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textPrimary,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: '(${Formatters.daysAgo(lot.date)})',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.normal,
+                                    color: AppTheme.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    Formatters.daysAgo(lot.date),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.textMuted,
+                  const SizedBox(width: 10),
+                  if (profitPill != null)
+                    profitPill
+                  else if (lot.isFullySold)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'Tükendi',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Divider(color: AppTheme.borderSubtle, height: 1),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSubStat(
+                      'Alış Fiyatı',
+                      Formatters.formatCurrencyPrice(lot.purchasePrice),
+                    ),
+                  ),
+                  _buildItemDivider(),
+                  Expanded(
+                    child: _buildSubStat(
+                      'Adet',
+                      '${_formatQty(lot.remainingQuantity)} Adet',
+                      highlightColor: lot.isFullySold ? AppTheme.textMuted : AppTheme.textPrimary,
+                    ),
+                  ),
+                  _buildItemDivider(),
+                  Expanded(
+                    child: _buildSubStat(
+                      'Maliyet',
+                      Formatters.currency(lot.totalOriginalCost),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildSubStat(
-                  'Alış Fiyatı',
-                  Formatters.formatCurrencyPrice(lot.purchasePrice),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildSubStat(
-                  'Toplam Maliyet',
-                  Formatters.currency(lot.totalOriginalCost),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildSubStat(
-                  'Kalan Miktar',
-                  '${_formatQty(lot.remainingQuantity)} Adet',
-                  highlightColor: lot.isFullySold ? AppTheme.textMuted : AppTheme.textPrimary,
-                ),
-              ),
-              if (profitPill != null) ...[
-                const SizedBox(width: 10),
-                profitPill,
-              ],
             ],
           ),
         );
@@ -915,36 +956,53 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: AppTheme.loss.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_upward_rounded,
-                        size: 13,
-                        color: AppTheme.loss,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: AppTheme.loss.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_upward_rounded,
+                              size: 13,
+                              color: AppTheme.loss,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text.rich(
+                              TextSpan(
+                                text: 'Satış: ${Formatters.date(tx.date)} ',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: '(${Formatters.daysAgo(tx.date)})',
+                                    style: const TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.normal,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'Satış: ${Formatters.date(tx.date)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '(${Formatters.daysAgo(tx.date)})',
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
+                    profitBox,
                   ],
                 ),
                 const Padding(
@@ -953,20 +1011,13 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                 ),
                 Row(
                   children: [
-                    Expanded(child: _buildSubStat('Satılan Miktar', '${_formatQty(tx.quantity)} Adet')),
-                    const SizedBox(width: 8),
                     Expanded(child: _buildSubStat('Satış Fiyatı', Formatters.formatCurrencyPrice(tx.price))),
-                    const SizedBox(width: 8),
+                    _buildItemDivider(),
+                    Expanded(child: _buildSubStat('Adet', '${_formatQty(tx.quantity)} Adet')),
+                    _buildItemDivider(),
                     Expanded(child: _buildSubStat('Maliyet Farkı', Formatters.formatCurrencyPrice(saleRecord.unitCost))),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
+                    _buildItemDivider(),
                     Expanded(child: _buildSubStat('Toplam Gelir', Formatters.currency(tx.quantity * tx.price))),
-                    const SizedBox(width: 8),
-                    profitBox,
                   ],
                 ),
               ],
@@ -974,7 +1025,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
           );
         }
 
-        // PC / Masaüstü Görünümü
+        // PC / Masaüstü Görünümü (2 Katmanlı Düzen)
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -983,56 +1034,87 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppTheme.borderSubtle),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppTheme.loss.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.arrow_upward_rounded,
-                  size: 14,
-                  color: AppTheme.loss,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Satış: ${Formatters.date(tx.date)}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.loss.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_upward_rounded,
+                            size: 14,
+                            color: AppTheme.loss,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              text: 'Satış: ${Formatters.date(tx.date)} ',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textPrimary,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: '(${Formatters.daysAgo(tx.date)})',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.normal,
+                                    color: AppTheme.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    Formatters.daysAgo(tx.date),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.textMuted,
-                    ),
-                  ),
+                  const SizedBox(width: 10),
+                  profitBox,
                 ],
               ),
-              const SizedBox(width: 12),
-              Expanded(child: _buildSubStat('Satılan Miktar', '${_formatQty(tx.quantity)} Adet')),
-              const SizedBox(width: 8),
-              Expanded(child: _buildSubStat('Satış Fiyatı', Formatters.formatCurrencyPrice(tx.price))),
-              const SizedBox(width: 8),
-              Expanded(child: _buildSubStat('Maliyet Farkı', Formatters.formatCurrencyPrice(saleRecord.unitCost))),
-              const SizedBox(width: 8),
-              Expanded(child: _buildSubStat('Toplam Gelir', Formatters.currency(tx.quantity * tx.price))),
-              const SizedBox(width: 8),
-              profitBox,
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Divider(color: AppTheme.borderSubtle, height: 1),
+              ),
+              Row(
+                children: [
+                  Expanded(child: _buildSubStat('Satış Fiyatı', Formatters.formatCurrencyPrice(tx.price))),
+                  _buildItemDivider(),
+                  Expanded(child: _buildSubStat('Adet', '${_formatQty(tx.quantity)} Adet')),
+                  _buildItemDivider(),
+                  Expanded(child: _buildSubStat('Maliyet Farkı', Formatters.formatCurrencyPrice(saleRecord.unitCost))),
+                  _buildItemDivider(),
+                  Expanded(child: _buildSubStat('Toplam Gelir', Formatters.currency(tx.quantity * tx.price))),
+                ],
+              ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildItemDivider() {
+    return Container(
+      height: 24,
+      width: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      color: AppTheme.borderSubtle.withValues(alpha: 0.6),
     );
   }
 

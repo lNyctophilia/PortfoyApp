@@ -8,6 +8,7 @@ import '../models/portfolio.dart';
 import '../models/portfolio_asset.dart';
 import '../models/portfolio_transaction.dart';
 import '../models/return_mode.dart';
+import '../services/asset_catalog_service.dart';
 import '../services/inflation_service.dart';
 import '../services/market_data_service.dart';
 import '../services/storage_service.dart';
@@ -530,7 +531,23 @@ class PortfolioProvider extends ChangeNotifier {
 
     for (final portfolio in _portfolios) {
       final updatedAssets = <PortfolioAsset>[];
-      for (final asset in portfolio.assets) {
+      for (var asset in portfolio.assets) {
+        // GPN veya bilinen TEFAS fonlarının yabancı hisse isimleriyle bozulmasını düzelt (Self-healing)
+        if (asset.category == AssetCategory.fon) {
+          final curated = AssetCatalogService.findCurated(asset.symbol);
+          if (curated != null && curated.category == AssetCategory.fon) {
+            final isCorrupted = asset.name.toLowerCase().contains('global payments') ||
+                (asset.symbol.toUpperCase() == 'GPN' && !asset.name.toLowerCase().contains('garanti'));
+            if (isCorrupted) {
+              asset = asset.copyWith(
+                name: curated.name,
+                iconUrl: curated.iconUrl ?? asset.iconUrl,
+              );
+              hasChanges = true;
+            }
+          }
+        }
+
         if (asset.iconUrl == null || asset.iconUrl!.trim().isEmpty) {
           final matchingTx = portfolio.transactions.firstWhere(
             (t) =>
@@ -555,15 +572,36 @@ class PortfolioProvider extends ChangeNotifier {
               : MarketDataService.getKnownAssetLogo(asset.symbol, asset.category, asset.name);
 
           if (resolvedIcon != null && resolvedIcon.isNotEmpty) {
-            updatedAssets.add(asset.copyWith(iconUrl: resolvedIcon));
+            asset = asset.copyWith(iconUrl: resolvedIcon);
             MarketDataService.cacheLogo(asset.symbol, resolvedIcon);
             hasChanges = true;
-            continue;
           }
         }
         updatedAssets.add(asset);
       }
-      updatedPortfolios.add(portfolio.copyWith(assets: updatedAssets));
+
+      final updatedTransactions = portfolio.transactions.map((t) {
+        if (t.category == AssetCategory.fon) {
+          final curated = AssetCatalogService.findCurated(t.symbol);
+          if (curated != null && curated.category == AssetCategory.fon) {
+            final isCorrupted = t.name.toLowerCase().contains('global payments') ||
+                (t.symbol.toUpperCase() == 'GPN' && !t.name.toLowerCase().contains('garanti'));
+            if (isCorrupted) {
+              hasChanges = true;
+              return t.copyWith(
+                name: curated.name,
+                iconUrl: curated.iconUrl ?? t.iconUrl,
+              );
+            }
+          }
+        }
+        return t;
+      }).toList();
+
+      updatedPortfolios.add(portfolio.copyWith(
+        assets: updatedAssets,
+        transactions: updatedTransactions,
+      ));
     }
 
     if (hasChanges) {
@@ -691,17 +729,33 @@ class PortfolioProvider extends ChangeNotifier {
     final pIndex = _portfolios.indexWhere((p) => p.id == portfolioId);
     if (pIndex == -1) return;
 
+    var tx = transaction;
+    // GPN / Bilinen Fonların yabancı hisse isimleriyle bozulmasını ekleme anında onar (Self-healing)
+    if (tx.category == AssetCategory.fon) {
+      final curated = AssetCatalogService.findCurated(tx.symbol);
+      if (curated != null && curated.category == AssetCategory.fon) {
+        final isCorrupted = tx.name.toLowerCase().contains('global payments') ||
+            (tx.symbol.toUpperCase() == 'GPN' && !tx.name.toLowerCase().contains('garanti'));
+        if (isCorrupted) {
+          tx = tx.copyWith(
+            name: curated.name,
+            iconUrl: curated.iconUrl ?? tx.iconUrl,
+          );
+        }
+      }
+    }
+
     final portfolio = _portfolios[pIndex];
-    final updatedTransactions = [transaction, ...portfolio.transactions];
+    final updatedTransactions = [tx, ...portfolio.transactions];
     List<PortfolioAsset> updatedAssets = List.from(portfolio.assets);
 
     if (updateHoldings) {
-      if (transaction.type == TransactionType.satis) {
+      if (tx.type == TransactionType.satis) {
         // Satış işleminde FIFO ile varlığı ve kalan maliyeti güncelle
         final aIndex = updatedAssets.indexWhere(
           (a) =>
-              (transaction.assetId != null && a.id == transaction.assetId) ||
-              a.symbol.toUpperCase() == transaction.symbol.toUpperCase(),
+              (tx.assetId != null && a.id == tx.assetId) ||
+              a.symbol.toUpperCase() == tx.symbol.toUpperCase(),
         );
 
         if (aIndex != -1) {
@@ -712,7 +766,7 @@ class PortfolioProvider extends ChangeNotifier {
           );
           final fifoResult = FifoCalculator.calculate(
             tempPortfolio,
-            transaction.symbol,
+            tx.symbol,
             assetFallback: target,
           );
 
@@ -727,51 +781,54 @@ class PortfolioProvider extends ChangeNotifier {
             );
           }
         }
-      } else if (transaction.type == TransactionType.alis) {
+      } else if (tx.type == TransactionType.alis) {
         // Alış işleminde varlık ekle veya miktar/maliyet güncelle
         final aIndex = updatedAssets.indexWhere(
-          (a) => a.symbol.toUpperCase() == transaction.symbol.toUpperCase(),
+          (a) => a.symbol.toUpperCase() == tx.symbol.toUpperCase(),
         );
 
         if (aIndex != -1) {
           final existing = updatedAssets[aIndex];
-          final newQty = existing.quantity + transaction.quantity;
+          final newQty = existing.quantity + tx.quantity;
           final newAvgCost = newQty > 0
               ? ((existing.purchasePrice * existing.quantity) +
-                      (transaction.price * transaction.quantity)) /
+                      (tx.price * tx.quantity)) /
                   newQty
-              : transaction.price;
+              : tx.price;
 
           updatedAssets[aIndex] = existing.copyWith(
+            name: (existing.name.toLowerCase().contains('global payments') && tx.symbol.toUpperCase() == 'GPN')
+                ? tx.name
+                : existing.name,
             quantity: newQty,
             purchasePrice: newAvgCost,
-            currentPrice: transaction.currentPrice ?? existing.currentPrice,
-            iconUrl: transaction.iconUrl ?? existing.iconUrl,
-            dailyChangePercent: transaction.dailyChangePercent ?? existing.dailyChangePercent,
-            weeklyChangePercent: transaction.weeklyChangePercent ?? existing.weeklyChangePercent,
-            monthlyChangePercent: transaction.monthlyChangePercent ?? existing.monthlyChangePercent,
-            threeMonthlyChangePercent: transaction.threeMonthlyChangePercent ?? existing.threeMonthlyChangePercent,
-            sixMonthlyChangePercent: transaction.sixMonthlyChangePercent ?? existing.sixMonthlyChangePercent,
-            yearlyChangePercent: transaction.yearlyChangePercent ?? existing.yearlyChangePercent,
+            currentPrice: tx.currentPrice ?? existing.currentPrice,
+            iconUrl: tx.iconUrl ?? existing.iconUrl,
+            dailyChangePercent: tx.dailyChangePercent ?? existing.dailyChangePercent,
+            weeklyChangePercent: tx.weeklyChangePercent ?? existing.weeklyChangePercent,
+            monthlyChangePercent: tx.monthlyChangePercent ?? existing.monthlyChangePercent,
+            threeMonthlyChangePercent: tx.threeMonthlyChangePercent ?? existing.threeMonthlyChangePercent,
+            sixMonthlyChangePercent: tx.sixMonthlyChangePercent ?? existing.sixMonthlyChangePercent,
+            yearlyChangePercent: tx.yearlyChangePercent ?? existing.yearlyChangePercent,
           );
         } else {
           updatedAssets.add(
             PortfolioAsset(
               id: 'asset_${DateTime.now().millisecondsSinceEpoch}',
-              name: transaction.name,
-              symbol: transaction.symbol.toUpperCase(),
-              category: transaction.category,
-              purchaseDate: transaction.date,
-              purchasePrice: transaction.price,
-              quantity: transaction.quantity,
-              currentPrice: transaction.currentPrice ?? transaction.price,
-              iconUrl: transaction.iconUrl,
-              dailyChangePercent: transaction.dailyChangePercent ?? 0.0,
-              weeklyChangePercent: transaction.weeklyChangePercent ?? 0.0,
-              monthlyChangePercent: transaction.monthlyChangePercent ?? 0.0,
-              threeMonthlyChangePercent: transaction.threeMonthlyChangePercent ?? 0.0,
-              sixMonthlyChangePercent: transaction.sixMonthlyChangePercent ?? 0.0,
-              yearlyChangePercent: transaction.yearlyChangePercent ?? 0.0,
+              name: tx.name,
+              symbol: tx.symbol.toUpperCase(),
+              category: tx.category,
+              purchaseDate: tx.date,
+              purchasePrice: tx.price,
+              quantity: tx.quantity,
+              currentPrice: tx.currentPrice ?? tx.price,
+              iconUrl: tx.iconUrl,
+              dailyChangePercent: tx.dailyChangePercent ?? 0.0,
+              weeklyChangePercent: tx.weeklyChangePercent ?? 0.0,
+              monthlyChangePercent: tx.monthlyChangePercent ?? 0.0,
+              threeMonthlyChangePercent: tx.threeMonthlyChangePercent ?? 0.0,
+              sixMonthlyChangePercent: tx.sixMonthlyChangePercent ?? 0.0,
+              yearlyChangePercent: tx.yearlyChangePercent ?? 0.0,
             ),
           );
         }
@@ -929,7 +986,9 @@ class PortfolioProvider extends ChangeNotifier {
             }
             updatedAssets.add(
               asset.copyWith(
-                name: info.name.isNotEmpty ? info.name : asset.name,
+                name: (asset.name.isNotEmpty && asset.name != asset.symbol)
+                    ? asset.name
+                    : (info.name.isNotEmpty ? info.name : asset.name),
                 currentPrice: info.currentPrice,
                 iconUrl: info.iconUrl ?? asset.iconUrl,
                 dailyChangePercent: info.dailyChangePercent,
@@ -980,7 +1039,9 @@ class PortfolioProvider extends ChangeNotifier {
           }
           updatedAssets.add(
             asset.copyWith(
-              name: info.name.isNotEmpty ? info.name : asset.name,
+              name: (asset.name.isNotEmpty && asset.name != asset.symbol)
+                  ? asset.name
+                  : (info.name.isNotEmpty ? info.name : asset.name),
               currentPrice: info.currentPrice,
               purchasePrice: (asset.purchasePrice == 0 && info.purchaseDatePrice != null)
                   ? info.purchaseDatePrice!

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import '../core/network/app_http_client.dart';
 import '../models/asset_category.dart';
+import 'asset_catalog_service.dart';
 import 'storage_service.dart';
 
 class MarketAssetInfo {
@@ -678,8 +679,15 @@ class MarketDataService {
       switch (category) {
         case AssetCategory.fon:
           result = await _fetchTefasFund(cleanSymbol.toUpperCase(), purchaseDate);
-          // Eğer TEFAS'ta bulunamadıysa BIST veya Yabancı Borsa Yatırım Fonu (BYF/ETF) olabilir
-          result ??= await _fetchBistStock(cleanSymbol, purchaseDate);
+          // Eğer TEFAS fonu ise (bilinen TEFAS fonu veya 3 harfli fon kodu) ve TEFAS yanıt vermediyse,
+          // kesinlikle yabancı tekil hisseye (örn: GPN -> Global Payments Inc.) düşme!
+          if (result == null) {
+            final isTefasFund = AssetCatalogService.isKnownTefasFund(cleanSymbol) ||
+                (cleanSymbol.length == 3 && !cleanSymbol.endsWith('.IS'));
+            if (!isTefasFund) {
+              result = await _fetchBistStock(cleanSymbol, purchaseDate);
+            }
+          }
           break;
         case AssetCategory.hisse:
           result = await _fetchBistStock(cleanSymbol, purchaseDate);

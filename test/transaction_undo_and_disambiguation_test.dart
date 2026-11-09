@@ -120,4 +120,42 @@ void main() {
       expect(provider.rawPortfolios.first.assets.first.purchasePrice, equals(100.0));
     });
   });
+
+  group('GPN & TEFAS Fund Protection and Self-Healing Tests', () {
+    test('isKnownTefasFund identifies GPN as a known TEFAS fund', () {
+      expect(AssetCatalogService.isKnownTefasFund('GPN'), isTrue);
+      expect(AssetCatalogService.isKnownTefasFund('gpn'), isTrue);
+      expect(AssetCatalogService.isKnownTefasFund('AAPL'), isFalse);
+    });
+
+    test('Self-healing restores corrupted GPN asset name and logo from Global Payments', () async {
+      final provider = PortfolioProvider();
+      await provider.loadData();
+      await provider.addPortfolio(name: 'GPN Portföyü');
+      final pId = provider.rawPortfolios.first.id;
+
+      // Add corrupted GPN asset with Global Payments Inc.
+      final corruptedTx = PortfolioTransaction(
+        id: 'tx_gpn',
+        portfolioId: pId,
+        symbol: 'GPN',
+        name: 'Global Payments Inc.',
+        category: AssetCategory.fon,
+        type: TransactionType.alis,
+        price: 1.5,
+        quantity: 1000,
+        date: DateTime.now(),
+      );
+      await provider.addTransaction(pId, corruptedTx);
+
+      final p = provider.getPortfolioById(pId);
+      expect(p, isNotNull);
+      final asset = p!.assets.firstWhere((a) => a.symbol == 'GPN');
+      expect(asset.name, contains('Garanti Portföy'));
+      expect(asset.name, isNot(contains('Global Payments')));
+
+      final tx = p.transactions.firstWhere((t) => t.symbol == 'GPN');
+      expect(tx.name, contains('Garanti Portföy'));
+    });
+  });
 }

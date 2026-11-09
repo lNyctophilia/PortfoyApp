@@ -93,6 +93,54 @@ class PortfolioTransaction {
     return ((price - costPrice) / costPrice) * 100;
   }
 
+  PortfolioTransaction copyWith({
+    String? id,
+    String? portfolioId,
+    TransactionType? type,
+    String? symbol,
+    String? name,
+    AssetCategory? category,
+    DateTime? date,
+    double? quantity,
+    double? price,
+    double? costPrice,
+    double? realizedProfit,
+    String? assetId,
+    double? currentPrice,
+    String? iconUrl,
+    double? dailyChangePercent,
+    double? weeklyChangePercent,
+    double? monthlyChangePercent,
+    double? threeMonthlyChangePercent,
+    double? sixMonthlyChangePercent,
+    double? yearlyChangePercent,
+    double? withholdingTaxRate,
+  }) {
+    return PortfolioTransaction(
+      id: id ?? this.id,
+      portfolioId: portfolioId ?? this.portfolioId,
+      type: type ?? this.type,
+      symbol: symbol ?? this.symbol,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      date: date ?? this.date,
+      quantity: quantity ?? this.quantity,
+      price: price ?? this.price,
+      costPrice: costPrice ?? this.costPrice,
+      realizedProfit: realizedProfit ?? this.realizedProfit,
+      assetId: assetId ?? this.assetId,
+      currentPrice: currentPrice ?? this.currentPrice,
+      iconUrl: iconUrl ?? this.iconUrl,
+      dailyChangePercent: dailyChangePercent ?? this.dailyChangePercent,
+      weeklyChangePercent: weeklyChangePercent ?? this.weeklyChangePercent,
+      monthlyChangePercent: monthlyChangePercent ?? this.monthlyChangePercent,
+      threeMonthlyChangePercent: threeMonthlyChangePercent ?? this.threeMonthlyChangePercent,
+      sixMonthlyChangePercent: sixMonthlyChangePercent ?? this.sixMonthlyChangePercent,
+      yearlyChangePercent: yearlyChangePercent ?? this.yearlyChangePercent,
+      withholdingTaxRate: withholdingTaxRate ?? this.withholdingTaxRate,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

@@ -317,14 +317,14 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       // Switch to transactions tab
-      final txTabFinder = find.textContaining('İşlemler');
+      final txTabFinder = find.textContaining('İşlem Geçmişi');
       expect(txTabFinder, findsOneWidget);
       await tester.tap(txTabFinder);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
       // Under Brut: should show %100,00 and ₺1.000,00 (no plus sign)
-      expect(find.text('(%100,00)'), findsOneWidget);
+      expect(find.textContaining('(%100,00)'), findsOneWidget);
 
       // Switch mode to Net
       await provider.setReturnMode(ReturnCalculationMode.net);
@@ -332,7 +332,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       // Under Net: should show %82,50 and ₺825,00 (no plus sign)
-      expect(find.text('(%82,50)'), findsOneWidget);
+      expect(find.textContaining('(%82,50)'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox());
     });
@@ -488,8 +488,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Switch to İşlemler tab
-      await tester.tap(find.textContaining('İşlemler').first);
+      // Switch to İşlem Geçmişi tab
+      await tester.tap(find.textContaining('İşlem Geçmişi').first);
       await tester.pumpAndSettle();
 
       expect(find.text('Bu portföyde henüz işlem kaydı yok'), findsOneWidget);
@@ -793,7 +793,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       // Switch to transactions tab
-      final txTabFinder = find.textContaining('İşlemler');
+      final txTabFinder = find.textContaining('İşlem Geçmişi');
       expect(txTabFinder, findsOneWidget);
       await tester.tap(txTabFinder);
       await tester.pumpAndSettle();
@@ -802,6 +802,218 @@ void main() {
       expect(find.text('Fiyat'), findsOneWidget);
       expect(find.text('Adet'), findsOneWidget);
       expect(find.text('Tutar'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('AssetStatusDialog renders 2-layer layout on PC with Adet and Maliyet on far right',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+
+      final asset = PortfolioAsset(
+        id: 'asset_pc_status',
+        symbol: 'ALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        quantity: 100,
+        purchasePrice: 40,
+        currentPrice: 50,
+        purchaseDate: DateTime(2025, 1, 1),
+      );
+      final portfolio = Portfolio(
+        id: 'port_pc_status',
+        name: 'Altın Portföyü',
+        createdAt: DateTime(2025, 1, 1),
+        assets: [asset],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetStatusDialog(
+            portfolio: portfolio,
+            asset: asset,
+            provider: provider,
+            isFullScreen: false,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Verifies label changes: 'Adet' and 'Maliyet' present, 'Kalan Miktar' and 'Toplam Maliyet' absent
+      expect(find.text('Kalan Miktar'), findsNothing);
+      expect(find.text('Toplam Maliyet'), findsNothing);
+      expect(find.text('Alış Fiyatı'), findsWidgets);
+      expect(find.text('Adet'), findsWidgets);
+      expect(find.text('Maliyet'), findsWidgets);
+
+      // Verify column ordering: Alış Fiyatı left < Adet left < Maliyet left (Maliyet on far right)
+      final alisFiyatRect = tester.getRect(find.text('Alış Fiyatı').first);
+      final adetRect = tester.getRect(find.text('Adet').first);
+      final maliyetRect = tester.getRect(find.text('Maliyet').first);
+      expect(alisFiyatRect.left < adetRect.left, isTrue);
+      expect(adetRect.left < maliyetRect.left, isTrue);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('PortfolioDetailDialog Transaction History renders 3-column table on mobile for sales with header K/Z pill',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+
+      await provider.addPortfolio(name: 'Mobil Satış Portföyü');
+      final pId = provider.rawPortfolios.first.id;
+
+      final satisTx = PortfolioTransaction(
+        id: 'tx_satis_mobile',
+        portfolioId: pId,
+        type: TransactionType.satis,
+        symbol: 'THYAO',
+        name: 'Türk Hava Yolları',
+        category: AssetCategory.hisse,
+        date: DateTime(2025, 2, 1),
+        quantity: 20,
+        price: 300,
+        costPrice: 200,
+        realizedProfit: 2000,
+      );
+
+      await provider.addTransaction(pId, satisTx);
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            home: PortfolioDetailDialog(
+              portfolioId: pId,
+              isFullScreen: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final txTabFinder = find.textContaining('İşlem Geçmişi');
+      await tester.tap(txTabFinder);
+      await tester.pumpAndSettle();
+
+      // Mobile table still has exactly Fiyat, Adet, Tutar columns
+      expect(find.text('Fiyat'), findsOneWidget);
+      expect(find.text('Adet'), findsOneWidget);
+      expect(find.text('Tutar'), findsOneWidget);
+      // 'K/Z' is NOT a column header in the table
+      expect(find.text('K/Z'), findsNothing);
+
+      // But profit pill is rendered in header
+      expect(find.textContaining('(%50,00)'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('AssetStatusDialog tab buttons do not show count badges',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+      final asset = PortfolioAsset(
+        id: 'asset_tab_test',
+        symbol: 'CUSTOMALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        quantity: 100,
+        purchasePrice: 200,
+        currentPrice: 250,
+        purchaseDate: DateTime.now(),
+      );
+      final portfolio = Portfolio(
+        id: 'port_tab_test',
+        name: 'Altın Portföyü',
+        createdAt: DateTime.now(),
+        assets: [asset],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetStatusDialog(
+            portfolio: portfolio,
+            asset: asset,
+            provider: provider,
+            isFullScreen: true,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Tab buttons contain 'Alış Lotları' and 'Satış Geçmişi'
+      expect(find.text('Alış Lotları'), findsOneWidget);
+      expect(find.text('Satış Geçmişi'), findsOneWidget);
+
+      // Verify that within the tab buttons there are no numeric count badges
+      final tabInkWells = find.ancestor(of: find.text('Alış Lotları'), matching: find.byType(InkWell));
+      expect(tabInkWells, findsOneWidget);
+
+      // The button child row should only have Icon, SizedBox, Flexible(Text) -> exactly 3 items (no count badge container)
+      final rowFinder = find.descendant(of: tabInkWells, matching: find.byType(Row)).first;
+      final row = tester.widget<Row>(rowFinder);
+      expect(row.children.length, 3);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('PortfolioDetailDialog Transaction History tab button renders only title and icon without count',
+        (WidgetTester tester) async {
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+
+      await provider.addPortfolio(name: 'Test Tab Portfoy');
+      final pId = provider.rawPortfolios.first.id;
+      final tx = PortfolioTransaction(
+        id: 'tx_tab_1',
+        portfolioId: pId,
+        assetId: 'asset_dummy',
+        symbol: 'CUSTOMALTIN',
+        name: 'Altın',
+        category: AssetCategory.emtia,
+        type: TransactionType.alis,
+        price: 100,
+        quantity: 10,
+        date: DateTime.now(),
+      );
+      await provider.addTransaction(pId, tx);
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            home: PortfolioDetailDialog(
+              portfolioId: pId,
+              isFullScreen: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Button says exactly 'İşlem Geçmişi' without any parenthetical count
+      expect(find.text('İşlem Geçmişi'), findsOneWidget);
+      expect(find.textContaining('İşlemler ('), findsNothing);
+      expect(find.textContaining('İşlem Geçmişi ('), findsNothing);
 
       await tester.pumpWidget(const SizedBox());
     });

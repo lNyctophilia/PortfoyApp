@@ -525,7 +525,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                 child: _buildTabButton(
                                   index: 1,
                                   icon: Icons.history_rounded,
-                                  label: 'İşlemler (${portfolio.transactions.length})',
+                                  label: 'İşlem Geçmişi',
                                   compact: true,
                                 ),
                               ),
@@ -575,7 +575,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                   _buildTabButton(
                                     index: 1,
                                     icon: Icons.history_rounded,
-                                    label: 'İşlem Geçmişi (${portfolio.transactions.length})',
+                                    label: 'İşlem Geçmişi',
                                   ),
                                 ],
                               ),
@@ -844,12 +844,11 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         Widget buildTxMetricCol(
           String label,
           String value, {
+          double? width,
           Color? valueColor,
-          String? subValue,
-          Color? subValueColor,
           CrossAxisAlignment crossAlignment = CrossAxisAlignment.start,
         }) {
-          return Column(
+          final content = Column(
             crossAxisAlignment: crossAlignment,
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -874,19 +873,12 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (subValue != null && subValue.isNotEmpty)
-                Text(
-                  subValue,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: subValueColor ?? (valueColor ?? AppTheme.textMuted),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
             ],
           );
+          if (width != null) {
+            return SizedBox(width: width, child: content);
+          }
+          return content;
         }
 
         Widget buildTxDivider() {
@@ -910,6 +902,27 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           profitColor = isProfitVal ? AppTheme.profit : AppTheme.loss;
         }
 
+        Widget? kzPill;
+        if (isSatis && displayProfit != null && displayPercent != null) {
+          kzPill = Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+            decoration: BoxDecoration(
+              color: (displayProfit >= 0) ? AppTheme.profitBg : AppTheme.lossBg,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '${Formatters.currency(displayProfit)} (${Formatters.percent(displayPercent)})',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: profitColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          );
+        }
+
         if (isMobile) {
           return Container(
             width: double.infinity,
@@ -931,25 +944,27 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                tx.symbol,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.textPrimary,
-                                ),
+                          Text.rich(
+                            TextSpan(
+                              text: '${tx.symbol} ',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textPrimary,
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '• ${Formatters.date(tx.date)}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.textMuted,
+                              children: [
+                                TextSpan(
+                                  text: '• ${Formatters.date(tx.date)}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.normal,
+                                    color: AppTheme.textMuted,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             tx.name,
@@ -963,16 +978,26 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                         ],
                       ),
                     ),
-                    if (isLatestForAsset)
-                      IconButton(
-                        icon: const Icon(Icons.undo_rounded, size: 18),
-                        tooltip: 'Geri Al',
-                        color: AppTheme.warning,
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.all(6),
-                        constraints: const BoxConstraints(),
-                        onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
+                    if (kzPill != null) ...[
+                      const SizedBox(width: 6),
+                      Flexible(child: kzPill),
+                    ],
+                    if (isLatestForAsset) ...[
+                      const SizedBox(width: 4),
+                      SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: IconButton(
+                          icon: const Icon(Icons.undo_rounded, size: 18),
+                          tooltip: 'Geri Al',
+                          color: AppTheme.warning,
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
+                        ),
                       ),
+                    ],
                   ],
                 ),
                 const Padding(
@@ -1001,18 +1026,6 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                         Formatters.currency(tx.totalAmount),
                       ),
                     ),
-                    if (isSatis && displayProfit != null && displayPercent != null) ...[
-                      buildTxDivider(),
-                      Expanded(
-                        child: buildTxMetricCol(
-                          'K/Z',
-                          Formatters.currency(displayProfit),
-                          valueColor: profitColor,
-                          subValue: '(${Formatters.percent(displayPercent)})',
-                          subValueColor: profitColor,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ],
@@ -1070,44 +1083,52 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
+              // Sabit Sütunlar: Fiyat | Adet | Tutar
               buildTxMetricCol(
                 'Fiyat',
                 '${Formatters.formatPrice(tx.price)} ₺',
+                width: 95,
                 crossAlignment: CrossAxisAlignment.end,
               ),
               buildTxDivider(),
               buildTxMetricCol(
                 'Adet',
                 tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2),
+                width: 80,
                 crossAlignment: CrossAxisAlignment.end,
               ),
               buildTxDivider(),
               buildTxMetricCol(
                 'Tutar',
                 Formatters.currency(tx.totalAmount),
+                width: 105,
                 crossAlignment: CrossAxisAlignment.end,
               ),
-              if (isSatis && displayProfit != null && displayPercent != null) ...[
-                buildTxDivider(),
-                buildTxMetricCol(
-                  'Kâr / Zarar',
-                  Formatters.currency(displayProfit),
-                  valueColor: profitColor,
-                  subValue: '(${Formatters.percent(displayPercent)})',
-                  subValueColor: profitColor,
-                  crossAlignment: CrossAxisAlignment.end,
-                ),
-              ],
-              if (isLatestForAsset) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.undo_rounded, size: 20),
-                  tooltip: 'İşlemi Geri Al',
-                  color: AppTheme.warning,
-                  onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
-                ),
-              ],
+              const SizedBox(width: 10),
+              // K/Z Kutucuğu: Tutarın hemen sağında sabit slot (alışlarda boş kalacak şekilde)
+              Container(
+                width: 130,
+                alignment: Alignment.centerLeft,
+                child: kzPill ?? const SizedBox(),
+              ),
+              const SizedBox(width: 8),
+              // Geri Al Butonu: Sabit slot (son işlem değilse boş kalacak şekilde)
+              Container(
+                width: 40,
+                alignment: Alignment.center,
+                child: isLatestForAsset
+                    ? IconButton(
+                        icon: const Icon(Icons.undo_rounded, size: 20),
+                        tooltip: 'İşlemi Geri Al',
+                        color: AppTheme.warning,
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
+                      )
+                    : const SizedBox(),
+              ),
             ],
           ),
         );

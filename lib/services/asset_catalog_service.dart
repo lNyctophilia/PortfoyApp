@@ -284,6 +284,13 @@ class AssetCatalogService {
         .replaceAll('ç', 'c');
   }
 
+  /// Bilinen TEFAS fonu mu kontrolü
+  static bool isKnownTefasFund(String symbol) {
+    final sym = symbol.trim().toUpperCase();
+    if (sym.isEmpty) return false;
+    return _knownFunds.any((f) => f['code']!.toUpperCase() == sym);
+  }
+
   /// Bilinen sabit katalogdan sembol tam eşleşmesi bulur
   static AssetSuggestion? findCurated(String symbol) {
     final sym = symbol.trim().toUpperCase();
