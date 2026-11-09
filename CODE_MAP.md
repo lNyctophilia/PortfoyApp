@@ -60,19 +60,20 @@
 - **File:** `lib/dialogs/asset_status_dialog.dart`
   - **Lines 1-35:** Imports, AssetStatusDialog declaration with isFullScreen flag, and state setup.
   - **Lines 36-114:** build() method: Adaptive layout rendering full-screen Scaffold with clean AppBar (without Add Transaction button) on mobile or responsive Dialog shell on desktop.
-  - **Lines 115-435:** Header metrics with 'Adet' (number-only value) and 'Ort. Maliyet', profit/loss banner, horizontal scrollable metrics bar, category type badge, and tab selector.
-  - **Lines 436-583:** Metric items with centered alignment, dividers, and tab buttons (_buildMetricItem, _buildDivider, _buildTabButton).
-  - **Lines 584-763:** _buildLotsTab() - Detailed list of open/closed purchase lots with holding durations, costs, returns.
-  - **Lines 764-942:** _buildSalesTab() - Realized sales history, sell prices, capital gains, dynamic net/gross withholding tax badges.
-  - **Lines 943-1056:** Helper widgets, sub-stats, and formatters.
+  - **Lines 115-231:** Mobile layout rendering responsive 2-row _buildSummaryMetricsBar without horizontal scroll, tab switcher, and list.
+  - **Lines 232-358:** Desktop layout rendering horizontally stretched single-row _buildSummaryMetricsBar with Expanded items, tab switcher, and list.
+  - **Lines 359-536:** _buildSummaryMetricsBar (mobile 2-row balanced grid vs desktop stretched row), _buildMetricItem, _buildDivider, _buildTabButton.
+  - **Lines 537-795:** _buildLotsTab() - Detailed list of open/closed purchase lots with holding durations, costs, returns.
+  - **Lines 796-974:** _buildSalesTab() - Realized sales history, sell prices, capital gains, dynamic net/gross withholding tax badges.
+  - **Lines 975-1088:** Helper widgets, sub-stats, and formatters.
 - **File:** `lib/dialogs/portfolio_detail_dialog.dart`
   - **Lines 1-31:** Imports, PortfolioDetailDialog declaration with isFullScreen flag, and state setup.
   - **Lines 32-186:** build() method - Adaptive screen shell: full-screen Scaffold with AppBar on mobile vs responsive Dialog shell on desktop.
   - **Lines 187-248:** _buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, and close icon.
-  - **Lines 249-663:** _buildDetailContent() - Core stretched content: 'Portföy Değeri' header metric with clean value, aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount, Gerçekleşen K/Z), period performance, distribution bar, and tab bar switcher.
-  - **Lines 664-763:** _buildAssetsTab() - Clean full-width search input, empty state, and full-width AssetItemTile list opening status via AdaptiveNavigation.openAssetStatus.
-  - **Lines 764-1105:** _buildTransactionsTab() - Chronological transaction history cards with green Alış and red Satış type badges, sales profit badge dynamically calculating Net and Gross returns based on returnMode / showNetValues with matching profit/loss colors, and Geri Al action.
-  - **Lines 1106-1172:** _confirmUndoTransaction() and _confirmDeleteAsset().
+  - **Lines 249-648:** _buildDetailContent() - Core stretched content: 'Portföy Değeri' header metric with clean value, aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount, Gerçekleşen K/Z), direct PeriodPerformanceRow without redundant title, tightened vertical dividers, distribution bar, and tab bar switcher.
+  - **Lines 649-748:** _buildAssetsTab() - Clean full-width search input, empty state, and full-width AssetItemTile list opening status via AdaptiveNavigation.openAssetStatus.
+  - **Lines 749-1090:** _buildTransactionsTab() - Chronological transaction history cards with green Alış and red Satış type badges, sales profit badge dynamically calculating Net and Gross returns based on returnMode / showNetValues with matching profit/loss colors, and Geri Al action.
+  - **Lines 1091-1157:** _confirmUndoTransaction() and _confirmDeleteAsset().
 - **File:** `lib/dialogs/reorder_portfolios_dialog.dart`
   - **Lines 1-28:** Imports, ReorderPortfoliosDialog declaration with isBottomSheet flag.
   - **Lines 29-87:** build() method - Adaptive shell rendering draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog on desktop.
@@ -298,12 +299,13 @@
   - **Lines 1-33:** Imports, PortfolioCard declaration with onReorder callback support.
   - **Lines 34-92:** _PortfolioCardState and build(): immediate-response hover state without frame delay, constant border width preventing subpixel jitter, opaque hitbox, and shadow elevations.
   - **Lines 93-240:** Header with portfolio name, description, and popup menu actions.
-  - **Lines 241-325:** Total portfolio value, cost, profit/loss banner, and period return badges.
-  - **Lines 326-406:** Category distribution bar, asset allocation summary, and footer action area.
+  - **Lines 241-325:** Total portfolio value, cost, and profit/loss banner.
+  - **Lines 326-360:** Direct PeriodPerformanceRow between tightened dividers without redundant text.
+  - **Lines 361-405:** Category distribution bar, asset allocation summary, and footer action area.
 - **File:** `test/asset_status_and_transaction_history_test.dart`
   - **Lines 1-105:** Mock HTTP network overrides and client stubs for SVG logo requests.
-  - **Lines 106-190:** AssetStatusDialog widget tests verifying removal of 'İşlem Ekle' on mobile, 'Adet' label, pure number value, 'Ort. Maliyet' label, and centered metric alignment.
-  - **Lines 191-283:** Transaction history unit and widget tests verifying PortfolioTransaction calculation and PortfolioDetailDialog dynamic Net vs Gross badge rendering.
+  - **Lines 106-235:** AssetStatusDialog widget tests verifying removal of 'İşlem Ekle' on mobile, 'Adet' label, pure number value, 'Ort. Maliyet' label, centered metric alignment, mobile 2-row layout without horizontal scroll, desktop stretched single row layout, and removal of redundant historical performance titles.
+  - **Lines 236-334:** Transaction history unit and widget tests verifying PortfolioTransaction calculation and PortfolioDetailDialog dynamic Net vs Gross badge rendering.
 - **File:** `test/period_performance_test.dart`
   - **Lines 1-95:** Unit & widget tests verifying PeriodPerformanceRow.fromAsset data mapping, 7-period rendering on desktop with expanded layout, and responsive mobile scroll behavior.
 - **File:** `test/transaction_undo_and_disambiguation_test.dart`

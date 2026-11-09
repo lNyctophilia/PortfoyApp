@@ -451,25 +451,10 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                               },
                             ),
                             const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 12),
+                              padding: EdgeInsets.symmetric(vertical: 8),
                               child: Divider(color: AppTheme.borderSubtle, height: 1),
                             ),
-                            // Tarihsel Dönem Verileri
-                            Row(
-                              children: [
-                                const Icon(Icons.history_rounded, size: 16, color: AppTheme.textSecondary),
-                                const SizedBox(width: 6),
-                                const Text(
-                                  'Tarihsel Getiriler',
-                                  style: TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
+                            // Tarihsel Dönem Performansı
                             PeriodPerformanceRow.fromPortfolio(
                               portfolio,
                               compact: false,
@@ -478,7 +463,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                               assetInflationRates: provider.assetInflationRates,
                             ),
                             const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 12),
+                              padding: EdgeInsets.symmetric(vertical: 8),
                               child: Divider(color: AppTheme.borderSubtle, height: 1),
                             ),
                             // Kategori Dağılım Çubuğu ve Yüzdeler

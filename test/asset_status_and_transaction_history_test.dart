@@ -9,6 +9,7 @@ import 'package:portfoy_app/models/portfolio_asset.dart';
 import 'package:portfoy_app/models/portfolio_transaction.dart';
 import 'package:portfoy_app/models/return_mode.dart';
 import 'package:portfoy_app/providers/portfolio_provider.dart';
+import 'package:portfoy_app/widgets/portfolio_card.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -95,9 +96,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       // Verify summary bar has 'Adet' and pure number '50' without 'Adet' suffix
-      final summaryBar = find.byWidgetPredicate(
-        (w) => w is SingleChildScrollView && w.scrollDirection == Axis.horizontal,
-      );
+      final summaryBar = find.byKey(const Key('asset_status_summary_card'));
       expect(find.descendant(of: summaryBar, matching: find.text('Adet')), findsOneWidget);
       expect(find.descendant(of: summaryBar, matching: find.text('50')), findsOneWidget);
       expect(find.descendant(of: summaryBar, matching: find.text('50 Adet')), findsNothing);
@@ -105,6 +104,137 @@ void main() {
       // Verify "Ort. Maliyet" is found and "Ort. Kalan Maliyet" is gone
       expect(find.descendant(of: summaryBar, matching: find.text('Ort. Maliyet')), findsOneWidget);
       expect(find.descendant(of: summaryBar, matching: find.text('Ort. Kalan Maliyet')), findsNothing);
+
+      // Verify no horizontal SingleChildScrollView in summaryBar on mobile
+      expect(
+        find.descendant(
+          of: summaryBar,
+          matching: find.byWidgetPredicate(
+            (w) => w is SingleChildScrollView && w.scrollDirection == Axis.horizontal,
+          ),
+        ),
+        findsNothing,
+      );
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('AssetStatusDialog renders stretched single row on desktop without SingleChildScrollView',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+      final asset = PortfolioAsset(
+        id: 'asset_2',
+        symbol: 'ALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        quantity: 50,
+        purchasePrice: 250,
+        currentPrice: 300,
+        purchaseDate: DateTime(2025, 1, 1),
+      );
+      final portfolio = Portfolio(
+        id: 'port_2',
+        name: 'Altın Portföyü',
+        createdAt: DateTime(2025, 1, 1),
+        assets: [asset],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetStatusDialog(
+            portfolio: portfolio,
+            asset: asset,
+            provider: provider,
+            isFullScreen: false,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final summaryBar = find.byKey(const Key('asset_status_summary_card'));
+      expect(summaryBar, findsOneWidget);
+
+      // Should have Expanded metric items inside Row
+      expect(
+        find.descendant(of: summaryBar, matching: find.byType(Expanded)),
+        findsAtLeastNWidgets(4),
+      );
+      // No horizontal scroll on desktop
+      expect(
+        find.descendant(
+          of: summaryBar,
+          matching: find.byWidgetPredicate(
+            (w) => w is SingleChildScrollView && w.scrollDirection == Axis.horizontal,
+          ),
+        ),
+        findsNothing,
+      );
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('PortfolioCard and PortfolioDetailDialog do not render redundant historical performance titles',
+        (WidgetTester tester) async {
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+      final asset = PortfolioAsset(
+        id: 'asset_3',
+        symbol: 'ALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        quantity: 10,
+        purchasePrice: 2000,
+        currentPrice: 2500,
+        purchaseDate: DateTime(2025, 1, 1),
+      );
+      final portfolio = Portfolio(
+        id: 'port_3',
+        name: 'Test Portföy',
+        createdAt: DateTime(2025, 1, 1),
+        assets: [asset],
+      );
+
+      // 1. Verify PortfolioCard does not have 'Tarihsel Değişimler'
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            home: Scaffold(
+              body: PortfolioCard(
+                portfolio: portfolio,
+                onTap: () {},
+                onEdit: () {},
+                onDelete: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Tarihsel Değişimler'), findsNothing);
+
+      // 2. Verify PortfolioDetailDialog does not have 'Tarihsel Getiriler'
+      await provider.addPortfolio(name: 'Test Portföy');
+      final pId = provider.rawPortfolios.first.id;
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            home: PortfolioDetailDialog(
+              portfolioId: pId,
+              isFullScreen: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Tarihsel Getiriler'), findsNothing);
 
       await tester.pumpWidget(const SizedBox());
     });

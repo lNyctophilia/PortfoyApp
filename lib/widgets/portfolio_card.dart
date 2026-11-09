@@ -341,36 +341,21 @@ class _PortfolioCardState extends State<PortfolioCard> {
               ),
 
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
+                padding: EdgeInsets.symmetric(vertical: 8),
                 child: Divider(color: AppTheme.borderSubtle, height: 1),
               ),
 
-              // ORTA KISIM: TARİHSEL VERİLER (GÜNLÜK, HAFTALIK, AYLIK, YILLIK)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Tarihsel Değişimler',
-                    style: TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  PeriodPerformanceRow.fromPortfolio(
-                    p,
-                    compact: true,
-                    mode: mode,
-                    periodInflation: provider.periodInflation,
-                    assetInflationRates: inflationRates,
-                  ),
-                ],
+              // ORTA KISIM: TARİHSEL DÖNEM PERFORMANSI
+              PeriodPerformanceRow.fromPortfolio(
+                p,
+                compact: true,
+                mode: mode,
+                periodInflation: provider.periodInflation,
+                assetInflationRates: inflationRates,
               ),
 
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
+                padding: EdgeInsets.symmetric(vertical: 8),
                 child: Divider(color: AppTheme.borderSubtle, height: 1),
               ),
 

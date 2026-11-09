@@ -116,76 +116,16 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
           child: Column(
             children: [
               // ÖZET İSTATİSTİK KARTLARI
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceLight,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppTheme.borderSubtle),
-                ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: Row(
-                    children: [
-                      _buildMetricItem(
-                        'Adet',
-                        _formatQty(fifoResult.remainingQuantity),
-                        icon: Icons.inventory_2_outlined,
-                      ),
-                      _buildDivider(),
-                      _buildMetricItem(
-                        'Ort. Maliyet',
-                        Formatters.currency(fifoResult.averageRemainingCost),
-                        icon: Icons.price_change_outlined,
-                      ),
-                      _buildDivider(),
-                      _buildMetricItem(
-                        'Güncel Fiyat',
-                        Formatters.currency(displayCurrentPrice),
-                        icon: Icons.show_chart_rounded,
-                      ),
-                      _buildDivider(),
-                      _buildMetricItem(
-                        'Kalan Kâr / Zarar',
-                        '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
-                        valueColor: profitColor,
-                        icon: Icons.insights_rounded,
-                      ),
-                      if (fifoResult.totalRealizedProfit != 0) ...[
-                        _buildDivider(),
-                        Builder(
-                          builder: (context) {
-                            final hasRealizedStopaj = currentAsset.category ==
-                                    AssetCategory.fon &&
-                                fifoResult.totalRealizedProfit > 0 &&
-                                currentAsset.effectiveWithholdingTaxRate > 0;
-                            final netRealized = fifoResult.totalRealizedProfit -
-                                fifoResult.totalRealizedProfit *
-                                    (currentAsset.effectiveWithholdingTaxRate / 100);
-                            final displayRealized =
-                                (hasRealizedStopaj && showNetValues)
-                                    ? netRealized
-                                    : fifoResult.totalRealizedProfit;
-
-                            return _buildMetricItem(
-                              'Gerçekleşen Kâr',
-                              Formatters.currency(displayRealized),
-                              valueColor: displayRealized >= 0
-                                  ? AppTheme.profit
-                                  : AppTheme.loss,
-                              icon: Icons.monetization_on_outlined,
-                            );
-                          },
-                        ),
-                      ],
-                    ],
-                ),
-                ),
+              _buildSummaryMetricsBar(
+                isMobile: true,
+                fifoResult: fifoResult,
+                currentAsset: currentAsset,
+                displayCurrentPrice: displayCurrentPrice,
+                displayProfit: displayProfit,
+                displayProfitPercent: displayProfitPercent,
+                profitColor: profitColor,
+                showNetValues: showNetValues,
               ),
-            ),
 
             // TAB BUTONLARI (Alış Lotları / Satışlar)
             Padding(
@@ -319,75 +259,15 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
             ),
             const Divider(color: AppTheme.borderSubtle, height: 1),
             // ÖZET İSTATİSTİK KARTLARI
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceLight,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppTheme.borderSubtle),
-                ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: Row(
-                    children: [
-                      _buildMetricItem(
-                        'Adet',
-                        _formatQty(fifoResult.remainingQuantity),
-                        icon: Icons.inventory_2_outlined,
-                      ),
-                      _buildDivider(),
-                      _buildMetricItem(
-                        'Ort. Maliyet',
-                        Formatters.currency(fifoResult.averageRemainingCost),
-                        icon: Icons.price_change_outlined,
-                      ),
-                      _buildDivider(),
-                      _buildMetricItem(
-                        'Güncel Fiyat',
-                        Formatters.currency(displayCurrentPrice),
-                        icon: Icons.show_chart_rounded,
-                      ),
-                      _buildDivider(),
-                      _buildMetricItem(
-                        'Kalan Kâr / Zarar',
-                        '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
-                        valueColor: profitColor,
-                        icon: Icons.insights_rounded,
-                      ),
-                      if (fifoResult.totalRealizedProfit != 0) ...[
-                        _buildDivider(),
-                        Builder(
-                          builder: (context) {
-                            final hasRealizedStopaj = currentAsset.category ==
-                                    AssetCategory.fon &&
-                                fifoResult.totalRealizedProfit > 0 &&
-                                currentAsset.effectiveWithholdingTaxRate > 0;
-                            final netRealized = fifoResult.totalRealizedProfit -
-                                fifoResult.totalRealizedProfit *
-                                    (currentAsset.effectiveWithholdingTaxRate / 100);
-                            final displayRealized =
-                                (hasRealizedStopaj && showNetValues)
-                                    ? netRealized
-                                    : fifoResult.totalRealizedProfit;
-
-                            return _buildMetricItem(
-                              'Gerçekleşen Kâr',
-                              Formatters.currency(displayRealized),
-                              valueColor: displayRealized >= 0
-                                  ? AppTheme.profit
-                                  : AppTheme.loss,
-                              icon: Icons.monetization_on_outlined,
-                            );
-                          },
-                        ),
-                      ],
-                    ],
-                ),
-                ),
-              ),
+            _buildSummaryMetricsBar(
+              isMobile: false,
+              fifoResult: fifoResult,
+              currentAsset: currentAsset,
+              displayCurrentPrice: displayCurrentPrice,
+              displayProfit: displayProfit,
+              displayProfitPercent: displayProfitPercent,
+              profitColor: profitColor,
+              showNetValues: showNetValues,
             ),
 
             // TAB BUTONLARI (Alış Lotları / Satışlar)
@@ -433,6 +313,156 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     );
   }
 
+  Widget _buildSummaryMetricsBar({
+    required bool isMobile,
+    required FifoResult fifoResult,
+    required PortfolioAsset currentAsset,
+    required double displayCurrentPrice,
+    required double displayProfit,
+    required double displayProfitPercent,
+    required Color profitColor,
+    required bool showNetValues,
+  }) {
+    final metricAdet = _buildMetricItem(
+      'Adet',
+      _formatQty(fifoResult.remainingQuantity),
+      icon: Icons.inventory_2_outlined,
+    );
+
+    final metricMaliyet = _buildMetricItem(
+      'Ort. Maliyet',
+      Formatters.currency(fifoResult.averageRemainingCost),
+      icon: Icons.price_change_outlined,
+    );
+
+    final metricFiyat = _buildMetricItem(
+      'Güncel Fiyat',
+      Formatters.currency(displayCurrentPrice),
+      icon: Icons.show_chart_rounded,
+    );
+
+    final metricKalanKar = _buildMetricItem(
+      'Kalan Kâr / Zarar',
+      '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
+      valueColor: profitColor,
+      icon: Icons.insights_rounded,
+    );
+
+    Widget? metricRealized;
+    if (fifoResult.totalRealizedProfit != 0) {
+      final hasRealizedStopaj = currentAsset.category == AssetCategory.fon &&
+          fifoResult.totalRealizedProfit > 0 &&
+          currentAsset.effectiveWithholdingTaxRate > 0;
+      final netRealized = fifoResult.totalRealizedProfit -
+          fifoResult.totalRealizedProfit *
+              (currentAsset.effectiveWithholdingTaxRate / 100);
+      final displayRealized = (hasRealizedStopaj && showNetValues)
+          ? netRealized
+          : fifoResult.totalRealizedProfit;
+
+      metricRealized = _buildMetricItem(
+        'Gerçekleşen Kâr',
+        Formatters.currency(displayRealized),
+        valueColor: displayRealized >= 0 ? AppTheme.profit : AppTheme.loss,
+        icon: Icons.monetization_on_outlined,
+      );
+    }
+
+    if (!isMobile) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+        child: Container(
+          key: const Key('asset_status_summary_card'),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceLight,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.borderSubtle),
+          ),
+          child: Row(
+            children: [
+              Expanded(child: metricAdet),
+              _buildDivider(isMobile: false),
+              Expanded(child: metricMaliyet),
+              _buildDivider(isMobile: false),
+              Expanded(child: metricFiyat),
+              _buildDivider(isMobile: false),
+              Expanded(child: metricKalanKar),
+              if (metricRealized != null) ...[
+                _buildDivider(isMobile: false),
+                Expanded(child: metricRealized),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Mobil Görünüm: 2 satır, kaydırma olmadan tam ekrana sığacak şekilde
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+      child: Container(
+        key: const Key('asset_status_summary_card'),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceLight,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.borderSubtle),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (metricRealized != null) ...[
+              // 5 Metrik: 1. Satırda 3 temel metrik, 2. Satırda 2 getiri metriği
+              Row(
+                children: [
+                  Expanded(child: metricAdet),
+                  _buildDivider(isMobile: true),
+                  Expanded(child: metricMaliyet),
+                  _buildDivider(isMobile: true),
+                  Expanded(child: metricFiyat),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Divider(color: AppTheme.borderSubtle, height: 1),
+              ),
+              Row(
+                children: [
+                  Expanded(child: metricKalanKar),
+                  _buildDivider(isMobile: true),
+                  Expanded(child: metricRealized),
+                ],
+              ),
+            ] else ...[
+              // 4 Metrik: 2x2 dengeli ızgara
+              Row(
+                children: [
+                  Expanded(child: metricAdet),
+                  _buildDivider(isMobile: true),
+                  Expanded(child: metricMaliyet),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Divider(color: AppTheme.borderSubtle, height: 1),
+              ),
+              Row(
+                children: [
+                  Expanded(child: metricFiyat),
+                  _buildDivider(isMobile: true),
+                  Expanded(child: metricKalanKar),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMetricItem(
     String label,
     String value, {
@@ -454,16 +484,18 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
               Icon(icon, size: 12, color: AppTheme.textMuted),
               const SizedBox(width: 4),
             ],
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.w500,
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
             ),
             if (badge != null) ...[
               const SizedBox(width: 4),
@@ -505,11 +537,11 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider({bool isMobile = false}) {
     return Container(
       width: 1,
-      height: 32,
-      margin: const EdgeInsets.symmetric(horizontal: 12),
+      height: isMobile ? 24 : 32,
+      margin: EdgeInsets.symmetric(horizontal: isMobile ? 4 : 8),
       color: AppTheme.borderSubtle,
     );
   }
