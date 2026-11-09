@@ -106,7 +106,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
     _selectedType = widget.initialType;
     if (widget.initialAsset != null) {
-      _selectExistingAsset(widget.initialAsset!);
       _alisCategory = widget.initialAsset!.category;
       _alisSymbolController.text = widget.initialAsset!.symbol;
       _alisNameController.text = widget.initialAsset!.name;
@@ -114,9 +113,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       _alisLastSymbol = widget.initialAsset!.symbol;
       _alisHasSelectedAsset = true;
       _fetchAlisMarketData(widget.initialAsset!.symbol, forceHistoricalPrice: true);
-    } else if (widget.portfolio.assets.isNotEmpty) {
-      _selectExistingAsset(widget.portfolio.assets.first);
     }
+    // Satış sekmesinde varsayılan olarak hiçbir varlık seçili gelmez,
+    // adet ve fiyat boş kalır, tarih bugünün tarihi olur.
   }
 
   @override
@@ -587,9 +586,29 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
             icon: const Icon(Icons.close_rounded),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          title: const Text(
-            'İşlem Ekle',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: (isAlis ? AppTheme.profit : AppTheme.loss)
+                      .withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  isAlis
+                      ? Icons.add_shopping_cart_rounded
+                      : Icons.sell_rounded,
+                  color: isAlis ? AppTheme.profit : AppTheme.loss,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'İşlem Ekle',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+              ),
+            ],
           ),
         ),
         body: SafeArea(
@@ -630,43 +649,41 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   }
 
   Widget _buildDesktopHeader(BuildContext context, bool isAlis) {
-    return // BAŞLIK
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: (isAlis ? AppTheme.primary : AppTheme.profit)
-                              .withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          isAlis
-                              ? Icons.shopping_cart_outlined
-                              : Icons.monetization_on_outlined,
-                          color:
-                              isAlis ? AppTheme.primaryLight : AppTheme.profit,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Text(
-                          'İşlem Ekle',
-                          style: TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded,
-                            color: AppTheme.textMuted),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  );
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: (isAlis ? AppTheme.profit : AppTheme.loss)
+                .withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            isAlis
+                ? Icons.add_shopping_cart_rounded
+                : Icons.sell_rounded,
+            color: isAlis ? AppTheme.profit : AppTheme.loss,
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 14),
+        const Expanded(
+          child: Text(
+            'İşlem Ekle',
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.close_rounded,
+              color: AppTheme.textMuted),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
   }
 
   Widget _buildFormContent(BuildContext context, bool isAlis, {required bool isMobile}) {
@@ -810,32 +827,67 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
                   const SizedBox(height: 24),
 
-                  // AKSİYON BUTONLARI (Alt kısımdaki otomatik düşüş checkbox'ı tamamen kaldırıldı)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('İptal'),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isAlis ? AppTheme.profit : AppTheme.loss,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 14),
+                  // AKSİYON BUTONLARI (Mobilde tam genişlik, masaüstünde sağa hizalı)
+                  if (isMobile)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              side: const BorderSide(color: AppTheme.borderSubtle),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('İptal', style: TextStyle(color: AppTheme.textSecondary)),
+                          ),
                         ),
-                        onPressed: (!isAlis && widget.portfolio.assets.isEmpty)
-                            ? null
-                            : _saveTransaction,
-                        child: Text(
-                          isAlis ? 'Alışı Kaydet' : 'Satışı Kaydet',
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  isAlis ? AppTheme.profit : AppTheme.loss,
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: (!isAlis && widget.portfolio.assets.isEmpty)
+                                ? null
+                                : _saveTransaction,
+                            child: Text(
+                              isAlis ? 'Alışı Kaydet' : 'Satışı Kaydet',
+                              style: const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    )
+                  else
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('İptal'),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                isAlis ? AppTheme.profit : AppTheme.loss,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 14),
+                          ),
+                          onPressed: (!isAlis && widget.portfolio.assets.isEmpty)
+                              ? null
+                              : _saveTransaction,
+                          child: Text(
+                            isAlis ? 'Alışı Kaydet' : 'Satışı Kaydet',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
       ],
     );
   }
@@ -1015,6 +1067,159 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   }
 
   // ==========================================
+  // SATIŞ VARLIK SEÇİCİ BOTTOM SHEET
+  // ==========================================
+  void _showSatisAssetPicker(BuildContext context) {
+    final assets = widget.portfolio.assets;
+    if (assets.isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 16, 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Satılacak Varlığı Seçin',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 20),
+                        color: AppTheme.textMuted,
+                        onPressed: () => Navigator.of(ctx).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(color: AppTheme.borderSubtle, height: 1),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: assets.length,
+                    separatorBuilder: (_, _) => const Divider(
+                      color: AppTheme.borderSubtle,
+                      height: 1,
+                      indent: 68,
+                    ),
+                    itemBuilder: (context, index) {
+                      final a = assets[index];
+                      final isSelected = _selectedExistingAsset?.id == a.id;
+                      return InkWell(
+                        onTap: () {
+                          Navigator.of(ctx).pop();
+                          _selectExistingAsset(a);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          child: Row(
+                            children: [
+                              AssetLogo(
+                                iconUrl: a.iconUrl,
+                                symbol: a.symbol,
+                                name: a.name,
+                                category: a.category,
+                                size: 40,
+                                iconSize: 20,
+                                borderRadius: 10,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          a.symbol,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 1.5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: a.category.color.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            a.category.displayName,
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: a.category.color,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      a.name,
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                Formatters.formatCurrencyPrice(a.currentPrice),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                              if (isSelected) ...[
+                                const SizedBox(width: 8),
+                                const Icon(Icons.check_circle_rounded, size: 18, color: AppTheme.profit),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ==========================================
   // SATIŞ FORMU (PORTFÖYDE OLANLARDAN SATIŞ)
   // ==========================================
   Widget _buildSatisForm() {
@@ -1054,9 +1259,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // PORTFÖYDEKİ MEVCUT VARLIKLARDAN SEÇİM
+        // PORTFÖYDEKİ MEVCUT VARLIKLARDAN SEÇİM (Tıklanabilir Modern Kart)
         const Text(
-          'Portföydeki Varlık *',
+          'Portföydeki Varlık',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -1064,90 +1269,163 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           ),
         ),
         const SizedBox(height: 6),
-        DropdownButtonFormField<PortfolioAsset?>(
-          key: ValueKey(_selectedExistingAsset?.id ?? 'none'),
-          initialValue: _selectedExistingAsset,
-          decoration: const InputDecoration(
-            hintText: 'Portföyden satılacak varlığı seçin...',
-            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          ),
-          dropdownColor: AppTheme.surfaceElevated,
-          items: widget.portfolio.assets.map((a) {
-            return DropdownMenuItem<PortfolioAsset?>(
-              value: a,
-              child: Text(
-                '${a.symbol} - ${a.name} (Portföydeki Adet: ${_formatNumber(a.quantity)})',
-                style: const TextStyle(fontSize: 13),
-                overflow: TextOverflow.ellipsis,
+        InkWell(
+          onTap: () => _showSatisAssetPicker(context),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLight,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _selectedExistingAsset != null
+                    ? AppTheme.loss.withValues(alpha: 0.4)
+                    : AppTheme.borderSubtle,
               ),
-            );
-          }).toList(),
-          onChanged: (asset) {
-            if (asset != null) {
-              _selectExistingAsset(asset);
-            }
-          },
-          validator: (val) => val == null ? 'Varlık seçmelisiniz' : null,
-        ),
-        const SizedBox(height: 14),
-
-        // SEMBOL VE İSİM (Seçilen Varlık Bilgisi)
-        if (_selectedExistingAsset != null) ...[
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: AssetLogo(
-                  iconUrl: _satisIconUrl,
-                  symbol: _satisSymbolController.text.trim(),
-                  name: _satisNameController.text.trim(),
-                  category: _selectedExistingAsset?.category ?? AssetCategory.fon,
-                  size: 48,
-                  iconSize: 24,
-                  borderRadius: 12,
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  height: 52,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceLight,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.borderSubtle),
+            ),
+            child: Row(
+              children: [
+                if (_selectedExistingAsset != null) ...[
+                  AssetLogo(
+                    iconUrl: _satisIconUrl,
+                    symbol: _satisSymbolController.text.trim(),
+                    name: _satisNameController.text.trim(),
+                    category: _selectedExistingAsset?.category ?? AssetCategory.fon,
+                    size: 34,
+                    iconSize: 18,
+                    borderRadius: 8,
                   ),
-                  alignment: Alignment.centerLeft,
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: _satisSymbolController.text.trim(),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        if (_satisNameController.text.trim().isNotEmpty)
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
                           TextSpan(
-                            text: '   ${_satisNameController.text.trim()}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.normal,
-                              color: AppColors.textSecondary.withValues(alpha: 0.85),
+                            text: _satisSymbolController.text.trim(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
                             ),
                           ),
-                      ],
+                          if (_satisNameController.text.trim().isNotEmpty)
+                            TextSpan(
+                              text: '   ${_satisNameController.text.trim()}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.normal,
+                                color: AppColors.textSecondary.withValues(alpha: 0.85),
+                              ),
+                            ),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
+                ] else ...[
+                  const Icon(Icons.account_balance_wallet_outlined, size: 20, color: AppTheme.textMuted),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Portföyden satılacak varlığı seçin...',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: AppTheme.textMuted,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // TOPLAM ADET & TOPLAM FİYAT BİLGİ KUTUCUĞU
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.borderSubtle),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Toplam Adet',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _selectedExistingAsset != null
+                          ? '${_formatNumber(_selectedExistingAsset!.quantity)} Adet'
+                          : '-',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                height: 24,
+                width: 1,
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                color: AppTheme.borderSubtle,
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Toplam Fiyat',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _selectedExistingAsset != null
+                          ? Formatters.currency(_selectedExistingAsset!.quantity * _selectedExistingAsset!.currentPrice)
+                          : '-',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-        ],
+        ),
+        const SizedBox(height: 14),
 
         // MİKTAR VE SATIŞ FİYATI
         Row(
@@ -1160,18 +1438,15 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 inputFormatters: [
                   TurkishNumberInputFormatter(maxDecimals: 6),
                 ],
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Adet',
                   hintText: '0',
-                  helperText: _selectedExistingAsset != null
-                      ? 'Portföydeki: ${_formatNumber(_selectedExistingAsset!.quantity)}'
-                      : null,
                 ),
                 validator: (v) {
+                  if (_selectedExistingAsset == null) return 'Önce varlık seçin';
                   final val = _parseVal(v ?? '');
                   if (val <= 0) return 'Miktar girin';
-                  if (_selectedExistingAsset != null &&
-                      val > _selectedExistingAsset!.quantity) {
+                  if (val > _selectedExistingAsset!.quantity) {
                     return 'Mevcut adetten fazla satılamaz';
                   }
                   return null;

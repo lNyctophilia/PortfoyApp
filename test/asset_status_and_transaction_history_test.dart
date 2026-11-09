@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:portfoy_app/dialogs/add_edit_portfolio_dialog.dart';
+import 'package:portfoy_app/dialogs/add_transaction_dialog.dart';
 import 'package:portfoy_app/dialogs/asset_status_dialog.dart';
 import 'package:portfoy_app/dialogs/portfolio_detail_dialog.dart';
 import 'package:portfoy_app/models/asset_category.dart';
@@ -321,16 +322,16 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Under Brut: should show +%100,00 and ₺1.000,00
-      expect(find.text('(+%100,00)'), findsOneWidget);
+      // Under Brut: should show %100,00 and ₺1.000,00 (no plus sign)
+      expect(find.text('(%100,00)'), findsOneWidget);
 
       // Switch mode to Net
       await provider.setReturnMode(ReturnCalculationMode.net);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Under Net: should show +%82,50 and ₺825,00
-      expect(find.text('(+%82,50)'), findsOneWidget);
+      // Under Net: should show %82,50 and ₺825,00 (no plus sign)
+      expect(find.text('(%82,50)'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox());
     });
@@ -450,7 +451,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: AddEditPortfolioDialog(
-              onSave: (_, __) {},
+              onSave: (_, _) {},
             ),
           ),
         ),
@@ -587,6 +588,116 @@ void main() {
 
       expect(find.text('Bu varlık için henüz satış yapılmadı'), findsOneWidget);
       expect(find.text('Satış yaptığınızda FIFO maliyeti ve gerçekleşen kâr burada listelenir.'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    test('Formatters.percent does not include plus sign for positive and includes minus for negative', () {
+      expect(Formatters.percent(15.5), '%15,50');
+      expect(Formatters.percent(0.0), '%0,00');
+      expect(Formatters.percent(-8.25), '-%8,25');
+    });
+
+    testWidgets('AddTransactionDialog Sell form has no asset pre-selected, no star, no helper text, and displays Toplam Adet/Fiyat',
+        (WidgetTester tester) async {
+      final asset = PortfolioAsset(
+        id: 'asset_satis_test',
+        symbol: 'THYAO',
+        name: 'Türk Hava Yolları',
+        category: AssetCategory.hisse,
+        quantity: 100,
+        purchasePrice: 200,
+        currentPrice: 250,
+        purchaseDate: DateTime.now(),
+      );
+      final portfolio = Portfolio(
+        id: 'port_tx_test',
+        name: 'Hisse Portföyü',
+        createdAt: DateTime.now(),
+        assets: [asset],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AddTransactionDialog(
+              portfolio: portfolio,
+              initialType: TransactionType.satis,
+              onSave: (_, _) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 1. Header has sell tag icon
+      expect(find.byIcon(Icons.sell_rounded), findsWidgets);
+
+      // 2. "Portföydeki Varlık" without star
+      expect(find.text('Portföydeki Varlık'), findsOneWidget);
+      expect(find.textContaining('Portföydeki Varlık *'), findsNothing);
+
+      // 3. Initial placeholder visible, no asset pre-selected
+      expect(find.text('Portföyden satılacak varlığı seçin...'), findsOneWidget);
+
+      // 4. "Toplam Adet" and "Toplam Fiyat" box exists
+      expect(find.text('Toplam Adet'), findsOneWidget);
+      expect(find.text('Toplam Fiyat'), findsOneWidget);
+
+      // 5. No helperText "Portföydeki: 100" under quantity
+      expect(find.textContaining('Portföydeki:'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('PortfolioDetailDialog Transaction History renders Fiyat, Adet, Tutar columns with dividers',
+        (WidgetTester tester) async {
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+
+      await provider.addPortfolio(name: 'İşlem Portföyü');
+      final pId = provider.rawPortfolios.first.id;
+
+      final alisTx = PortfolioTransaction(
+        id: 'tx_alis_cols',
+        portfolioId: pId,
+        type: TransactionType.alis,
+        symbol: 'ALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        date: DateTime(2025, 1, 1),
+        quantity: 50,
+        price: 150,
+        costPrice: 150,
+      );
+
+      await provider.addTransaction(pId, alisTx);
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            home: PortfolioDetailDialog(
+              portfolioId: pId,
+              isFullScreen: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Switch to transactions tab
+      final txTabFinder = find.textContaining('İşlemler');
+      expect(txTabFinder, findsOneWidget);
+      await tester.tap(txTabFinder);
+      await tester.pumpAndSettle();
+
+      // Check for columns Fiyat, Adet, Tutar
+      expect(find.text('Fiyat'), findsOneWidget);
+      expect(find.text('Adet'), findsOneWidget);
+      expect(find.text('Tutar'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox());
     });

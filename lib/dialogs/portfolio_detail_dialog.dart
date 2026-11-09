@@ -121,24 +121,29 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         body: SafeArea(
           child: RefreshIndicator(
             onRefresh: () => provider.refreshPortfolioPrices(portfolio.id),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: _buildDetailContent(
-                context,
-                portfolio,
-                provider,
-                filteredAssets,
-                mode,
-                inflationRates,
-                displayValue,
-                displayProfit,
-                displayProfitPercent,
-                showNetValues,
-                isProfit,
-                profitColor,
-                true,
-              ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: _buildDetailContent(
+                    context,
+                    portfolio,
+                    provider,
+                    filteredAssets,
+                    mode,
+                    inflationRates,
+                    displayValue,
+                    displayProfit,
+                    displayProfitPercent,
+                    showNetValues,
+                    isProfit,
+                    profitColor,
+                    true,
+                    availableHeight: constraints.maxHeight,
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -157,23 +162,28 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
             Expanded(
               child: Padding(
                 padding: EdgeInsets.only(left: isMobile ? 14 : 24, right: 8, bottom: isMobile ? 14 : 20),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.only(right: isMobile ? 8 : 16),
-                  child: _buildDetailContent(
-                    context,
-                    portfolio,
-                    provider,
-                    filteredAssets,
-                    mode,
-                    inflationRates,
-                    displayValue,
-                    displayProfit,
-                    displayProfitPercent,
-                    showNetValues,
-                    isProfit,
-                    profitColor,
-                    isMobile,
-                  ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.only(right: isMobile ? 8 : 16),
+                      child: _buildDetailContent(
+                        context,
+                        portfolio,
+                        provider,
+                        filteredAssets,
+                        mode,
+                        inflationRates,
+                        displayValue,
+                        displayProfit,
+                        displayProfitPercent,
+                        showNetValues,
+                        isProfit,
+                        profitColor,
+                        isMobile,
+                        availableHeight: constraints.maxHeight,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -258,8 +268,9 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     bool showNetValues,
     bool isProfit,
     Color profitColor,
-    bool isMobile,
-  ) {
+    bool isMobile, {
+    double availableHeight = 500,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -593,8 +604,8 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                       const SizedBox(height: 14),
                       // SEÇİLEN SEKMENİN İÇERİĞİ
                       _selectedTab == 0
-                          ? _buildAssetsTab(portfolio, filteredAssets, provider, isMobile)
-                          : _buildTransactionsTab(portfolio, provider, isMobile),
+                          ? _buildAssetsTab(portfolio, filteredAssets, provider, isMobile, availableHeight: availableHeight)
+                          : _buildTransactionsTab(portfolio, provider, isMobile, availableHeight: availableHeight),
       ],
     );
   }
@@ -646,7 +657,8 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     );
   }
   Widget _buildAssetsTab(Portfolio portfolio,
-      List<PortfolioAsset> filteredAssets, PortfolioProvider provider, bool isMobile) {
+      List<PortfolioAsset> filteredAssets, PortfolioProvider provider, bool isMobile,
+      {double availableHeight = 500}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -672,11 +684,16 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         ),
         // Varlık Listesi
         if (filteredAssets.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 36),
+          Container(
+            constraints: BoxConstraints(
+              minHeight: (availableHeight - 380).clamp(220.0, 800.0),
+            ),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.folder_open_rounded,
@@ -694,7 +711,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                     ),
                   ),
                   if (portfolio.assets.isEmpty) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     ElevatedButton.icon(
                       onPressed: () {
                         showDialog(
@@ -746,13 +763,19 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     );
   }
   Widget _buildTransactionsTab(
-      Portfolio portfolio, PortfolioProvider provider, bool isMobile) {
+      Portfolio portfolio, PortfolioProvider provider, bool isMobile,
+      {double availableHeight = 500}) {
     if (portfolio.transactions.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 36),
+      return Container(
+        constraints: BoxConstraints(
+          minHeight: (availableHeight - 340).clamp(220.0, 800.0),
+        ),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 24),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.receipt_long_outlined,
@@ -818,50 +841,73 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           ),
         );
 
-        Widget? profitBadgeWidget;
-        if (isSatis) {
-          profitBadgeWidget = Builder(
-            builder: (context) {
-              final showNetValues = context.watch<PortfolioProvider>().showNetValues;
-              final hasStopaj = tx.withholdingTax > 0;
-              final displayProfit = (hasStopaj && showNetValues) ? tx.netRealizedProfit : tx.realizedProfit;
-              final displayPercent = (hasStopaj && showNetValues) ? tx.netProfitPercent : tx.profitPercent;
-              final isProfit = displayProfit >= 0;
-              final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
-
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                decoration: BoxDecoration(
-                  color: profitColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: profitColor.withValues(alpha: 0.3)),
+        Widget buildTxMetricCol(
+          String label,
+          String value, {
+          Color? valueColor,
+          String? subValue,
+          Color? subValueColor,
+          CrossAxisAlignment crossAlignment = CrossAxisAlignment.start,
+        }) {
+          return Column(
+            crossAxisAlignment: crossAlignment,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textMuted.withValues(alpha: 0.75),
                 ),
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  alignment: WrapAlignment.end,
-                  spacing: 4,
-                  children: [
-                    Text(
-                      Formatters.currency(displayProfit),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: profitColor,
-                      ),
-                    ),
-                    Text(
-                      '(${Formatters.percent(displayPercent)})',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                        color: profitColor,
-                      ),
-                    ),
-                  ],
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: valueColor ?? AppTheme.textPrimary,
                 ),
-              );
-            },
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (subValue != null && subValue.isNotEmpty)
+                Text(
+                  subValue,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: subValueColor ?? (valueColor ?? AppTheme.textMuted),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
           );
+        }
+
+        Widget buildTxDivider() {
+          return Container(
+            height: 24,
+            width: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 10),
+            color: AppTheme.borderSubtle.withValues(alpha: 0.6),
+          );
+        }
+
+        double? displayProfit;
+        double? displayPercent;
+        Color? profitColor;
+        if (isSatis) {
+          final showNetValues = context.watch<PortfolioProvider>().showNetValues;
+          final hasStopaj = tx.withholdingTax > 0;
+          displayProfit = (hasStopaj && showNetValues) ? tx.netRealizedProfit : tx.realizedProfit;
+          displayPercent = (hasStopaj && showNetValues) ? tx.netProfitPercent : tx.profitPercent;
+          final isProfitVal = displayProfit >= 0;
+          profitColor = isProfitVal ? AppTheme.profit : AppTheme.loss;
         }
 
         if (isMobile) {
@@ -934,29 +980,39 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   child: Divider(color: AppTheme.borderSubtle, height: 1),
                 ),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${Formatters.formatPrice(tx.price)} ₺ × ${tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2)} Adet',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                        Text(
-                          Formatters.currency(tx.totalAmount),
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                      ],
+                    Expanded(
+                      child: buildTxMetricCol(
+                        'Fiyat',
+                        '${Formatters.formatPrice(tx.price)} ₺',
+                      ),
                     ),
-                    ?profitBadgeWidget,
+                    buildTxDivider(),
+                    Expanded(
+                      child: buildTxMetricCol(
+                        'Adet',
+                        tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2),
+                      ),
+                    ),
+                    buildTxDivider(),
+                    Expanded(
+                      child: buildTxMetricCol(
+                        'Tutar',
+                        Formatters.currency(tx.totalAmount),
+                      ),
+                    ),
+                    if (isSatis && displayProfit != null && displayPercent != null) ...[
+                      buildTxDivider(),
+                      Expanded(
+                        child: buildTxMetricCol(
+                          'K/Z',
+                          Formatters.currency(displayProfit),
+                          valueColor: profitColor,
+                          subValue: '(${Formatters.percent(displayPercent)})',
+                          subValueColor: profitColor,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],
@@ -1014,30 +1070,34 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${Formatters.formatPrice(tx.price)} ₺ × ${tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2)} Adet',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    Formatters.currency(tx.totalAmount),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ],
+              const SizedBox(width: 12),
+              buildTxMetricCol(
+                'Fiyat',
+                '${Formatters.formatPrice(tx.price)} ₺',
+                crossAlignment: CrossAxisAlignment.end,
               ),
-              if (profitBadgeWidget != null) ...[
-                const SizedBox(width: 16),
-                profitBadgeWidget,
+              buildTxDivider(),
+              buildTxMetricCol(
+                'Adet',
+                tx.quantity.toStringAsFixed(tx.quantity.truncateToDouble() == tx.quantity ? 0 : 2),
+                crossAlignment: CrossAxisAlignment.end,
+              ),
+              buildTxDivider(),
+              buildTxMetricCol(
+                'Tutar',
+                Formatters.currency(tx.totalAmount),
+                crossAlignment: CrossAxisAlignment.end,
+              ),
+              if (isSatis && displayProfit != null && displayPercent != null) ...[
+                buildTxDivider(),
+                buildTxMetricCol(
+                  'Kâr / Zarar',
+                  Formatters.currency(displayProfit),
+                  valueColor: profitColor,
+                  subValue: '(${Formatters.percent(displayPercent)})',
+                  subValueColor: profitColor,
+                  crossAlignment: CrossAxisAlignment.end,
+                ),
               ],
               if (isLatestForAsset) ...[
                 const SizedBox(width: 8),

@@ -6,7 +6,6 @@ import 'asset_logo.dart';
 import '../models/portfolio_asset.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
-import '../models/return_mode.dart';
 import 'period_performance_badge.dart';
 
 class AssetItemTile extends StatelessWidget {

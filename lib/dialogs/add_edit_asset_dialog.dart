@@ -133,7 +133,6 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
     final isPos = val >= 0;
     final color = isPos ? AppTheme.profit : AppTheme.loss;
     final bg = isPos ? AppTheme.profitBg : AppTheme.lossBg;
-    final sign = isPos ? '+' : '';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -174,7 +173,7 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
                 ),
                 const SizedBox(width: 3),
                 Text(
-                  '$sign${Formatters.percent(val)}',
+                  Formatters.percent(val),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -1054,7 +1053,7 @@ class _AddEditAssetDialogState extends State<AddEditAssetDialog> {
 
                                         return Text(
                                           hasData
-                                              ? '${isNetProfit ? '+' : ''}${Formatters.currency(netProfit)} (${Formatters.percent(netPct)})'
+                                              ? '${Formatters.currency(netProfit)} (${Formatters.percent(netPct)})'
                                               : '-',
                                           style: TextStyle(
                                             fontWeight: FontWeight.w800,

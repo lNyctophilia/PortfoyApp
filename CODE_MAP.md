@@ -34,46 +34,47 @@
 - **File:** `lib/dialogs/add_edit_asset_dialog.dart`
   - **Lines 1-58:** Imports, AddEditAssetDialog declaration with isFullScreen flag, and state controllers.
   - **Lines 59-132:** State initialization (initState), teardown (dispose), and numeric formatters (_formatPrice, _formatNumber, _parseVal).
-  - **Lines 133-192:** _buildReadonlyPeriodBadge() - Readonly badges for asset historical period performance.
+  - **Lines 133-192:** _buildReadonlyPeriodBadge() - Readonly badges for asset historical period performance (positive values without '+' prefix).
   - **Lines 193-355:** Market data fetching, suggestion selection, debounce logic, and date picking.
-  - **Lines 356-398:** _submit() form validation and asset creation/update dispatch to provider.
-  - **Lines 399-470:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop.
-  - **Lines 471-492:** _buildDesktopHeader() - PC header with title, icon, and close button.
-  - **Lines 493-1201:** _buildFormContent() - Category selection, symbol autocomplete, quantity & price fields with TurkishNumberInputFormatter (dot thousand, comma decimal), stopaj, summary preview, historical period performance badges, and actions.
+  - **Lines 356-396:** _submit() form validation and asset creation/update dispatch to provider.
+  - **Lines 397-461:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop.
+  - **Lines 462-492:** _buildDesktopHeader() - PC header with title, icon, and close button.
+  - **Lines 493-1143:** _buildFormContent() - Category selection, symbol autocomplete, quantity & price fields with TurkishNumberInputFormatter (dot thousand, comma decimal), stopaj, summary preview without '+' prefix on positive returns, and actions.
 - **File:** `lib/dialogs/add_edit_portfolio_dialog.dart`
   - **Lines 1-28:** Imports, AddEditPortfolioDialog declaration with isBottomSheet flag, and state setup.
   - **Lines 29-50:** Lifecycle methods (initState, dispose) and form submission logic (_submit).
   - **Lines 51-120:** _buildFormFields() - Input fields (clean name without star or hintText, clean description without hintText), validation, and action buttons.
   - **Lines 121-180:** build() method - Adaptive layout rendering as a draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog shell on desktop.
 - **File:** `lib/dialogs/add_transaction_dialog.dart`
-  - **Lines 1-76:** Imports, AddTransactionDialog declaration with isFullScreen flag, initialAsset, initialType, and state variables.
-  - **Lines 77-166:** initState(), dispose(), Turkish price/number parsing and formatting helpers with precision (_formatPriceGrouped, Formatters.parseDouble).
+  - **Lines 1-75:** Imports, AddTransactionDialog declaration with isFullScreen flag, initialAsset, initialType, and state variables.
+  - **Lines 76-166:** initState() (clean start with no preselected asset on sell, today's date), dispose(), Turkish price/number parsing and formatting helpers with precision (_formatPriceGrouped, Formatters.parseDouble).
   - **Lines 167-261:** Buy (Alis) transaction logic: suggestion selection, market data fetching.
   - **Lines 262-398:** Custom calendar picker dialog (_showCalendarPicker()) and buy date selection (_pickAlisDate()).
-  - **Lines 399-496:** Sell (Satis) transaction logic: asset selection from portfolio, historical price lookup, and date picker.
-  - **Lines 497-586:** _saveTransaction() - FIFO validation, cost estimation, transaction persistence, and asset updating.
-  - **Lines 587-645:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop with 'İşlem Ekle' title.
-  - **Lines 646-677:** _buildDesktopHeader() - PC header row with icon, 'İşlem Ekle' title, and close button.
-  - **Lines 678-854:** _buildFormContent() - Form switcher (Alis/Satis tabs) and text-only save buttons without icons.
-  - **Lines 855-1025:** _buildAlisForm() - Minimalist purchase form with clean inline code/name, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-green "Toplam" cost card.
-  - **Lines 1026-1284:** _buildSatisForm() - Minimalist sale form with consolidated asset info, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-red "Toplam" revenue card.
+  - **Lines 399-486:** Sell (Satis) transaction logic: asset selection from portfolio, historical price lookup, and date picker.
+  - **Lines 487-576:** _saveTransaction() - FIFO validation, cost estimation, transaction persistence, and asset updating.
+  - **Lines 577-647:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile (with dynamic green shopping cart for Alış and red sell tag for Satış) or responsive Dialog shell on desktop with 'İşlem Ekle' title.
+  - **Lines 648-679:** _buildDesktopHeader() - PC header row with dynamic shopping cart / sell tag icon, 'İşlem Ekle' title, and close button.
+  - **Lines 680-897:** _buildFormContent() - Form switcher (Alis/Satis tabs) and responsive actions (full-width expanded buttons on mobile).
+  - **Lines 898-1071:** _buildAlisForm() - Minimalist purchase form with clean inline code/name, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-green "Toplam" cost card.
+  - **Lines 1072-1224:** _showSatisAssetPicker() - Modern modal bottom sheet picker listing portfolio assets with logo, symbol, category, name, and current price (omitting quantity per user rule).
+  - **Lines 1225-1478:** _buildSatisForm() - Minimalist sale form with clickable asset selection container (without asterisk), Toplam Adet and Toplam Fiyat summary card, TurkishNumberInputFormatter price and quantity inputs without helper text, centered date, TL icon, and centered soft-red "Toplam" revenue card.
 - **File:** `lib/dialogs/asset_status_dialog.dart`
   - **Lines 1-34:** Imports, AssetStatusDialog declaration with isFullScreen flag, and state setup.
-  - **Lines 35-113:** build() method: Adaptive layout setup, FIFO calculation, responsive dimensions.
-  - **Lines 114-170:** Mobile fullScreen Scaffold with clean AppBar, responsive 2-row _buildSummaryMetricsBar, aligned 16px tab switcher, and content list.
-  - **Lines 171-314:** Responsive desktop Dialog shell with header, horizontal 20px _buildSummaryMetricsBar, tab switcher, and content list.
-  - **Lines 315-610:** _buildSummaryMetricsBar with Formatters.formatCurrencyPrice precision for average cost and current price, _buildMetricItem, _buildDivider, _buildTabButton.
-  - **Lines 611-787:** _buildLotsTab() - Detailed list of open/closed purchase lots with adaptive Wrap date headers, full price precision, 3-stat clean layout (without Alınan Miktar), and right-aligned P/L box without 'Kâr/Zarar:' prefix (without 'Tamamı Duruyor' or 'Kalan Lot Değeri').
-  - **Lines 788-948:** _buildSalesTab() - Realized sales history with clean empty state (without FIFO subtitle), full price precision, and capital gains.
-  - **Lines 949-987:** _buildSubStat, and formatters.
+  - **Lines 35-117:** build() method: Adaptive layout setup, FIFO calculation, responsive dimensions.
+  - **Lines 118-170:** Mobile fullScreen Scaffold with clean AppBar, responsive 2-row _buildSummaryMetricsBar, aligned 16px tab switcher (green for Alış, red for Satış), and content list.
+  - **Lines 171-314:** Responsive desktop Dialog shell with header, horizontal 20px _buildSummaryMetricsBar, tab switcher (green for Alış, red for Satış), and content list.
+  - **Lines 315-612:** _buildSummaryMetricsBar with Formatters.formatCurrencyPrice precision for average cost and current price, _buildMetricItem, _buildDivider, _buildTabButton (semantic green active border/background for Alış, red for Satış).
+  - **Lines 613-831:** _buildLotsTab() - Detailed list of open/closed purchase lots with responsive phone vs PC layouts, subtle neutral border (no yellow warning border for partially sold lots), full price precision, 3-stat clean layout (without Alınan Miktar), and right-aligned P/L box without '+' prefix.
+  - **Lines 832-985:** _buildSalesTab() - Realized sales history with responsive phone vs PC layouts, removed consumed lots box, renamed 'Maliyet Farkı', 'K/Z' moved next to 'Toplam Gelir' without 'Gerçekleşen:' prefix, full price precision, and capital gains.
+  - **Lines 986-1029:** _buildSubStat, and formatters.
 - **File:** `lib/dialogs/portfolio_detail_dialog.dart`
   - **Lines 1-30:** Imports, PortfolioDetailDialog declaration with isFullScreen flag, and state setup.
-  - **Lines 31-185:** build() method - Adaptive screen shell: full-screen Scaffold with AppBar on mobile vs responsive Dialog shell on desktop.
-  - **Lines 186-247:** _buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, and close icon.
-  - **Lines 248-647:** _buildDetailContent() - Core stretched content: 'Portföy Değeri' header metric with clean value, aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount, Gerçekleşen K/Z), direct PeriodPerformanceRow without redundant title, tightened vertical dividers, distribution bar, and tab bar switcher.
-  - **Lines 648-747:** _buildAssetsTab() - Clean full-width search input, empty state, and full-width AssetItemTile list opening status via AdaptiveNavigation.openAssetStatus.
-  - **Lines 748-1056:** _buildTransactionsTab() - Minimalist empty state (icon and title only, without subtitle or 'İlk İşlemi Ekle' button), chronological transaction history cards with green Alış and red Satış type badges, sales profit badge dynamically calculating Net and Gross returns, and Geri Al action.
-  - **Lines 1057-1123:** _confirmUndoTransaction() and _confirmDeleteAsset().
+  - **Lines 31-195:** build() method - Adaptive screen shell wrapped in LayoutBuilder providing availableHeight for empty state vertical centering: full-screen Scaffold with AppBar on mobile vs responsive Dialog shell on desktop.
+  - **Lines 196-257:** _buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, and close icon.
+  - **Lines 258-658:** _buildDetailContent() - Core stretched content: 'Portföy Değeri' header metric with clean value, aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount without '+' prefix, Gerçekleşen K/Z), direct PeriodPerformanceRow without redundant title, tightened vertical dividers, distribution bar, and tab bar switcher.
+  - **Lines 659-764:** _buildAssetsTab() - Clean full-width search input, vertically and horizontally centered empty state ("Bu portföyde henüz varlık yok"), and full-width AssetItemTile list opening status via AdaptiveNavigation.openAssetStatus.
+  - **Lines 765-1101:** _buildTransactionsTab() - Minimalist vertically and horizontally centered empty state ("Bu portföyde henüz işlem kaydı yok"), chronological transaction history cards with small translucent column headers (Fiyat | Adet | Tutar | K/Z for sales) with dividers and values underneath, green Alış shopping cart and red Satış tag badges, sales profit badge dynamically calculating Net and Gross returns, and Geri Al action.
+  - **Lines 1102-1168:** _confirmUndoTransaction() and _confirmDeleteAsset().
 - **File:** `lib/dialogs/reorder_portfolios_dialog.dart`
   - **Lines 1-28:** Imports, ReorderPortfoliosDialog declaration with isBottomSheet flag.
   - **Lines 29-87:** build() method - Adaptive shell rendering draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog on desktop.
@@ -253,7 +254,7 @@
   - **Lines 246-303:** FifoCalculator.estimateSaleCost() - Hypothetical sale cost basis simulator.
 - **File:** `lib/utils/formatters.dart`
   - **Lines 1-18:** Imports, TextInputFormatter support, and static DateFormat & NumberFormat instances for Turkish locale.
-  - **Lines 19-37:** Currency and percentage string formatters (currency, compactCurrency, percent).
+  - **Lines 19-37:** Currency and percentage string formatters (currency, compactCurrency, percent without positive '+' prefix, negative with '-').
   - **Lines 38-58:** Date and relative time formatters (date, monthYear, daysAgo).
   - **Lines 59-112:** Holding duration text formatter (formatDuration calculating days, months, and years in Turkish).
   - **Lines 113-170:** formatPriceGrouped, formatPrice, and formatCurrencyPrice - Turkish number formatter with '.' thousand separators, ',' decimal separators, and full precision support up to 6-7 decimals for unit prices.
@@ -261,11 +262,11 @@
   - **Lines 186-200:** parseDouble - Robust Turkish locale number parser handling thousand dots and decimal commas without precision loss.
   - **Lines 201-320:** TurkishNumberInputFormatter - Dynamic TextInputFormatter automatically grouping integer thousands with '.' without auto-commas, rejecting manual dot keys, and cleanly supporting manual decimal comma with cursor preservation.
 - **File:** `lib/widgets/asset_item_tile.dart`
-  - **Lines 1-24:** Imports and AssetItemTile declaration with onDelete and onStatus callbacks.
-  - **Lines 25-50:** build() method: mode, inflation rates, and display values setup.
-  - **Lines 51-272:** LayoutBuilder adaptive layout: logo, symbol/category Wrap, name, status button, right-aligned clean value & profit badge (without TÜFE label in Reel mode), and action buttons.
-  - **Lines 273-302:** Desktop 1-row layout with logo & info on left (Expanded) and price, profit badge, and delete button pinned to the far right.
-  - **Lines 303-319:** Historical period performance section delegating to responsive PeriodPerformanceRow.fromAsset ensuring unified responsive expansion on PC and sleek horizontal scroll on mobile.
+  - **Lines 1-23:** Imports and AssetItemTile declaration with onDelete and onStatus callbacks.
+  - **Lines 24-49:** build() method: mode, inflation rates, and display values setup.
+  - **Lines 50-271:** LayoutBuilder adaptive layout: logo, symbol/category Wrap, name, status button, right-aligned clean value & profit badge (without TÜFE label in Reel mode), and action buttons.
+  - **Lines 272-301:** Desktop 1-row layout with logo & info on left (Expanded) and price, profit badge, and delete button pinned to the far right.
+  - **Lines 302-318:** Historical period performance section delegating to responsive PeriodPerformanceRow.fromAsset ensuring unified responsive expansion on PC and sleek horizontal scroll on mobile.
 - **File:** `lib/widgets/asset_logo.dart`
   - **Lines 1-30:** Imports, constants, and AssetLogo widget declaration.
   - **Lines 31-135:** _AssetLogoState lifecycle, SVG icon detection, candidate URLs cascading fallback mechanism (_candidateUrls, _candidateIndex, _tryNextCandidate).
@@ -308,6 +309,7 @@
   - **Lines 236-334:** Transaction history unit and widget tests verifying PortfolioTransaction calculation and PortfolioDetailDialog dynamic Net vs Gross badge rendering.
   - **Lines 335-437:** Unit & widget tests verifying horizontal 16px alignment of summary card, tab buttons, and transaction cards on mobile in AssetStatusDialog, and desktop active mode stretch container in SettingsScreen.
   - **Lines 438-593:** New UI & minimal tests verifying Formatters.formatCurrencyPrice precision, AddEditPortfolioDialog star and hint removal, transactions empty state cleanup, AssetItemTile reel mode label cleanup, and AssetStatusDialog lots/sales minimal requirements.
+  - **Lines 594-705:** Tests verifying Formatters.percent formatting without '+' sign, AddTransactionDialog sell form initial state (no asset pre-selected, star removed, helperText removed, Toplam Adet/Fiyat box), and PortfolioDetailDialog transaction column layout (Fiyat | Adet | Tutar with dividers).
 - **File:** `test/period_performance_test.dart`
   - **Lines 1-182:** Unit & widget tests verifying PeriodPerformanceRow.fromAsset data mapping, empty portfolio reel mode 0.0 neutrality, same-day asset purchase reel mode holding duration logic, 7-period rendering on desktop with expanded layout, and responsive mobile scroll behavior.
 - **File:** `test/transaction_undo_and_disambiguation_test.dart`

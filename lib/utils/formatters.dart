@@ -32,8 +32,8 @@ class Formatters {
     if (!includeSign) {
       return '%${value.abs().toStringAsFixed(2).replaceAll('.', ',')}';
     }
-    final sign = value > 0 ? '+' : '';
-    return '$sign%${value.toStringAsFixed(2).replaceAll('.', ',')}';
+    final sign = value < 0 ? '-' : '';
+    return '$sign%${value.abs().toStringAsFixed(2).replaceAll('.', ',')}';
   }
 
   static String date(DateTime date) {
