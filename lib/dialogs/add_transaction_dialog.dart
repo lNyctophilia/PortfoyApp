@@ -67,6 +67,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   late TextEditingController _satisNameController;
   late TextEditingController _satisQuantityController;
   late TextEditingController _satisPriceController;
+  final FocusNode _satisQuantityFocusNode = FocusNode();
   late DateTime _satisDate;
   DateTime? _satisEarliestDate;
   String? _satisIconUrl;
@@ -103,6 +104,11 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
     _satisQuantityController.addListener(() => setState(() {}));
     _satisPriceController.addListener(() => setState(() {}));
+    _satisQuantityFocusNode.addListener(() {
+      if (!_satisQuantityFocusNode.hasFocus) {
+        _clampSatisQuantity();
+      }
+    });
 
     _selectedType = widget.initialType;
     if (widget.initialAsset != null) {
@@ -137,7 +143,20 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _satisNameController.dispose();
     _satisQuantityController.dispose();
     _satisPriceController.dispose();
+    _satisQuantityFocusNode.dispose();
     super.dispose();
+  }
+
+  void _clampSatisQuantity() {
+    if (_selectedExistingAsset == null) return;
+    final val = _parseVal(_satisQuantityController.text);
+    if (val > _selectedExistingAsset!.quantity) {
+      final formatted = _formatNumber(_selectedExistingAsset!.quantity);
+      _satisQuantityController.value = TextEditingValue(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
+      );
+    }
   }
 
   String _formatPrice(double val) {
@@ -533,6 +552,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         );
         return;
       }
+
+      _clampSatisQuantity();
 
       final qty = _parseVal(_satisQuantityController.text);
       final price = _parseVal(_satisPriceController.text);
@@ -1191,15 +1212,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 10),
-                              Text(
-                                Formatters.formatCurrencyPrice(a.currentPrice),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.textPrimary,
-                                ),
-                              ),
                               if (isSelected) ...[
                                 const SizedBox(width: 8),
                                 const Icon(Icons.check_circle_rounded, size: 18, color: AppTheme.profit),
@@ -1278,11 +1290,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
             decoration: BoxDecoration(
               color: AppTheme.surfaceLight,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _selectedExistingAsset != null
-                    ? AppTheme.loss.withValues(alpha: 0.4)
-                    : AppTheme.borderSubtle,
-              ),
+              border: Border.all(color: AppTheme.borderSubtle),
             ),
             child: Row(
               children: [
@@ -1360,11 +1368,12 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
             children: [
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
                       'Toplam Adet',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w500,
@@ -1376,6 +1385,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       _selectedExistingAsset != null
                           ? '${_formatNumber(_selectedExistingAsset!.quantity)} Adet'
                           : '-',
+                      textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -1395,11 +1405,12 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               ),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
                       'Toplam Fiyat',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w500,
@@ -1411,6 +1422,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       _selectedExistingAsset != null
                           ? Formatters.currency(_selectedExistingAsset!.quantity * _selectedExistingAsset!.currentPrice)
                           : '-',
+                      textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -1427,11 +1439,50 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         ),
         const SizedBox(height: 14),
 
-        // MİKTAR VE SATIŞ FİYATI
+        // Satış Tarihi & Adet
         Row(
           children: [
             Expanded(
+              child: InkWell(
+                onTap: _pickSatisDate,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 52,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.borderSubtle),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_rounded,
+                        size: 18,
+                        color: AppTheme.loss,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          Formatters.date(_satisDate),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
               child: TextFormField(
+                focusNode: _satisQuantityFocusNode,
                 controller: _satisQuantityController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -1442,6 +1493,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                   labelText: 'Adet',
                   hintText: '0',
                 ),
+                onFieldSubmitted: (_) => _clampSatisQuantity(),
+                onEditingComplete: _clampSatisQuantity,
                 validator: (v) {
                   if (_selectedExistingAsset == null) return 'Önce varlık seçin';
                   final val = _parseVal(v ?? '');
@@ -1453,68 +1506,30 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 },
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextFormField(
-                controller: _satisPriceController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  TurkishNumberInputFormatter(maxDecimals: 7),
-                ],
-                onChanged: (val) {
-                  setState(() {
-                    _isSatisPriceManual = val.trim().isNotEmpty;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Satış Fiyatı',
-                  hintText: '0,00',
-                  prefixIcon: Icon(Icons.currency_lira_rounded),
-                ),
-                validator: (v) =>
-                    _parseVal(v ?? '') <= 0 ? 'Geçerli fiyat girin' : null,
-              ),
-            ),
           ],
         ),
         const SizedBox(height: 14),
 
-        // İŞLEM TARİHİ
-        InkWell(
-          onTap: _pickSatisDate,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            height: 52,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceLight,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.borderSubtle),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.calendar_today_rounded,
-                  size: 18,
-                  color: AppTheme.loss,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    Formatters.date(_satisDate),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
+        // Satış Fiyatı
+        TextFormField(
+          controller: _satisPriceController,
+          keyboardType:
+              const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            TurkishNumberInputFormatter(maxDecimals: 7),
+          ],
+          onChanged: (val) {
+            setState(() {
+              _isSatisPriceManual = val.trim().isNotEmpty;
+            });
+          },
+          decoration: const InputDecoration(
+            labelText: 'Satış Fiyatı',
+            hintText: '0,00',
+            prefixIcon: Icon(Icons.currency_lira_rounded),
           ),
+          validator: (v) =>
+              _parseVal(v ?? '') <= 0 ? 'Geçerli fiyat girin' : null,
         ),
         const SizedBox(height: 14),
 

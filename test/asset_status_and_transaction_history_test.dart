@@ -15,6 +15,7 @@ import 'package:portfoy_app/utils/formatters.dart';
 import 'package:portfoy_app/widgets/asset_item_tile.dart';
 import 'package:portfoy_app/widgets/portfolio_card.dart';
 import 'package:portfoy_app/screens/settings_screen.dart';
+import 'package:portfoy_app/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -647,6 +648,109 @@ void main() {
 
       // 5. No helperText "Portföydeki: 100" under quantity
       expect(find.textContaining('Portföydeki:'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('AddTransactionDialog Sell form improvements: no price in picker, subtle border, centered stats, layout order, auto clamp',
+        (WidgetTester tester) async {
+      final asset = PortfolioAsset(
+        id: 'asset_satis_improve',
+        symbol: 'TESTXYZ',
+        name: 'Test Varlik',
+        category: AssetCategory.hisse,
+        quantity: 100,
+        purchasePrice: 200,
+        currentPrice: 250,
+        purchaseDate: DateTime(2025, 1, 1),
+      );
+      final portfolio = Portfolio(
+        id: 'port_tx_improve',
+        name: 'Hisse Portföyü',
+        createdAt: DateTime(2025, 1, 1),
+        assets: [asset],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AddTransactionDialog(
+              portfolio: portfolio,
+              initialType: TransactionType.satis,
+              onSave: (_, _) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 1. Open Asset Picker
+      await tester.tap(find.text('Portföyden satılacak varlığı seçin...'));
+      await tester.pumpAndSettle();
+
+      // Check BottomSheet contents: symbol, category badge, and name exist, but price does NOT exist
+      expect(find.text('TESTXYZ'), findsWidgets);
+      expect(find.text('Test Varlik'), findsWidgets);
+      expect(find.text(AssetCategory.hisse.displayName), findsWidgets);
+      expect(find.text(Formatters.formatCurrencyPrice(250)), findsNothing);
+
+      // Select asset
+      await tester.tap(find.text('TESTXYZ').last);
+      await tester.pumpAndSettle();
+
+      // 2. Check asset container border has NO red highlight (is AppTheme.borderSubtle)
+      final inkWellFinder = find.ancestor(
+        of: find.byIcon(Icons.keyboard_arrow_down_rounded),
+        matching: find.byType(InkWell),
+      ).first;
+      final assetCardContainer = tester.widget<Container>(
+        find.descendant(of: inkWellFinder, matching: find.byType(Container)).first,
+      );
+      final boxDec = assetCardContainer.decoration as BoxDecoration?;
+      expect(boxDec?.border?.top.color, AppTheme.borderSubtle);
+
+      // 3. Toplam Adet and Toplam Fiyat columns are centered
+      final adetCol = tester.widget<Column>(
+        find.ancestor(of: find.text('Toplam Adet'), matching: find.byType(Column)).first,
+      );
+      expect(adetCol.crossAxisAlignment, CrossAxisAlignment.center);
+
+      final fiyatCol = tester.widget<Column>(
+        find.ancestor(of: find.text('Toplam Fiyat'), matching: find.byType(Column)).first,
+      );
+      expect(fiyatCol.crossAxisAlignment, CrossAxisAlignment.center);
+
+      // 4. Form layout order: Tarih & Adet are in a Row together, and Satış Fiyatı is below them
+      final adetFieldFinder = find.widgetWithText(TextFormField, 'Adet');
+      final adetRowFinder = find.ancestor(of: adetFieldFinder, matching: find.byType(Row)).first;
+      expect(
+        find.descendant(of: adetRowFinder, matching: find.byIcon(Icons.calendar_today_rounded)),
+        findsOneWidget,
+      );
+      // Satış Fiyatı is present
+      expect(find.widgetWithText(TextFormField, 'Satış Fiyatı'), findsOneWidget);
+
+      // 5. Adet auto-clamp test:
+      // Initially, selecting TESTXYZ populated 100 Adet
+      expect(find.text('100'), findsWidgets);
+
+      // User enters 250 (more than 100 in portfolio)
+      await tester.enterText(adetFieldFinder, '250');
+      await tester.pump();
+
+      // Submit field (Enter / Done action)
+      final textField = tester.widget<TextField>(
+        find.descendant(of: adetFieldFinder, matching: find.byType(TextField)),
+      );
+      textField.onSubmitted?.call('250');
+      await tester.pump();
+
+      // Verify it clamped back to 100
+      final editableText = tester.widget<EditableText>(
+        find.descendant(of: adetFieldFinder, matching: find.byType(EditableText)),
+      );
+      expect(editableText.controller.text, '100');
 
       await tester.pumpWidget(const SizedBox());
     });
