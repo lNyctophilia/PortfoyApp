@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/asset_category.dart';
 import '../models/portfolio.dart';
 import '../models/portfolio_asset.dart';
 import '../models/portfolio_transaction.dart';

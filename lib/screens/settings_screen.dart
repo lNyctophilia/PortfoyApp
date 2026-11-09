@@ -66,7 +66,7 @@ class SettingsScreen extends StatelessWidget {
                     border: Border.all(color: AppTheme.borderSubtle),
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // 1. SEÇENEK: BRÜT GETİRİ
                       _buildRadioOption(
@@ -106,6 +106,8 @@ class SettingsScreen extends StatelessWidget {
 
                       // Önizleme & Aktif Mod Durum Kutusu
                       Container(
+                        key: const Key('settings_active_mode_box'),
+                        width: double.infinity,
                         margin: const EdgeInsets.all(16),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,

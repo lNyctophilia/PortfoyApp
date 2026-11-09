@@ -10,6 +10,7 @@ import 'package:portfoy_app/models/portfolio_transaction.dart';
 import 'package:portfoy_app/models/return_mode.dart';
 import 'package:portfoy_app/providers/portfolio_provider.dart';
 import 'package:portfoy_app/widgets/portfolio_card.dart';
+import 'package:portfoy_app/screens/settings_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -327,6 +328,108 @@ void main() {
 
       // Under Net: should show +%82,50 and ₺825,00
       expect(find.text('(+%82,50)'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('AssetStatusDialog aligns summary, tab buttons, and transaction cards to 16px on mobile',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+      final asset = PortfolioAsset(
+        id: 'asset_align',
+        symbol: 'ALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        quantity: 10,
+        purchasePrice: 200,
+        currentPrice: 250,
+        purchaseDate: DateTime(2025, 1, 1),
+      );
+      final portfolio = Portfolio(
+        id: 'port_align',
+        name: 'Altın Portföyü',
+        createdAt: DateTime(2025, 1, 1),
+        assets: [asset],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetStatusDialog(
+            portfolio: portfolio,
+            asset: asset,
+            provider: provider,
+            isFullScreen: true,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 1. Summary card bounds
+      final summaryFinder = find.byKey(const Key('asset_status_summary_card'));
+      expect(summaryFinder, findsOneWidget);
+      final summaryRect = tester.getRect(summaryFinder);
+      expect(summaryRect.left, 16.0);
+      expect(summaryRect.right, 390.0 - 16.0);
+
+      // 2. Tab buttons row bounds
+      final alisTabFinder = find.text('Alış Lotları');
+      expect(alisTabFinder, findsOneWidget);
+      final alisButton = find.ancestor(of: alisTabFinder, matching: find.byType(InkWell)).first;
+      final alisButtonRect = tester.getRect(alisButton);
+      expect(alisButtonRect.left, 16.0);
+
+      final satisTabFinder = find.text('Satış Geçmişi');
+      expect(satisTabFinder, findsOneWidget);
+      final satisButton = find.ancestor(of: satisTabFinder, matching: find.byType(InkWell)).first;
+      final satisButtonRect = tester.getRect(satisButton);
+      expect(satisButtonRect.right, 390.0 - 16.0);
+
+      // 3. Lot card bounds
+      final lotDateFinder = find.textContaining('Alış:');
+      expect(lotDateFinder, findsOneWidget);
+      final lotCardFinder = find.ancestor(of: lotDateFinder, matching: find.byType(Container)).first;
+      final lotCardRect = tester.getRect(lotCardFinder);
+      expect(lotCardRect.left, 16.0);
+      expect(lotCardRect.right, 390.0 - 16.0);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('SettingsScreen active mode preview container stretches across full width on desktop',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: const MaterialApp(
+            home: SettingsScreen(),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final currentModeFinder = find.byKey(const Key('settings_active_mode_box'));
+      expect(currentModeFinder, findsOneWidget);
+
+      final modeContainerRect = tester.getRect(currentModeFinder);
+
+      // On 1200px screen, SettingsScreen has ConstrainedBox(maxWidth: 720) with horizontal padding 24 (720 - 48 = 672).
+      // The parent RadioGroup container has 1px border on each side: 672 - 2 = 670 width.
+      // The mode box outer geometry (including 16 margin on each side) stretches across the full 670px width.
+      expect(modeContainerRect.width, 670.0);
 
       await tester.pumpWidget(const SizedBox());
     });

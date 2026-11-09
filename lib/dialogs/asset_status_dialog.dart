@@ -1,4 +1,3 @@
-import '../core/navigation/adaptive_navigation.dart';
 import 'package:flutter/material.dart';
 import '../models/asset_category.dart';
 import '../models/portfolio.dart';
@@ -129,7 +128,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
 
             // TAB BUTONLARI (Alış Lotları / Satışlar)
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 20, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 20, vertical: 4),
               child: Row(
                 children: [
                   Expanded(
@@ -272,7 +271,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
 
             // TAB BUTONLARI (Alış Lotları / Satışlar)
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 20, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 20, vertical: 4),
               child: Row(
                 children: [
                   Expanded(
@@ -620,7 +619,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 6, 20, 16),
+      padding: EdgeInsets.fromLTRB(isMobile ? 16 : 20, 6, isMobile ? 16 : 20, 16),
       itemCount: result.allLots.length,
       itemBuilder: (context, index) {
         final lot = result.allLots[index];
@@ -649,10 +648,16 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Üst Satır: Tarih & Durum Rozeti
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 6,
                 children: [
-                  Row(
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 4,
                     children: [
                       Container(
                         padding: const EdgeInsets.all(6),
@@ -666,7 +671,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                           color: AppTheme.profit,
                         ),
                       ),
-                      const SizedBox(width: 8),
                       Text(
                         'Alış: ${Formatters.date(lot.date)}',
                         style: const TextStyle(
@@ -675,7 +679,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                           color: AppTheme.textPrimary,
                         ),
                       ),
-                      const SizedBox(width: 6),
                       Text(
                         '(${Formatters.daysAgo(lot.date)})',
                         style: const TextStyle(
@@ -736,10 +739,14 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Divider(color: AppTheme.borderSubtle, height: 1),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 6,
                   children: [
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text(
                           'Kalan Lot Değeri: ',
@@ -823,13 +830,11 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 6, 20, 16),
+      padding: EdgeInsets.fromLTRB(isMobile ? 16 : 20, 6, isMobile ? 16 : 20, 16),
       itemCount: result.saleRecords.length,
       itemBuilder: (context, index) {
         final saleRecord = result.saleRecords[index];
         final tx = saleRecord.transaction;
-        final isProfit = saleRecord.realizedProfit >= 0;
-        final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
@@ -843,10 +848,16 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Üst Satır: Satış Tarihi ve Gerçekleşen Kâr Rozeti
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 6,
                 children: [
-                  Row(
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 4,
                     children: [
                       Container(
                         padding: const EdgeInsets.all(6),
@@ -860,7 +871,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                           color: AppTheme.loss,
                         ),
                       ),
-                      const SizedBox(width: 8),
                       Text(
                         'Satış: ${Formatters.date(tx.date)}',
                         style: const TextStyle(
@@ -869,7 +879,6 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                           color: AppTheme.textPrimary,
                         ),
                       ),
-                      const SizedBox(width: 6),
                       Text(
                         '(${Formatters.daysAgo(tx.date)})',
                         style: const TextStyle(
