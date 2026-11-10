@@ -277,9 +277,9 @@
 - **File:** `lib/widgets/asset_symbol_autocomplete.dart`
   - **Lines 1-43:** Imports and AssetSymbolAutocomplete declaration with assetName, labelText, prefixIcon, and showRefreshButton support.
   - **Lines 44-165:** State initialization, focus listeners, and debounced search.
-  - **Lines 166-428:** \_showOverlay() - Category-grouped dropdown overlay with clean category headers ('Yatırım Fonu', 'Borsa Yatırım Fonu', without parenthetical text or count badges) and clean symbol rows (without subtitle badge next to code).
-  - **Lines 429-438:** \_hideOverlay() - Overlay dismissal helper.
-  - **Lines 439-515:** build() method - TextFormField with magnifying glass search prefix icon when empty and clean inline code & name display.
+  - **Lines 166-405:** \_showOverlay() - Category-grouped dropdown overlay with TapRegion (groupId: _layerLink) protecting touch interactions, clean category headers, and item selection.
+  - **Lines 406-410:** \_hideOverlay() - Overlay dismissal helper.
+  - **Lines 411-529:** build() method - CompositedTransformTarget wrapped with TapRegion, responsive desktop onTapOutside unfocus handler, TextFormField with magnifying glass search prefix, and inline code & name display.
 - **File:** `lib/widgets/category_distribution_bar.dart`
   - **Lines 1-33:** Imports, CategoryDistributionBar declaration, and color palette definition.
   - **Lines 34-160:** build() method: Multi-segmented horizontal progress bar, compact responsive legend badges with percentages and monetary values.

@@ -246,8 +246,10 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
             link: _layerLink,
             showWhenUnlinked: false,
             offset: Offset(0, size.height + 6),
-            child: Material(
-              color: Colors.transparent,
+            child: TapRegion(
+              groupId: _layerLink,
+              child: Material(
+                color: Colors.transparent,
               child: Container(
                 constraints: const BoxConstraints(maxHeight: 320),
                 decoration: BoxDecoration(
@@ -394,9 +396,10 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
               ),
             ),
           ),
-        );
-      },
-    );
+        ),
+      );
+    },
+  );
 
     overlay.insert(_overlayEntry!);
   }
@@ -414,12 +417,22 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
         widget.assetName!.trim().isNotEmpty &&
         !isEmpty;
 
+    final isDesktop = MediaQuery.sizeOf(context).width >= 600;
+
     return CompositedTransformTarget(
       link: _layerLink,
-      child: Stack(
-        alignment: Alignment.centerLeft,
-        children: [
-          TextFormField(
+      child: TapRegion(
+        groupId: _layerLink,
+        onTapOutside: (event) {
+          // Masaüstünde dışarı tıklandığında menüyü kapat
+          if (isDesktop && _focusNode.hasFocus) {
+            _focusNode.unfocus();
+          }
+        },
+        child: Stack(
+          alignment: Alignment.centerLeft,
+          children: [
+            TextFormField(
             controller: widget.controller,
             focusNode: _focusNode,
             textCapitalization: TextCapitalization.characters,
@@ -510,6 +523,7 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
             ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
