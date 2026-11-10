@@ -11,6 +11,7 @@ class Portfolio {
   final List<PortfolioAsset> assets;
   final List<PortfolioTransaction> transactions;
   final bool isVisible;
+  final int sortIndex;
 
   Portfolio({
     required this.id,
@@ -20,6 +21,7 @@ class Portfolio {
     required this.assets,
     this.transactions = const [],
     this.isVisible = true,
+    this.sortIndex = 0,
   });
 
   int get assetCount => assets.length;
@@ -319,6 +321,7 @@ class Portfolio {
     List<PortfolioAsset>? assets,
     List<PortfolioTransaction>? transactions,
     bool? isVisible,
+    int? sortIndex,
   }) {
     return Portfolio(
       id: id ?? this.id,
@@ -328,6 +331,7 @@ class Portfolio {
       assets: assets ?? this.assets,
       transactions: transactions ?? this.transactions,
       isVisible: isVisible ?? this.isVisible,
+      sortIndex: sortIndex ?? this.sortIndex,
     );
   }
 
@@ -340,6 +344,7 @@ class Portfolio {
       'assets': assets.map((a) => a.toJson()).toList(),
       'transactions': transactions.map((t) => t.toJson()).toList(),
       'isVisible': isVisible,
+      'sortIndex': sortIndex,
     };
   }
 
@@ -358,6 +363,7 @@ class Portfolio {
               .toList() ??
           [],
       isVisible: json['isVisible'] as bool? ?? true,
+      sortIndex: json['sortIndex'] as int? ?? (json['order'] as int? ?? 0),
     );
   }
 }

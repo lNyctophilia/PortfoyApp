@@ -44,6 +44,7 @@ class AssetSymbolAutocomplete extends StatefulWidget {
 class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
   final FocusNode _focusNode = FocusNode();
   final LayerLink _layerLink = LayerLink();
+  final Object _tapRegionGroupId = Object();
   OverlayEntry? _overlayEntry;
 
   List<AssetSuggestion> _suggestions = [];
@@ -85,18 +86,18 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
   void _onFocusChanged() {
     setState(() {});
     if (_focusNode.hasFocus) {
-      if (widget.controller.text.trim().isNotEmpty) {
+      if (widget.controller.text.trim().isNotEmpty && _suggestions.isNotEmpty) {
+        _showOverlay();
+      } else if (widget.controller.text.trim().isNotEmpty) {
         _performSearch(widget.controller.text);
       } else {
         _hideOverlay();
       }
-    } else {
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (mounted && !_focusNode.hasFocus) {
-          _hideOverlay();
-        }
-      });
     }
+    // Not: Mobilde ekrandaki öneri listesine dokunulup kaydırıldığında input odağı
+    // kaybolabilir. Bu sebeple odak kaybında (blur) overlay'i kapatmıyoruz.
+    // Liste yalnızca kullanıcı arama kutusu ve öneri listesi dışına dokunduğunda
+    // (TapRegion.onTapOutside) veya bir varlık seçtiğinde kapatılır.
   }
 
   void _onControllerChanged() {
@@ -173,9 +174,17 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
 
     _overlayEntry = OverlayEntry(
       builder: (context) {
-        final screenWidth = MediaQuery.sizeOf(context).width;
+        final mediaQuery = MediaQuery.of(context);
+        final screenWidth = mediaQuery.size.width;
+        final screenHeight = mediaQuery.size.height;
+        final viewInsetsBottom = mediaQuery.viewInsets.bottom;
         final targetWidth = math.min(size.width.clamp(200.0, 520.0), screenWidth - 32);
         final accentColor = widget.category?.color ?? AppTheme.primaryLight;
+
+        // RenderBox koordinatları ile klavyenin üzerinde kalan boşluğu hesapla
+        final fieldOffset = renderBox.localToGlobal(Offset.zero);
+        final spaceBelow = screenHeight - viewInsetsBottom - (fieldOffset.dy + size.height) - 16;
+        final dynamicMaxHeight = (spaceBelow > 140) ? math.min(320.0, spaceBelow) : 220.0;
 
         // Kategorilere göre bölümler (BYF'ler ayrı bir bölüm olarak listelenir)
         final sections = <Map<String, dynamic>>[];
@@ -247,44 +256,50 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
             showWhenUnlinked: false,
             offset: Offset(0, size.height + 6),
             child: TapRegion(
-              groupId: _layerLink,
+              groupId: _tapRegionGroupId,
+              onTapOutside: (_) {
+                _hideOverlay();
+              },
               child: Material(
                 color: Colors.transparent,
-              child: Container(
-                constraints: const BoxConstraints(maxHeight: 320),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceElevated,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: accentColor.withValues(alpha: 0.35),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
+                child: Container(
+                  constraints: BoxConstraints(maxHeight: dynamicMaxHeight),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceElevated,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: accentColor.withValues(alpha: 0.35),
+                      width: 1.2,
                     ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_isSearching)
-                        LinearProgressIndicator(
-                          minHeight: 2,
-                          backgroundColor: Colors.transparent,
-                          valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                        ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_isSearching)
+                          LinearProgressIndicator(
+                            minHeight: 2,
+                            backgroundColor: Colors.transparent,
+                            valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                          ),
 
-                      // Gruplanmış Öneri Listesi
-                      Flexible(
-                        child: ListView(
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          children: [
+                        // Gruplanmış Öneri Listesi
+                        Flexible(
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            child: ListView(
+                              padding: EdgeInsets.zero,
+                              shrinkWrap: true,
+                              physics: const ClampingScrollPhysics(),
+                              children: [
                             for (final section in sections) ...[
                               // Bölüm Başlığı (Section Header)
                               Container(
@@ -386,8 +401,9 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
                                     ),
                                   ),
                                 ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
                     ],
@@ -398,8 +414,8 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
           ),
         ),
       );
-    },
-  );
+      },
+    );
 
     overlay.insert(_overlayEntry!);
   }
@@ -417,22 +433,14 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
         widget.assetName!.trim().isNotEmpty &&
         !isEmpty;
 
-    final isDesktop = MediaQuery.sizeOf(context).width >= 600;
-
-    return CompositedTransformTarget(
+    return TapRegion(
+      groupId: _tapRegionGroupId,
+      child: CompositedTransformTarget(
       link: _layerLink,
-      child: TapRegion(
-        groupId: _layerLink,
-        onTapOutside: (event) {
-          // Masaüstünde dışarı tıklandığında menüyü kapat
-          if (isDesktop && _focusNode.hasFocus) {
-            _focusNode.unfocus();
-          }
-        },
-        child: Stack(
-          alignment: Alignment.centerLeft,
-          children: [
-            TextFormField(
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          TextFormField(
             controller: widget.controller,
             focusNode: _focusNode,
             textCapitalization: TextCapitalization.characters,
@@ -525,5 +533,5 @@ class _AssetSymbolAutocompleteState extends State<AssetSymbolAutocomplete> {
       ),
     ),
   );
-  }
+}
 }

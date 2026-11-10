@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
@@ -261,9 +262,20 @@ class PortfolioProvider extends ChangeNotifier {
         } else {
           _portfolios = cloudPortfolios;
         }
+        _portfolios.sort((a, b) {
+          if (a.sortIndex != b.sortIndex) {
+            return a.sortIndex.compareTo(b.sortIndex);
+          }
+          return b.createdAt.compareTo(a.createdAt);
+        });
         await _storageService.savePortfolios(_portfolios);
         _backfillMissingAssetIcons();
       } else if (_portfolios.isNotEmpty) {
+        for (int i = 0; i < _portfolios.length; i++) {
+          if (_portfolios[i].sortIndex != i) {
+            _portfolios[i] = _portfolios[i].copyWith(sortIndex: i);
+          }
+        }
         await _firestoreService.savePortfolios(user.uid, _portfolios);
       }
 
@@ -371,8 +383,13 @@ class PortfolioProvider extends ChangeNotifier {
       mergedPortfolios.add(cp.copyWith(assets: updatedAssets));
     }
 
-    // Portföyleri oluşturulma tarihine göre en yeni en üstte sırala
-    mergedPortfolios.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    // Portföyleri öncelikle sortIndex'e göre, eşitlik durumunda oluşturulma tarihine göre sırala
+    mergedPortfolios.sort((a, b) {
+      if (a.sortIndex != b.sortIndex) {
+        return a.sortIndex.compareTo(b.sortIndex);
+      }
+      return b.createdAt.compareTo(a.createdAt);
+    });
 
     _portfolios = mergedPortfolios;
     _lastSyncTime = DateTime.now();
@@ -446,6 +463,12 @@ class PortfolioProvider extends ChangeNotifier {
 
     await MarketDataService.ensureLogoCacheLoaded();
     _portfolios = await _storageService.loadPortfolios();
+    _portfolios.sort((a, b) {
+      if (a.sortIndex != b.sortIndex) {
+        return a.sortIndex.compareTo(b.sortIndex);
+      }
+      return b.createdAt.compareTo(a.createdAt);
+    });
     _backfillMissingAssetIcons();
     if (_returnMode == ReturnCalculationMode.reel) {
       refreshInflationData();
@@ -620,15 +643,24 @@ class PortfolioProvider extends ChangeNotifier {
     required String name,
     String description = '',
   }) async {
+    final nextSortIndex = _portfolios.isEmpty
+        ? 0
+        : _portfolios.map((p) => p.sortIndex).reduce(math.max) + 1;
+
     final newPortfolio = Portfolio(
       id: 'port_${DateTime.now().millisecondsSinceEpoch}',
       name: name,
       description: description,
       createdAt: DateTime.now(),
       assets: [],
+      sortIndex: nextSortIndex,
     );
 
-    _portfolios.insert(0, newPortfolio);
+    // Yeni portföy listenin en altına eklenir
+    _portfolios.add(newPortfolio);
+    for (int i = 0; i < _portfolios.length; i++) {
+      _portfolios[i] = _portfolios[i].copyWith(sortIndex: i);
+    }
     await _persistPortfolios();
     notifyListeners();
   }
@@ -662,6 +694,9 @@ class PortfolioProvider extends ChangeNotifier {
 
   Future<void> deletePortfolio(String id) async {
     _portfolios.removeWhere((p) => p.id == id);
+    for (int i = 0; i < _portfolios.length; i++) {
+      _portfolios[i] = _portfolios[i].copyWith(sortIndex: i);
+    }
     await _persistPortfolios();
     notifyListeners();
   }
@@ -678,6 +713,10 @@ class PortfolioProvider extends ChangeNotifier {
     }
     final item = _portfolios.removeAt(oldIndex);
     _portfolios.insert(newIndex, item);
+    // Sıralamayı kalıcı hale getirmek için her portföye yeni indeksini ata
+    for (int i = 0; i < _portfolios.length; i++) {
+      _portfolios[i] = _portfolios[i].copyWith(sortIndex: i);
+    }
     await _persistPortfolios();
     notifyListeners();
   }

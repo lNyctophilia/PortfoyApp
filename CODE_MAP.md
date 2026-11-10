@@ -144,13 +144,13 @@
   - **Lines 41-55:** Getter defaultIcon mapping category to Material icon.
   - **Lines 56-86:** Method buildIcon() with custom SVG/vector handling for emtia/metals.
 - **File:** `lib/models/portfolio.dart`
-  - **Lines 1-24:** Imports, Portfolio class declaration, properties, and constructor.
-  - **Lines 25-51:** Aggregate getters for asset counts, gross total cost, gross total value, and net values.
-  - **Lines 52-112:** Real (inflation-adjusted) return calculations and mode-based profit evaluation methods (profitForMode, valueForMode).
-  - **Lines 113-230:** Realized gains from transactions, earliestActivePurchaseDate, active holding duration (holdingDays based on active assets), and neutral-duration sensitive period performance metrics (daily, weekly, monthly, threeMonthly, sixMonthly, yearly returning 0.0 when duration is insufficient).
-  - **Lines 231-313:** Asset allocation breakdown calculations (assetAllocations, categoryPercentages, categoryValues).
-  - **Lines 314-364:** Immutable helper copyWith() and JSON serialization methods (toJson, fromJson).
-  - **Lines 365-379:** AssetAllocationItem model representing category and asset distribution weights.
+  - **Lines 1-25:** Imports, Portfolio class declaration, properties including sortIndex, and constructor with default sortIndex = 0.
+  - **Lines 26-52:** Aggregate getters for asset counts, gross total cost, gross total value, and net values.
+  - **Lines 53-113:** Real (inflation-adjusted) return calculations and mode-based profit evaluation methods (profitForMode, valueForMode).
+  - **Lines 114-231:** Realized gains from transactions, earliestActivePurchaseDate, active holding duration (holdingDays based on active assets), and neutral-duration sensitive period performance metrics (daily, weekly, monthly, threeMonthly, sixMonthly, yearly returning 0.0 when duration is insufficient).
+  - **Lines 232-314:** Asset allocation breakdown calculations (assetAllocations, categoryPercentages, categoryValues).
+  - **Lines 315-370:** Immutable helper copyWith() and JSON serialization methods (toJson, fromJson) supporting sortIndex.
+  - **Lines 371-385:** AssetAllocationItem model representing category and asset distribution weights.
 - **File:** `lib/models/portfolio_asset.dart`
   - **Lines 1-25:** Imports, PortfolioAsset class declaration, and properties.
   - **Lines 26-44:** Constructor definition with default parameter values.
@@ -169,18 +169,18 @@
   - **Lines 1-6:** Enum declaration ReturnCalculationMode (brut, net, reel).
   - **Lines 7-63:** Extension ReturnCalculationModeExtension with labels, badgeText, title, shortDescription, and detailedDescription.
 - **File:** `lib/providers/portfolio_provider.dart`
-  - **Lines 1-52:** Imports, PortfolioProvider declaration, auth/firestore services, and internal state variables (realtime stream subscriptions and isLiveConnected state).
-  - **Lines 53-115:** Filtered portfolio getters, auth state getters (currentUser, isSignedIn, isSyncing, lastSyncTime, syncError, isLiveConnected), and category filter accessors.
-  - **Lines 116-163:** Grand total aggregate getters across all visible portfolios (cost, value, profit, profit percent for brut/net/reel).
-  - **Lines 164-292:** Auth lifecycle listener, dispose teardown, cloud synchronization with local merge (syncWithCloud() with auto markUserApproved and gate unlocking), Google sign-in/out dispatch with syncing status tracking, and background Firestore persistence (\_persistPortfolios()).
-  - **Lines 293-415:** Realtime Firestore stream handlers (\_startRealtimeSubscriptions, \_cancelRealtimeSubscriptions, \_onPortfoliosSnapshot, \_onSettingsSnapshot).
-  - **Lines 416-461:** Data loading (loadData()), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
-  - **Lines 462-509:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
-  - **Lines 510-576:** Missing asset icon resolution & self-healing corrupted fund names and logos (\_backfillMissingAssetIcons()).
-  - **Lines 577-665:** Category filtering setter and portfolio CRUD operations (addPortfolio, updatePortfolio, togglePortfolioVisibility, deletePortfolio, reorderPortfolios).
-  - **Lines 666-723:** Direct asset management (addAsset, updateAsset, deleteAsset).
-  - **Lines 724-929:** Transaction handling (addTransaction with FIFO calculations, auto-healing corrupted fund transactions, deleteTransaction with buy rollback reducing quantity/recalculating average cost and deleting when 0, and sell rollback).
-  - **Lines 930-1079:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()) preserving established asset names, and getPortfolioById lookup.
+  - **Lines 1-53:** Imports (including dart:math), PortfolioProvider declaration, auth/firestore services, and internal state variables (realtime stream subscriptions and isLiveConnected state).
+  - **Lines 54-116:** Filtered portfolio getters, auth state getters (currentUser, isSignedIn, isSyncing, lastSyncTime, syncError, isLiveConnected), and category filter accessors.
+  - **Lines 117-164:** Grand total aggregate getters across all visible portfolios (cost, value, profit, profit percent for brut/net/reel).
+  - **Lines 165-300:** Auth lifecycle listener, dispose teardown, cloud synchronization with local merge (syncWithCloud() with sortIndex preservation, auto markUserApproved and gate unlocking), Google sign-in/out dispatch with syncing status tracking, and background Firestore persistence (\_persistPortfolios()).
+  - **Lines 301-423:** Realtime Firestore stream handlers (\_startRealtimeSubscriptions, \_cancelRealtimeSubscriptions, \_onPortfoliosSnapshot preserving sortIndex order, \_onSettingsSnapshot).
+  - **Lines 424-477:** Data loading (loadData() preserving sortIndex), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
+  - **Lines 478-525:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
+  - **Lines 526-592:** Missing asset icon resolution & self-healing corrupted fund names and logos (\_backfillMissingAssetIcons()).
+  - **Lines 593-704:** Category filtering setter and portfolio CRUD operations (addPortfolio adding to bottom with sequential sortIndex, updatePortfolio, togglePortfolioVisibility, deletePortfolio normalizing indices, reorderPortfolios assigning sequential sortIndex).
+  - **Lines 705-762:** Direct asset management (addAsset, updateAsset, deleteAsset).
+  - **Lines 763-968:** Transaction handling (addTransaction with FIFO calculations, auto-healing corrupted fund transactions, deleteTransaction with buy rollback reducing quantity/recalculating average cost and deleting when 0, and sell rollback).
+  - **Lines 969-1118:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()) preserving established asset names, and getPortfolioById lookup.
 - **File:** `lib/screens/settings_screen.dart`
   - **Lines 1-15:** Imports and SettingsScreen declaration.
   - **Lines 16-46:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
@@ -276,10 +276,10 @@
   - **Lines 161-270:** buildGoldCard() - Vector gold ingot badge for gold and precious metal assets.
 - **File:** `lib/widgets/asset_symbol_autocomplete.dart`
   - **Lines 1-43:** Imports and AssetSymbolAutocomplete declaration with assetName, labelText, prefixIcon, and showRefreshButton support.
-  - **Lines 44-165:** State initialization, focus listeners, and debounced search.
-  - **Lines 166-405:** \_showOverlay() - Category-grouped dropdown overlay with TapRegion (groupId: _layerLink) protecting touch interactions, clean category headers, and item selection.
-  - **Lines 406-410:** \_hideOverlay() - Overlay dismissal helper.
-  - **Lines 411-529:** build() method - CompositedTransformTarget wrapped with TapRegion, responsive desktop onTapOutside unfocus handler, TextFormField with magnifying glass search prefix, and inline code & name display.
+  - **Lines 44-165:** State initialization, focus listeners (without aggressive blur hide timer), TapRegion group setup, and debounced search.
+  - **Lines 166-444:** \_showOverlay() - Category-grouped dropdown overlay wrapped in TapRegion with dynamicMaxHeight respecting virtual keyboard viewInsets, ClampingScrollPhysics, and visible scrollbar.
+  - **Lines 445-454:** \_hideOverlay() - Safe overlay dismissal helper.
+  - **Lines 455-537:** build() method - TextFormField wrapped in TapRegion with search prefix icon and clean inline code & name display.
 - **File:** `lib/widgets/category_distribution_bar.dart`
   - **Lines 1-33:** Imports, CategoryDistributionBar declaration, and color palette definition.
   - **Lines 34-160:** build() method: Multi-segmented horizontal progress bar, compact responsive legend badges with percentages and monetary values.
@@ -314,6 +314,8 @@
   - **Lines 594-705:** Tests verifying Formatters.percent formatting without '+' sign, AddTransactionDialog sell form initial state (no asset pre-selected, star removed, helperText removed, Toplam Adet/Fiyat box), and PortfolioDetailDialog transaction column layout (Fiyat | Adet | Tutar with dividers).
   - **Lines 706-924:** Tests verifying 2-layer PC layout with Adet and Maliyet on far right in AssetStatusDialog, and 3-column table on mobile with header K/Z pill in PortfolioDetailDialog.
   - **Lines 925-1021:** Widget tests verifying removal of tab count badges in AssetStatusDialog and removal of parenthetical transaction count next to 'İşlem Geçmişi' in PortfolioDetailDialog.
+- **File:** `test/mobile_autocomplete_and_reorder_sync_test.dart`
+  - **Lines 1-152:** Unit & widget tests verifying Portfolio sortIndex serialization/deserialization, PortfolioProvider reorderPortfolios sequential sortIndex updates, addPortfolio bottom insertion, cloud sync sortIndex priority over createdAt, and AssetSymbolAutocomplete TapRegion touch dismissal prevention.
 - **File:** `test/period_performance_test.dart`
   - **Lines 1-182:** Unit & widget tests verifying PeriodPerformanceRow.fromAsset data mapping, empty portfolio reel mode 0.0 neutrality, same-day asset purchase reel mode holding duration logic, 7-period rendering on desktop with expanded layout, and responsive mobile scroll behavior.
 - **File:** `test/transaction_undo_and_disambiguation_test.dart`
