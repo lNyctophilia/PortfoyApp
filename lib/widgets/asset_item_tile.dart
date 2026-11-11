@@ -153,7 +153,7 @@ class AssetItemTile extends StatelessWidget {
                         ),
                         SizedBox(width: 5),
                         Text(
-                          'Durumum',
+                          'Maliyet Detayı',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,

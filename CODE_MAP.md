@@ -64,17 +64,21 @@
   - **Lines 118-168:** Mobile fullScreen Scaffold with clean AppBar, responsive 2-row \_buildSummaryMetricsBar, aligned 16px tab switcher without count badges (green for Alış, red for Satış), and content list.
   - **Lines 169-310:** Responsive desktop Dialog shell with header, horizontal 20px \_buildSummaryMetricsBar, tab switcher without count badges (green for Alış, red for Satış), and content list.
   - **Lines 311-589:** \_buildSummaryMetricsBar with Formatters.formatCurrencyPrice precision for average cost and current price, \_buildMetricItem, \_buildDivider, \_buildTabButton (clean icon and label without count badge container).
-  - **Lines 590-872:** \_buildLotsTab() - Detailed list of open/closed purchase lots with responsive 2-layer PC and mobile layouts, 'Adet' label, 'Maliyet' label placed on the far right, top-right K/Z box (`profitPill`) without '+' prefix, and 3 divider-separated columns.
-  - **Lines 873-1111:** \_buildSalesTab() - Realized sales history with responsive 2-layer PC and mobile layouts, top-right K/Z box (`profitBox`), and 4 divider-separated columns (`Satış Fiyatı | Adet | Maliyet Farkı | Toplam Gelir`).
-  - **Lines 1112-1158:** \_buildItemDivider(), \_buildSubStat, and \_formatQty formatters.
+  - **Lines 590-823:** \_buildLotsTab() - Active purchase lots list (exhausted/tükenen lots filtered out, Tükendi badge removed), responsive 2-layer PC and mobile layouts, 'Adet' and 'Maliyet' labels, '(X Gün)' elapsed duration format, and profit pill.
+  - **Lines 824-1062:** \_buildSalesTab() - Realized sales history with responsive 2-layer PC and mobile layouts, top-right K/Z box (`profitBox`), and 4 divider-separated columns (`Satış Fiyatı | Adet | Maliyet Farkı | Toplam Gelir`).
+  - **Lines 1063-1109:** \_buildItemDivider(), \_buildSubStat, and \_formatQty formatters.
 - **File:** `lib/dialogs/portfolio_detail_dialog.dart`
-  - **Lines 1-30:** Imports, PortfolioDetailDialog declaration with isFullScreen flag, and state setup.
-  - **Lines 31-195:** build() method - Adaptive screen shell wrapped in LayoutBuilder providing availableHeight for empty state vertical centering: full-screen Scaffold with AppBar on mobile vs responsive Dialog shell on desktop.
-  - **Lines 196-257:** \_buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, and close icon.
-  - **Lines 258-658:** \_buildDetailContent() - Core stretched content: 'Portföy Değeri' header metric with clean value, aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount without '+' prefix, Gerçekleşen K/Z), direct PeriodPerformanceRow without redundant title, tightened vertical dividers, distribution bar, and tab bar switcher with clean 'İşlem Geçmişi' tab button without transaction count.
-  - **Lines 659-764:** \_buildAssetsTab() - Clean full-width search input, vertically and horizontally centered empty state ("Bu portföyde henüz varlık yok"), and full-width AssetItemTile list opening status via AdaptiveNavigation.openAssetStatus.
-  - **Lines 765-1213:** \_buildTransactionsTab() - Minimalist vertically and horizontally centered empty state ("Bu portföyde henüz işlem kaydı yok"), chronological transaction history cards with fixed-position slots on PC (4 columns on sell: Fiyat, Adet, Tutar, Kâr / Zarar with kzPill, empty 151px slot on buy, and fixed 40px Undo button at far right) and on mobile (fixed 32px Undo button slot at far right on both buy and sell preventing shifting, and centered kzPill between asset info and undo button).
-  - **Lines 1214-1280:** \_confirmUndoTransaction() and \_confirmDeleteAsset().
+  - **Lines 1-33:** Imports, PortfolioDetailDialog declaration with isFullScreen flag, and state setup (_txSortCriterion, _txSortAscending).
+  - **Lines 34-201:** build() method - Adaptive screen shell wrapped in LayoutBuilder providing availableHeight for empty state vertical centering: full-screen Scaffold with AppBar on mobile vs responsive Dialog shell on desktop.
+  - **Lines 202-263:** \_buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, and close icon.
+  - **Lines 264-676:** \_buildDetailContent() - Core stretched content: 'Portföy Değeri' header metric with clean value, aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount without '+' prefix, Gerçekleşen K/Z), direct PeriodPerformanceRow without redundant title, tightened vertical dividers, distribution bar, tab bar switcher with clean 'İşlem Geçmişi' tab button, and dynamic TransactionSortBar on desktop when transaction tab is active.
+  - **Lines 677-782:** \_buildAssetsTab() - Clean full-width search input, vertically and horizontally centered empty state ("Bu portföyde henüz varlık yok"), and full-width AssetItemTile list opening status via AdaptiveNavigation.openAssetStatus.
+  - **Lines 783-1253:** \_buildTransactionsTab() - Minimalist vertically and horizontally centered empty state ("Bu portföyde henüz işlem kaydı yok"), responsive mobile TransactionSortBar, sorted transaction history cards using sortPortfolioTransactions with fixed-position slots on PC and mobile, and undo button.
+  - **Lines 1254-1320:** \_confirmUndoTransaction() and \_confirmDeleteAsset().
+- **File:** `lib/dialogs/widgets/transaction_sort_bar.dart`
+  - **Lines 1-15:** Imports and TransactionSortCriterion enum (date, fund, type, profitLoss, amount).
+  - **Lines 16-60:** sortPortfolioTransactions() comparator with net profit consideration and deterministic date tie-breaker.
+  - **Lines 61-188:** TransactionSortBar widget - Apple-minimalist responsive sort bar with dropdown selector and animated rotation direction toggle button.
 - **File:** `lib/dialogs/reorder_portfolios_dialog.dart`
   - **Lines 1-28:** Imports, ReorderPortfoliosDialog declaration with isBottomSheet flag.
   - **Lines 29-87:** build() method - Adaptive shell rendering draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog on desktop.
@@ -265,7 +269,7 @@
 - **File:** `lib/utils/formatters.dart`
   - **Lines 1-18:** Imports, TextInputFormatter support, and static DateFormat & NumberFormat instances for Turkish locale.
   - **Lines 19-37:** Currency and percentage string formatters (currency, compactCurrency, percent without positive '+' prefix, negative with '-').
-  - **Lines 38-58:** Date and relative time formatters (date, monthYear, daysAgo).
+  - **Lines 38-58:** Date and duration formatters (date, monthYear, daysAgo returning '$diff Gün' calendar day format).
   - **Lines 59-112:** Holding duration text formatter (formatDuration calculating days, months, and years in Turkish).
   - **Lines 113-170:** formatPriceGrouped, formatPrice, and formatCurrencyPrice - Turkish number formatter with '.' thousand separators, ',' decimal separators, and full precision support up to 6-7 decimals for unit prices.
   - **Lines 171-185:** formatNumber with Turkish grouping.
@@ -274,7 +278,7 @@
 - **File:** `lib/widgets/asset_item_tile.dart`
   - **Lines 1-23:** Imports and AssetItemTile declaration with onDelete and onStatus callbacks.
   - **Lines 24-49:** build() method: mode, inflation rates, and display values setup.
-  - **Lines 50-271:** LayoutBuilder adaptive layout: logo, symbol/category Wrap, name, status button, right-aligned clean value & profit badge (without TÜFE label in Reel mode), and action buttons.
+  - **Lines 50-271:** LayoutBuilder adaptive layout: logo, symbol/category Wrap, name, 'Maliyet Detayı' status button, right-aligned clean value & profit badge (without TÜFE label in Reel mode), and action buttons.
   - **Lines 272-301:** Desktop 1-row layout with logo & info on left (Expanded) and price, profit badge, and delete button pinned to the far right.
   - **Lines 302-318:** Historical period performance section delegating to responsive PeriodPerformanceRow.fromAsset ensuring unified responsive expansion on PC and sleek horizontal scroll on mobile.
 - **File:** `lib/widgets/asset_logo.dart`
@@ -322,6 +326,7 @@
   - **Lines 594-705:** Tests verifying Formatters.percent formatting without '+' sign, AddTransactionDialog sell form initial state (no asset pre-selected, star removed, helperText removed, Toplam Adet/Fiyat box), and PortfolioDetailDialog transaction column layout (Fiyat | Adet | Tutar with dividers).
   - **Lines 706-924:** Tests verifying 2-layer PC layout with Adet and Maliyet on far right in AssetStatusDialog, and 3-column table on mobile with header K/Z pill in PortfolioDetailDialog.
   - **Lines 925-1181:** Widget tests verifying removal of tab count badges in AssetStatusDialog, removal of parenthetical transaction count next to 'İşlem Geçmişi' in PortfolioDetailDialog, mobile fixed right undo button & centered K/Z pill alignment, and PC 4-column layout on sell with empty slot on buy.
+  - **Lines 1182-1320:** Widget & unit tests verifying 'Maliyet Detayı' button on AssetItemTile, filtering out exhausted/tükenen lots from AssetStatusDialog without 'Tükendi' badge, and Formatters.daysAgo '$diff Gün' formatting.
 - **File:** `test/mobile_autocomplete_and_reorder_sync_test.dart`
   - **Lines 1-152:** Unit & widget tests verifying Portfolio sortIndex serialization/deserialization, PortfolioProvider reorderPortfolios sequential sortIndex updates, addPortfolio bottom insertion, cloud sync sortIndex priority over createdAt, and AssetSymbolAutocomplete TapRegion touch dismissal prevention.
 - **File:** `test/period_performance_test.dart`

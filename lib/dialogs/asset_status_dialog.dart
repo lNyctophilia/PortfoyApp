@@ -589,7 +589,8 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
 
   // ALIÅ LOTLARI SEKMESİ
   Widget _buildLotsTab(FifoResult result, PortfolioAsset asset, bool isMobile) {
-    if (result.allLots.isEmpty) {
+    final activeLots = result.activeLots;
+    if (activeLots.isEmpty) {
       return const Center(
         child: Text(
           'Alış kaydı bulunamadı',
@@ -600,49 +601,41 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
 
     return ListView.builder(
       padding: EdgeInsets.fromLTRB(isMobile ? 16 : 20, 6, isMobile ? 16 : 20, 16),
-      itemCount: result.allLots.length,
+      itemCount: activeLots.length,
       itemBuilder: (context, index) {
-        final lot = result.allLots[index];
+        final lot = activeLots[index];
         final lotProfit = lot.unrealizedProfit(asset.currentPrice);
         final lotProfitPercent = lot.unrealizedProfitPercent(asset.currentPrice);
         final isProfit = lotProfit >= 0;
         final profitColor = isProfit ? AppTheme.profit : AppTheme.loss;
 
-        final profitPill = (!lot.isFullySold)
-            ? Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3.5,
-                ),
-                decoration: BoxDecoration(
-                  color: isProfit ? AppTheme.profitBg : AppTheme.lossBg,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '${Formatters.currency(lotProfit)} (${Formatters.percent(lotProfitPercent)})',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: profitColor,
-                  ),
-                ),
-              )
-            : null;
+        final profitPill = Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 3.5,
+          ),
+          decoration: BoxDecoration(
+            color: isProfit ? AppTheme.profitBg : AppTheme.lossBg,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            '${Formatters.currency(lotProfit)} (${Formatters.percent(lotProfitPercent)})',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: profitColor,
+            ),
+          ),
+        );
 
         if (isMobile) {
           return Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: lot.isFullySold
-                  ? AppTheme.surfaceLight.withValues(alpha: 0.5)
-                  : AppTheme.surfaceLight,
+              color: AppTheme.surfaceLight,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: lot.isFullySold
-                    ? AppTheme.borderSubtle.withValues(alpha: 0.5)
-                    : AppTheme.borderSubtle,
-              ),
+              border: Border.all(color: AppTheme.borderSubtle),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -694,24 +687,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    if (profitPill != null)
-                      profitPill
-                    else if (lot.isFullySold)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          'Tükendi',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                      ),
+                    profitPill,
                   ],
                 ),
                 const Padding(
@@ -731,14 +707,13 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                       child: _buildSubStat(
                         'Adet',
                         '${_formatQty(lot.remainingQuantity)} Adet',
-                        highlightColor: lot.isFullySold ? AppTheme.textMuted : AppTheme.textPrimary,
                       ),
                     ),
                     _buildItemDivider(),
                     Expanded(
                       child: _buildSubStat(
                         'Maliyet',
-                        Formatters.currency(lot.totalOriginalCost),
+                        Formatters.currency(lot.totalRemainingCost),
                       ),
                     ),
                   ],
@@ -753,15 +728,9 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: lot.isFullySold
-                ? AppTheme.surfaceLight.withValues(alpha: 0.5)
-                : AppTheme.surfaceLight,
+            color: AppTheme.surfaceLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: lot.isFullySold
-                  ? AppTheme.borderSubtle.withValues(alpha: 0.5)
-                  : AppTheme.borderSubtle,
-            ),
+            border: Border.all(color: AppTheme.borderSubtle),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -813,24 +782,7 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  if (profitPill != null)
-                    profitPill
-                  else if (lot.isFullySold)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'Tükendi',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textMuted,
-                        ),
-                      ),
-                    ),
+                  profitPill,
                 ],
               ),
               const Padding(
@@ -850,14 +802,13 @@ class _AssetStatusDialogState extends State<AssetStatusDialog> {
                     child: _buildSubStat(
                       'Adet',
                       '${_formatQty(lot.remainingQuantity)} Adet',
-                      highlightColor: lot.isFullySold ? AppTheme.textMuted : AppTheme.textPrimary,
                     ),
                   ),
                   _buildItemDivider(),
                   Expanded(
                     child: _buildSubStat(
                       'Maliyet',
-                      Formatters.currency(lot.totalOriginalCost),
+                      Formatters.currency(lot.totalRemainingCost),
                     ),
                   ),
                 ],

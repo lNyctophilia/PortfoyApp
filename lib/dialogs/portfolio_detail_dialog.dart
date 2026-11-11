@@ -12,6 +12,8 @@ import '../models/return_mode.dart';
 import '../widgets/period_performance_badge.dart';
 import '../core/navigation/adaptive_navigation.dart';
 import 'add_transaction_dialog.dart';
+import 'widgets/transaction_sort_bar.dart';
+
 class PortfolioDetailDialog extends StatefulWidget {
   final String portfolioId;
   final bool isFullScreen;
@@ -21,12 +23,16 @@ class PortfolioDetailDialog extends StatefulWidget {
     required this.portfolioId,
     this.isFullScreen = false,
   });
+
   @override
   State<PortfolioDetailDialog> createState() => _PortfolioDetailDialogState();
 }
+
 class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
   int _selectedTab = 0; // 0: Varlıklar, 1: İşlem Geçmişi
   String _search = '';
+  TransactionSortCriterion _txSortCriterion = TransactionSortCriterion.date;
+  bool _txSortAscending = false;
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<PortfolioProvider>();
@@ -580,6 +586,18 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                                 ],
                               ),
                             ),
+                            if (_selectedTab == 1 && portfolio.transactions.isNotEmpty) ...[
+                              const SizedBox(width: 14),
+                              TransactionSortBar(
+                                selectedCriterion: _txSortCriterion,
+                                isAscending: _txSortAscending,
+                                onCriterionChanged: (criterion) =>
+                                    setState(() => _txSortCriterion = criterion),
+                                onToggleDirection: () =>
+                                    setState(() => _txSortAscending = !_txSortAscending),
+                                isMobile: false,
+                              ),
+                            ],
                             const Spacer(),
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
@@ -796,12 +814,32 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         ),
       );
     }
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: portfolio.transactions.length,
-      itemBuilder: (context, index) {
-        final tx = portfolio.transactions[index];
+    final sortedTransactions = sortPortfolioTransactions(
+      portfolio.transactions,
+      _txSortCriterion,
+      _txSortAscending,
+      showNetValues: provider.showNetValues,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (isMobile)
+          TransactionSortBar(
+            selectedCriterion: _txSortCriterion,
+            isAscending: _txSortAscending,
+            onCriterionChanged: (criterion) =>
+                setState(() => _txSortCriterion = criterion),
+            onToggleDirection: () =>
+                setState(() => _txSortAscending = !_txSortAscending),
+            isMobile: true,
+          ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: sortedTransactions.length,
+          itemBuilder: (context, index) {
+            final tx = sortedTransactions[index];
         final isLatestForAsset = portfolio.transactions
                 .firstWhere(
                   (t) => t.symbol.toUpperCase() == tx.symbol.toUpperCase(),
@@ -1207,10 +1245,12 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
               ),
             ],
           ),
-        );
-      },
-    );
-  }
+          );
+        },
+      ),
+    ],
+  );
+}
   void _confirmUndoTransaction(
     BuildContext context,
     PortfolioProvider provider,

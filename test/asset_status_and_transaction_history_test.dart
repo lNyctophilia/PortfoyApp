@@ -67,7 +67,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('Durumum screen displays Adet, pure number without suffix, and Ort. Maliyet in summary bar',
+    testWidgets('Maliyet Detayı screen displays Adet, pure number without suffix, and Ort. Maliyet in summary bar',
         (WidgetTester tester) async {
       final provider = PortfolioProvider();
       addTearDown(() => provider.dispose());
@@ -1176,6 +1176,145 @@ void main() {
       expect(undoRect0.right, equals(undoRect1.right));
 
       await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('AssetItemTile renders Maliyet Detayı button instead of Durumum',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+
+      final asset = PortfolioAsset(
+        id: 'asset_button_test',
+        symbol: 'ALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        quantity: 10,
+        purchasePrice: 200,
+        currentPrice: 250,
+        purchaseDate: DateTime.now(),
+      );
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            home: Scaffold(
+              body: AssetItemTile(
+                asset: asset,
+                onStatus: () {},
+                onDelete: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Maliyet Detayı'), findsOneWidget);
+      expect(find.text('Durumum'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('AssetStatusDialog filters out exhausted lots and does not show Tükendi',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+
+      await provider.addPortfolio(name: 'FIFO Test Portföy');
+      final pId = provider.rawPortfolios.first.id;
+
+      // 1. Alış: 10 adet @ 100 TL
+      final buy1 = PortfolioTransaction(
+        id: 'tx_buy_1',
+        portfolioId: pId,
+        type: TransactionType.alis,
+        symbol: 'ALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        date: DateTime.now().subtract(const Duration(days: 40)),
+        quantity: 10,
+        price: 100,
+      );
+      await provider.addTransaction(pId, buy1);
+
+      // 2. Alış: 20 adet @ 120 TL
+      final buy2 = PortfolioTransaction(
+        id: 'tx_buy_2',
+        portfolioId: pId,
+        type: TransactionType.alis,
+        symbol: 'ALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        date: DateTime.now().subtract(const Duration(days: 26)),
+        quantity: 20,
+        price: 120,
+      );
+      await provider.addTransaction(pId, buy2);
+
+      // 3. Satış: 10 adet @ 150 TL -> İlk alış lotunu tamamen tüketir (10 adet tükenir)
+      final sell1 = PortfolioTransaction(
+        id: 'tx_sell_1',
+        portfolioId: pId,
+        type: TransactionType.satis,
+        symbol: 'ALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        date: DateTime.now().subtract(const Duration(days: 10)),
+        quantity: 10,
+        price: 150,
+      );
+      await provider.addTransaction(pId, sell1);
+
+      final updatedPortfolio = provider.rawPortfolios.first;
+      final asset = updatedPortfolio.assets.firstWhere((a) => a.symbol == 'ALTIN');
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            home: AssetStatusDialog(
+              portfolio: updatedPortfolio,
+              asset: asset,
+              provider: provider,
+              isFullScreen: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Tükenen ilk lot (tx_buy_1) listede olmamalı, "Tükendi" rozeti bulunmamalı
+      expect(find.text('Tükendi'), findsNothing);
+
+      // Yalnızca aktif ikinci lot (20 adet) listelenmeli
+      expect(find.text('20 Adet'), findsOneWidget);
+      expect(find.text('10 Adet'), findsNothing);
+
+      // Geçen süre "(26 Gün)" olarak görünmeli, "önce" veya "ay" içermemeli
+      expect(find.textContaining('(26 Gün)'), findsOneWidget);
+      expect(find.textContaining('önce'), findsNothing);
+      expect(find.textContaining('ay'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    test('Formatters.daysAgo returns format like 26 Gün without once suffix or ay', () {
+      final now = DateTime.now();
+      expect(Formatters.daysAgo(now), equals('0 Gün'));
+      expect(Formatters.daysAgo(now.subtract(const Duration(days: 1))), equals('1 Gün'));
+      expect(Formatters.daysAgo(now.subtract(const Duration(days: 26))), equals('26 Gün'));
+      expect(Formatters.daysAgo(now.subtract(const Duration(days: 45))), equals('45 Gün'));
+      expect(Formatters.daysAgo(now.subtract(const Duration(days: 400))), equals('400 Gün'));
     });
   });
 }

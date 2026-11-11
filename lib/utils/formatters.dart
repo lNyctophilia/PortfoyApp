@@ -49,12 +49,12 @@ class Formatters {
   }
 
   static String daysAgo(DateTime date) {
-    final diff = DateTime.now().difference(date).inDays;
-    if (diff == 0) return 'Bugün';
-    if (diff == 1) return 'Dün';
-    if (diff < 30) return '$diff gün önce';
-    if (diff < 365) return '${(diff / 30).floor()} ay önce';
-    return '${(diff / 365).toStringAsFixed(1)} yıl önce';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    final diff = today.difference(target).inDays;
+    final safeDiff = diff < 0 ? 0 : diff;
+    return '$safeDiff Gün';
   }
 
   static String formatDuration(DateTime startDate, [DateTime? endDate]) {

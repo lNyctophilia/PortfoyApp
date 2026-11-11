@@ -91,7 +91,7 @@ class AdaptiveNavigation {
     }
   }
 
-  /// Varlık Durum ve FIFO Lot Detaylarını açar.
+  /// Varlık Maliyet Detayı ve FIFO Lot Detaylarını açar.
   /// PC'de: Çok sekmeli popup modal olarak açılır.
   /// Telefonda: Tam ekran görünüm olarak açılır.
   static Future<T?> openAssetStatus<T>(
