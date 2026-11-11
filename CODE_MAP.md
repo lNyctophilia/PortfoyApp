@@ -73,8 +73,8 @@
   - **Lines 196-257:** \_buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, and close icon.
   - **Lines 258-658:** \_buildDetailContent() - Core stretched content: 'Portföy Değeri' header metric with clean value, aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount without '+' prefix, Gerçekleşen K/Z), direct PeriodPerformanceRow without redundant title, tightened vertical dividers, distribution bar, and tab bar switcher with clean 'İşlem Geçmişi' tab button without transaction count.
   - **Lines 659-764:** \_buildAssetsTab() - Clean full-width search input, vertically and horizontally centered empty state ("Bu portföyde henüz varlık yok"), and full-width AssetItemTile list opening status via AdaptiveNavigation.openAssetStatus.
-  - **Lines 765-1135:** \_buildTransactionsTab() - Minimalist vertically and horizontally centered empty state ("Bu portföyde henüz işlem kaydı yok"), chronological transaction history cards with fixed-position slots on PC (Fiyat, Adet, Tutar, K/Z box immediately to the right of Tutar, reserved space for Alış and Undo button preventing column shifting, wider spacing towards the left) and unified 3-column table on mobile with K/Z pill in header.
-  - **Lines 1136-1204:** \_confirmUndoTransaction() and \_confirmDeleteAsset().
+  - **Lines 765-1213:** \_buildTransactionsTab() - Minimalist vertically and horizontally centered empty state ("Bu portföyde henüz işlem kaydı yok"), chronological transaction history cards with fixed-position slots on PC (4 columns on sell: Fiyat, Adet, Tutar, Kâr / Zarar with kzPill, empty 151px slot on buy, and fixed 40px Undo button at far right) and on mobile (fixed 32px Undo button slot at far right on both buy and sell preventing shifting, and centered kzPill between asset info and undo button).
+  - **Lines 1214-1280:** \_confirmUndoTransaction() and \_confirmDeleteAsset().
 - **File:** `lib/dialogs/reorder_portfolios_dialog.dart`
   - **Lines 1-28:** Imports, ReorderPortfoliosDialog declaration with isBottomSheet flag.
   - **Lines 29-87:** build() method - Adaptive shell rendering draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog on desktop.
@@ -321,7 +321,7 @@
   - **Lines 438-593:** New UI & minimal tests verifying Formatters.formatCurrencyPrice precision, AddEditPortfolioDialog star and hint removal, transactions empty state cleanup, AssetItemTile reel mode label cleanup, and AssetStatusDialog lots/sales minimal requirements.
   - **Lines 594-705:** Tests verifying Formatters.percent formatting without '+' sign, AddTransactionDialog sell form initial state (no asset pre-selected, star removed, helperText removed, Toplam Adet/Fiyat box), and PortfolioDetailDialog transaction column layout (Fiyat | Adet | Tutar with dividers).
   - **Lines 706-924:** Tests verifying 2-layer PC layout with Adet and Maliyet on far right in AssetStatusDialog, and 3-column table on mobile with header K/Z pill in PortfolioDetailDialog.
-  - **Lines 925-1021:** Widget tests verifying removal of tab count badges in AssetStatusDialog and removal of parenthetical transaction count next to 'İşlem Geçmişi' in PortfolioDetailDialog.
+  - **Lines 925-1181:** Widget tests verifying removal of tab count badges in AssetStatusDialog, removal of parenthetical transaction count next to 'İşlem Geçmişi' in PortfolioDetailDialog, mobile fixed right undo button & centered K/Z pill alignment, and PC 4-column layout on sell with empty slot on buy.
 - **File:** `test/mobile_autocomplete_and_reorder_sync_test.dart`
   - **Lines 1-152:** Unit & widget tests verifying Portfolio sortIndex serialization/deserialization, PortfolioProvider reorderPortfolios sequential sortIndex updates, addPortfolio bottom insertion, cloud sync sortIndex priority over createdAt, and AssetSymbolAutocomplete TapRegion touch dismissal prevention.
 - **File:** `test/period_performance_test.dart`

@@ -1017,5 +1017,165 @@ void main() {
 
       await tester.pumpWidget(const SizedBox());
     });
+
+    testWidgets('PortfolioDetailDialog Transaction History Mobile: Undo button remains fixed at right on buy and sell, and K/Z pill is centered',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+
+      await provider.addPortfolio(name: 'Mobil Hizalama Portföyü');
+      final pId = provider.rawPortfolios.first.id;
+
+      final alisTx = PortfolioTransaction(
+        id: 'tx_alis_mobile_pos',
+        portfolioId: pId,
+        type: TransactionType.alis,
+        symbol: 'ALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        date: DateTime(2025, 1, 1),
+        quantity: 10,
+        price: 50,
+        costPrice: 50,
+      );
+
+      final satisTx = PortfolioTransaction(
+        id: 'tx_satis_mobile_pos',
+        portfolioId: pId,
+        type: TransactionType.satis,
+        symbol: 'GUMUS',
+        name: 'Gram Gümüş',
+        category: AssetCategory.emtia,
+        date: DateTime(2025, 2, 1),
+        quantity: 20,
+        price: 300,
+        costPrice: 200,
+        realizedProfit: 2000,
+      );
+
+      await provider.addTransaction(pId, alisTx);
+      await provider.addTransaction(pId, satisTx);
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            home: PortfolioDetailDialog(
+              portfolioId: pId,
+              isFullScreen: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final txTabFinder = find.textContaining('İşlem Geçmişi');
+      await tester.tap(txTabFinder);
+      await tester.pumpAndSettle();
+
+      // Find undo buttons
+      final undoIcons = find.byIcon(Icons.undo_rounded);
+      expect(undoIcons, findsNWidgets(2));
+
+      // In mobile, both undo buttons should have identical right edge alignment
+      final undoRect0 = tester.getRect(undoIcons.at(0));
+      final undoRect1 = tester.getRect(undoIcons.at(1));
+      expect(undoRect0.right, equals(undoRect1.right));
+
+      // Verify K/Z pill is rendered between asset info and undo button
+      final kzFinder = find.textContaining('(%50,00)');
+      expect(kzFinder, findsOneWidget);
+      final kzRect = tester.getRect(kzFinder);
+      final gumusRect = tester.getRect(find.textContaining('GUMUS').first);
+
+      // kzRect is to the right of GUMUS and to the left of the undo button
+      expect(kzRect.left > gumusRect.left, isTrue);
+      expect(kzRect.right < undoRect0.left, isTrue);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('PortfolioDetailDialog Transaction History PC: 4 columns on sell, empty slot on buy, fixed undo button',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final provider = PortfolioProvider();
+      addTearDown(() => provider.dispose());
+
+      await provider.addPortfolio(name: 'PC İşlem Portföyü');
+      final pId = provider.rawPortfolios.first.id;
+
+      final alisTx = PortfolioTransaction(
+        id: 'tx_alis_pc_pos',
+        portfolioId: pId,
+        type: TransactionType.alis,
+        symbol: 'ALTIN',
+        name: 'Gram Altın',
+        category: AssetCategory.emtia,
+        date: DateTime(2025, 1, 1),
+        quantity: 10,
+        price: 50,
+        costPrice: 50,
+      );
+
+      final satisTx = PortfolioTransaction(
+        id: 'tx_satis_pc_pos',
+        portfolioId: pId,
+        type: TransactionType.satis,
+        symbol: 'GUMUS',
+        name: 'Gram Gümüş',
+        category: AssetCategory.emtia,
+        date: DateTime(2025, 2, 1),
+        quantity: 20,
+        price: 300,
+        costPrice: 200,
+        realizedProfit: 2000,
+      );
+
+      await provider.addTransaction(pId, alisTx);
+      await provider.addTransaction(pId, satisTx);
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PortfolioProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            home: PortfolioDetailDialog(
+              portfolioId: pId,
+              isFullScreen: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final txTabFinder = find.textContaining('İşlem Geçmişi');
+      await tester.tap(txTabFinder);
+      await tester.pumpAndSettle();
+
+      // On PC, Satış card has 'Kâr / Zarar' 4th column header
+      expect(find.text('Kâr / Zarar'), findsOneWidget);
+
+      // Both cards have 'Fiyat', 'Adet', 'Tutar'
+      expect(find.text('Fiyat'), findsNWidgets(2));
+      expect(find.text('Adet'), findsNWidgets(2));
+      expect(find.text('Tutar'), findsNWidgets(2));
+
+      // Both undo buttons have identical right edge alignment
+      final undoIcons = find.byIcon(Icons.undo_rounded);
+      expect(undoIcons, findsNWidgets(2));
+      final undoRect0 = tester.getRect(undoIcons.at(0));
+      final undoRect1 = tester.getRect(undoIcons.at(1));
+      expect(undoRect0.right, equals(undoRect1.right));
+
+      await tester.pumpWidget(const SizedBox());
+    });
   });
 }

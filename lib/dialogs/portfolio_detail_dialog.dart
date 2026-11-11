@@ -905,7 +905,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
         Widget? kzPill;
         if (isSatis && displayProfit != null && displayPercent != null) {
           kzPill = Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
             decoration: BoxDecoration(
               color: (displayProfit >= 0) ? AppTheme.profitBg : AppTheme.lossBg,
               borderRadius: BorderRadius.circular(6),
@@ -940,64 +940,115 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   children: [
                     typeBadge,
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text.rich(
-                            TextSpan(
-                              text: '${tx.symbol} ',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textPrimary,
-                              ),
-                              children: [
-                                TextSpan(
-                                  text: '• ${Formatters.date(tx.date)}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.normal,
-                                    color: AppTheme.textMuted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            tx.name,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppTheme.textSecondary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
                     if (kzPill != null) ...[
-                      const SizedBox(width: 6),
-                      Flexible(child: kzPill),
-                    ],
-                    if (isLatestForAsset) ...[
-                      const SizedBox(width: 4),
-                      SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: IconButton(
-                          icon: const Icon(Icons.undo_rounded, size: 18),
-                          tooltip: 'Geri Al',
-                          color: AppTheme.warning,
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
+                      Flexible(
+                        fit: FlexFit.loose,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text.rich(
+                              TextSpan(
+                                text: '${tx.symbol} ',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: '• ${Formatters.date(tx.date)}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.normal,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              tx.name,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: kzPill,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ] else ...[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text.rich(
+                              TextSpan(
+                                text: '${tx.symbol} ',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: '• ${Formatters.date(tx.date)}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.normal,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              tx.name,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
                     ],
+                    const SizedBox(width: 4),
+                    SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: isLatestForAsset
+                          ? IconButton(
+                              icon: const Icon(Icons.undo_rounded, size: 18),
+                              tooltip: 'Geri Al',
+                              color: AppTheme.warning,
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => _confirmUndoTransaction(context, provider, portfolio.id, tx),
+                            )
+                          : const SizedBox(),
+                    ),
                   ],
                 ),
                 const Padding(
@@ -1105,13 +1156,38 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                 width: 105,
                 crossAlignment: CrossAxisAlignment.end,
               ),
-              const SizedBox(width: 10),
-              // K/Z Kutucuğu: Tutarın hemen sağında sabit slot (alışlarda boş kalacak şekilde)
-              Container(
-                width: 130,
-                alignment: Alignment.centerLeft,
-                child: kzPill ?? const SizedBox(),
-              ),
+              // 4. Sütun: Kâr / Zarar (Satış işlemlerinde K/Z kutucuğu, Alış işlemlerinde boşluk)
+              if (isSatis && kzPill != null) ...[
+                buildTxDivider(),
+                SizedBox(
+                  width: 130,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Kâr / Zarar',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textMuted.withValues(alpha: 0.75),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: kzPill,
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                // Alış işlemlerinde tire yerine sadece boşluk (sabit slot genişliği: divider (21px) + 130px = 151px)
+                const SizedBox(width: 151),
+              ],
               const SizedBox(width: 8),
               // Geri Al Butonu: Sabit slot (son işlem değilse boş kalacak şekilde)
               Container(
