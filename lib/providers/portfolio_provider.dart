@@ -557,7 +557,7 @@ class PortfolioProvider extends ChangeNotifier {
       for (var asset in portfolio.assets) {
         // GPN veya bilinen TEFAS fonlarının yabancı hisse isimleriyle bozulmasını düzelt (Self-healing)
         if (asset.category == AssetCategory.fon) {
-          final curated = AssetCatalogService.findCurated(asset.symbol);
+          final curated = AssetCatalogService.findCurated(asset.symbol, AssetCategory.fon);
           if (curated != null && curated.category == AssetCategory.fon) {
             final isCorrupted = asset.name.toLowerCase().contains('global payments') ||
                 (asset.symbol.toUpperCase() == 'GPN' && !asset.name.toLowerCase().contains('garanti'));
@@ -568,6 +568,15 @@ class PortfolioProvider extends ChangeNotifier {
               );
               hasChanges = true;
             }
+          }
+        } else if (asset.category == AssetCategory.hisse && asset.symbol.toUpperCase() == 'GPN') {
+          // Global Payments hissesinin Garanti logosu almasını düzelt
+          if (asset.iconUrl == null || asset.iconUrl!.contains('garanti')) {
+            asset = asset.copyWith(
+              iconUrl: 'https://s3-symbol-logo.tradingview.com/global-payments.svg',
+            );
+            MarketDataService.cacheLogo(asset.symbol, AssetCategory.hisse, asset.iconUrl!);
+            hasChanges = true;
           }
         }
 
@@ -616,7 +625,7 @@ class PortfolioProvider extends ChangeNotifier {
 
       final updatedTransactions = portfolio.transactions.map((t) {
         if (t.category == AssetCategory.fon) {
-          final curated = AssetCatalogService.findCurated(t.symbol);
+          final curated = AssetCatalogService.findCurated(t.symbol, AssetCategory.fon);
           if (curated != null && curated.category == AssetCategory.fon) {
             final isCorrupted = t.name.toLowerCase().contains('global payments') ||
                 (t.symbol.toUpperCase() == 'GPN' && !t.name.toLowerCase().contains('garanti'));
@@ -636,6 +645,13 @@ class PortfolioProvider extends ChangeNotifier {
               hasChanges = true;
               t = t.copyWith(iconUrl: correctedLogo);
             }
+          }
+        } else if (t.category == AssetCategory.hisse && t.symbol.toUpperCase() == 'GPN') {
+          if (t.iconUrl == null || t.iconUrl!.contains('garanti')) {
+            hasChanges = true;
+            t = t.copyWith(
+              iconUrl: 'https://s3-symbol-logo.tradingview.com/global-payments.svg',
+            );
           }
         }
         return t;
@@ -791,7 +807,7 @@ class PortfolioProvider extends ChangeNotifier {
     var tx = transaction;
     // GPN / Bilinen Fonların yabancı hisse isimleriyle bozulmasını ekleme anında onar (Self-healing)
     if (tx.category == AssetCategory.fon) {
-      final curated = AssetCatalogService.findCurated(tx.symbol);
+      final curated = AssetCatalogService.findCurated(tx.symbol, AssetCategory.fon);
       if (curated != null && curated.category == AssetCategory.fon) {
         final isCorrupted = tx.name.toLowerCase().contains('global payments') ||
             (tx.symbol.toUpperCase() == 'GPN' && !tx.name.toLowerCase().contains('garanti'));
@@ -809,6 +825,12 @@ class PortfolioProvider extends ChangeNotifier {
         if (correctedLogo != null) {
           tx = tx.copyWith(iconUrl: correctedLogo);
         }
+      }
+    } else if (tx.category == AssetCategory.hisse && tx.symbol.toUpperCase() == 'GPN') {
+      if (tx.iconUrl == null || tx.iconUrl!.contains('garanti')) {
+        tx = tx.copyWith(
+          iconUrl: 'https://s3-symbol-logo.tradingview.com/global-payments.svg',
+        );
       }
     }
 
@@ -864,7 +886,7 @@ class PortfolioProvider extends ChangeNotifier {
               : tx.price;
 
           updatedAssets[aIndex] = existing.copyWith(
-            name: (existing.name.toLowerCase().contains('global payments') && tx.symbol.toUpperCase() == 'GPN')
+            name: (existing.name.toLowerCase().contains('global payments') && tx.symbol.toUpperCase() == 'GPN' && tx.category == AssetCategory.fon)
                 ? tx.name
                 : existing.name,
             quantity: newQty,

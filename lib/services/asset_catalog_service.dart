@@ -218,33 +218,41 @@ class AssetCatalogService {
   }
 
   /// Bilinen sabit katalogdan sembol tam eşleşmesi bulur
-  static AssetSuggestion? findCurated(String symbol) {
+  static AssetSuggestion? findCurated(String symbol, [AssetCategory? category]) {
     final sym = symbol.trim().toUpperCase();
     if (sym.isEmpty) return null;
 
     // 1. Hisseler
-    for (final s in _knownStocks) {
-      if (s['symbol']!.toUpperCase() == sym) {
-        return AssetSuggestion(
-          symbol: s['symbol']!,
-          name: s['name']!,
-          category: AssetCategory.hisse,
-          iconUrl: MarketDataService.getKnownAssetLogo(s['symbol']!, AssetCategory.hisse, s['name']),
-          subtitle: s['sub'],
-        );
+    if (category == null || category == AssetCategory.hisse) {
+      for (final s in _knownStocks) {
+        if (s['symbol']!.toUpperCase() == sym) {
+          final isByf = s['isByf'] == 'true';
+          final itemCat = isByf ? AssetCategory.fon : AssetCategory.hisse;
+          if (category != null && category != itemCat) continue;
+          return AssetSuggestion(
+            symbol: s['symbol']!,
+            name: s['name']!,
+            category: itemCat,
+            iconUrl: MarketDataService.getKnownAssetLogo(s['symbol']!, itemCat, s['name']),
+            subtitle: s['sub'],
+            isByf: isByf,
+          );
+        }
       }
     }
 
     // 2. Fonlar (TefasService önbelleğinde varsa)
-    final cachedFund = TefasService.getCachedFund(sym);
-    if (cachedFund != null) {
-      return AssetSuggestion(
-        symbol: cachedFund.code,
-        name: cachedFund.name,
-        category: AssetCategory.fon,
-        iconUrl: MarketDataService.resolveFundLogo(cachedFund.code, cachedFund.name),
-        subtitle: resolveFundSubtitle(cachedFund.name),
-      );
+    if (category == null || category == AssetCategory.fon) {
+      final cachedFund = TefasService.getCachedFund(sym);
+      if (cachedFund != null) {
+        return AssetSuggestion(
+          symbol: cachedFund.code,
+          name: cachedFund.name,
+          category: AssetCategory.fon,
+          iconUrl: MarketDataService.resolveFundLogo(cachedFund.code, cachedFund.name),
+          subtitle: resolveFundSubtitle(cachedFund.name),
+        );
+      }
     }
 
     // 3. Kriptolar
@@ -498,7 +506,7 @@ class AssetCatalogService {
               if (seen.contains(sym)) continue;
               seen.add(sym);
 
-              final curated = findCurated(sym);
+              final curated = findCurated(sym, AssetCategory.hisse);
               if (curated != null) {
                 results.add(curated);
                 continue;
@@ -556,7 +564,7 @@ class AssetCatalogService {
                 if (seen.contains(sym)) continue;
                 seen.add(sym);
 
-                final curated = findCurated(sym);
+                final curated = findCurated(sym, AssetCategory.hisse);
                 if (curated != null) {
                   results.add(curated);
                   continue;

@@ -431,10 +431,29 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     final clean = symbol.trim().toUpperCase();
     if (clean.length < 2) return;
 
+    DateTime queryDate = date;
+    // Eğer bir TEFAS fonu satılıyorsa (BYF değilse), banka ekstre/valör tarihine göre
+    // emrin verildiği ve fiyatın kesinleştiği iş gününün TEFAS fiyatını baz al.
+    if (category == AssetCategory.fon) {
+      final isByf = clean.endsWith('.IS') ||
+          const {'GLDTR', 'ZGOLD', 'SPY', 'QQQ', 'VOO'}.contains(clean) ||
+          (_selectedExistingAsset?.name.toLowerCase().contains('borsa yatırım fonu') ?? false) ||
+          (_selectedExistingAsset?.name.toLowerCase().contains('byf') ?? false);
+      if (!isByf) {
+        queryDate = MarketDataService.getTefasSatisValorDate(
+          date,
+          fundName: _satisNameController.text.isNotEmpty
+              ? _satisNameController.text
+              : _selectedExistingAsset?.name,
+          symbol: clean,
+        );
+      }
+    }
+
     final info = await MarketDataService.fetchAssetData(
       category: category,
       symbol: clean,
-      purchaseDate: date,
+      purchaseDate: queryDate,
     );
 
     if (!mounted) return;

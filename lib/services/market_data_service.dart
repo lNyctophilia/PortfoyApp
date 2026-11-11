@@ -194,12 +194,86 @@ class MarketDataService {
     } catch (_) {}
   }
 
-  static void cacheLogo(String symbol, String url) {
+  static String buildLogoCacheKey(String symbol, [AssetCategory? category]) {
+    final clean = normalizeSymbol(symbol).replaceAll('.IS', '');
+    if (category == null) return clean;
+    return '${category.name}_$clean';
+  }
+
+  static void cacheLogo(String symbol, Object categoryOrUrl, [String? maybeUrl]) {
+    AssetCategory? cat;
+    String url;
+    if (categoryOrUrl is AssetCategory) {
+      cat = categoryOrUrl;
+      url = maybeUrl ?? '';
+    } else {
+      url = categoryOrUrl.toString();
+    }
     final clean = normalizeSymbol(symbol).replaceAll('.IS', '');
     if (clean.isNotEmpty && url.isNotEmpty) {
-      _logoCache[clean] = url;
+      if (cat != null) {
+        _logoCache['${cat.name}_$clean'] = url;
+      } else {
+        _logoCache[clean] = url;
+      }
       _storageService.saveLogoCache(_logoCache);
     }
+  }
+
+  /// TEFAS fonlarında satış takası (valör) süresine göre emrin verildiği / fiyatın oluştuğu iş gününü döner.
+  /// Banka hesap hareketlerinde görünen tarih, paranın hesaba geçtiği takas (valör) günüdür.
+  /// - Para Piyasası / Likit fonlar: T-1 iş günü
+  /// - Yabancı hisse / yabancı borsa fonları: T-3 iş günü
+  /// - Standart TEFAS fonları (Hisse, Altın, Değişken, Katılım vb.): T-2 iş günü
+  static DateTime getTefasSatisValorDate(
+    DateTime settlementDate, {
+    String? fundName,
+    String? symbol,
+  }) {
+    final title = (fundName ?? '')
+        .toUpperCase()
+        .replaceAll('İ', 'I')
+        .replaceAll('Ş', 'S')
+        .replaceAll('Ğ', 'G')
+        .replaceAll('Ü', 'U')
+        .replaceAll('Ö', 'O')
+        .replaceAll('Ç', 'C');
+    final code = (symbol ?? '').trim().toUpperCase();
+
+    int valorDays = 2; // Varsayılan TEFAS satış valörü T+2
+
+    // 1. Para piyasası / likit fonlar -> T+1
+    if (title.contains('PARA PIYASASI') ||
+        title.contains('LIKIT') ||
+        title.contains('KISA VADELI') ||
+        title.contains('KISA VADE') ||
+        ['GPN', 'GPB', 'TI1', 'TI6', 'PPF', 'PPZ', 'ZPK', 'HLL', 'NRC'].contains(code)) {
+      valorDays = 1;
+    }
+    // 2. Yabancı hisse ve yabancı fon sepetleri -> T+3
+    else if (title.contains('YABANCI') ||
+        title.contains('AMERIKA') ||
+        title.contains('AVRUPA') ||
+        title.contains('GLOBAL') ||
+        title.contains('NASDAQ') ||
+        ['AFT', 'AFA', 'GBG', 'YAY', 'GUH', 'TGE', 'OVD'].contains(code)) {
+      valorDays = 3;
+    }
+
+    return subtractBusinessDays(settlementDate, valorDays);
+  }
+
+  /// Belirtilen tarihten geriye doğru hafta sonlarını (Cumartesi, Pazar) atlayarak N iş günü geriye gider
+  static DateTime subtractBusinessDays(DateTime from, int businessDays) {
+    DateTime current = DateTime(from.year, from.month, from.day);
+    int remaining = businessDays;
+    while (remaining > 0) {
+      current = current.subtract(const Duration(days: 1));
+      if (current.weekday != DateTime.saturday && current.weekday != DateTime.sunday) {
+        remaining--;
+      }
+    }
+    return current;
   }
 
   /// Fon unvanından veya kodundan alternatif logo URL adaylarını döndürür
@@ -220,7 +294,6 @@ class MarketDataService {
         t.contains('BNP') ||
         ['TPZ', 'TKP', 'TEP', 'TPF', 'TGE', 'TKF', 'TDF', 'TDB', 'TTA', 'TTB', 'TTC', 'TTD', 'TZL'].contains(code)) {
       return const [
-        'https://cdn.worldvectorlogo.com/logos/teb.svg',
         'https://s3-symbol-logo.tradingview.com/paribas.svg',
       ];
     }
@@ -304,9 +377,6 @@ class MarketDataService {
         ].contains(code)) {
       return const [
         'assets/icons/kuveyt_turk.svg',
-        'https://upload.wikimedia.org/wikipedia/commons/9/97/Kuveyt_T%C3%BCrk_Logo.svg',
-        'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/Kuveyt_T%C3%BCrk_Logo.svg/250px-Kuveyt_T%C3%BCrk_Logo.svg.png',
-        'https://portfoyapp.nycgamedevs.workers.dev/?url=https%3A%2F%2Fwww.kuveytturk.com.tr%2F_assets%2Fsvg%2Flogo.svg',
       ];
     }
 
@@ -462,12 +532,27 @@ class MarketDataService {
   /// Bilinen varlıklar (Fonlar, Döviz, Emtia, Popüler Hisseler) için anlık logo tespiti
   static String? getKnownAssetLogo(String symbol, AssetCategory category, [String? name]) {
     final sym = symbol.trim().toUpperCase().replaceAll('.IS', '');
-    if (_logoCache.containsKey(sym)) return _logoCache[sym];
+    final cacheKey = buildLogoCacheKey(sym, category);
+    if (_logoCache.containsKey(cacheKey)) return _logoCache[cacheKey];
+
+    // Eski tekil önbellek kaydı varsa ve kategori çakışması riski yoksa kontrol et
+    if (_logoCache.containsKey(sym)) {
+      final legacy = _logoCache[sym]!;
+      final isGaranti = legacy.contains('garanti');
+      final isGlobalPayments = legacy.contains('global-payments');
+      if (category == AssetCategory.hisse && isGaranti) {
+        // Hissede Garanti logosu olamaz, geç
+      } else if (category == AssetCategory.fon && isGlobalPayments) {
+        // Fonda Global Payments olamaz, geç
+      } else {
+        return legacy;
+      }
+    }
 
     if (category == AssetCategory.fon) {
       final logo = resolveFundLogo(sym, name ?? '');
       if (logo != null) {
-        _logoCache[sym] = logo;
+        cacheLogo(sym, category, logo);
         return logo;
       }
       return null;
@@ -587,6 +672,7 @@ class MarketDataService {
       'GOOG': 'https://s3-symbol-logo.tradingview.com/google.svg',
       'GOOGL': 'https://s3-symbol-logo.tradingview.com/google.svg',
       'META': 'https://s3-symbol-logo.tradingview.com/meta.svg',
+      'GPN': 'https://s3-symbol-logo.tradingview.com/global-payments.svg',
       'BTC': 'https://s3-symbol-logo.tradingview.com/crypto/XTVCBTC.svg',
       'ETH': 'https://s3-symbol-logo.tradingview.com/crypto/XTVCETH.svg',
     };
@@ -607,11 +693,17 @@ class MarketDataService {
 
     // Fonlar için kurum eşleştirmesi
     if (category == AssetCategory.fon) {
-      return resolveFundLogo(symbol, name ?? '');
+      final fundLogo = resolveFundLogo(symbol, name ?? '');
+      if (fundLogo != null) {
+        cacheLogo(symbol, category, fundLogo);
+        return fundLogo;
+      }
+      return null;
     }
 
     final clean = normalizeSymbol(symbol).replaceAll('.IS', '');
-    if (_logoCache.containsKey(clean)) return _logoCache[clean];
+    final cacheKey = buildLogoCacheKey(clean, category);
+    if (_logoCache.containsKey(cacheKey)) return _logoCache[cacheKey];
 
     try {
       final url =
@@ -655,14 +747,14 @@ class MarketDataService {
             (match['logo'] is Map ? match['logo']['logoid'] as String? : null);
         if (logoid != null && logoid.isNotEmpty) {
           final logoUrl = 'https://s3-symbol-logo.tradingview.com/$logoid.svg';
-          cacheLogo(clean, logoUrl);
+          cacheLogo(clean, category, logoUrl);
           return logoUrl;
         }
 
         final currLogo = match['currency-logoid'] as String?;
         if (currLogo != null && currLogo.isNotEmpty) {
           final logoUrl = 'https://s3-symbol-logo.tradingview.com/country/$currLogo.svg';
-          cacheLogo(clean, logoUrl);
+          cacheLogo(clean, category, logoUrl);
           return logoUrl;
         }
       }

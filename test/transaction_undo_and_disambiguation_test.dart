@@ -13,11 +13,11 @@ void main() {
         'TEB Portföy Kira Sertifikaları (Döviz) Katılım Fonu',
       );
       expect(candidates, isNotEmpty);
-      expect(candidates.first, contains('teb.svg'));
+      expect(candidates.first, contains('paribas.svg'));
 
       final logo = MarketDataService.resolveFundLogo('TPZ', 'TEB Portföy Kira Sertifikaları (Döviz) Katılım Fonu');
       expect(logo, isNotNull);
-      expect(logo, contains('teb.svg'));
+      expect(logo, contains('paribas.svg'));
     });
   });
 
@@ -156,6 +156,99 @@ void main() {
 
       final tx = p.transactions.firstWhere((t) => t.symbol == 'GPN');
       expect(tx.name, contains('Garanti Portföy'));
+    });
+
+    test('GPN stock gets Global Payments logo and GPN fon gets Garanti logo without collision', () {
+      final stockLogo = MarketDataService.getKnownAssetLogo('GPN', AssetCategory.hisse);
+      expect(stockLogo, isNotNull);
+      expect(stockLogo, contains('global-payments.svg'));
+
+      final fundLogo = MarketDataService.getKnownAssetLogo('GPN', AssetCategory.fon, 'Garanti Portföy');
+      expect(fundLogo, isNotNull);
+      expect(fundLogo, contains('garanti.svg'));
+      expect(fundLogo, isNot(contains('global-payments.svg')));
+    });
+
+    test('findCurated with AssetCategory.hisse does not return Garanti fund for GPN', () {
+      final stockCurated = AssetCatalogService.findCurated('GPN', AssetCategory.hisse);
+      expect(stockCurated, isNull); // GPN is not in local _knownStocks, searched via TradingView
+
+      final fundCurated = AssetCatalogService.findCurated('GPN', AssetCategory.fon);
+      expect(fundCurated, isNotNull);
+      expect(fundCurated!.category, equals(AssetCategory.fon));
+      expect(fundCurated.name, contains('Garanti Portföy'));
+    });
+
+    test('Self-healing restores Global Payments hisse if corrupted with Garanti logo', () async {
+      final provider = PortfolioProvider();
+      await provider.loadData();
+      await provider.addPortfolio(name: 'US Stock Portfolio');
+      final pId = provider.rawPortfolios.first.id;
+
+      // Add Global Payments with mistaken Garanti logo
+      final corruptedStockTx = PortfolioTransaction(
+        id: 'tx_stock_gpn',
+        portfolioId: pId,
+        symbol: 'GPN',
+        name: 'Global Payments Inc.',
+        category: AssetCategory.hisse,
+        type: TransactionType.alis,
+        price: 95.0,
+        quantity: 10,
+        iconUrl: 'https://s3-symbol-logo.tradingview.com/garanti.svg',
+        date: DateTime.now(),
+      );
+      await provider.addTransaction(pId, corruptedStockTx);
+
+      final p = provider.getPortfolioById(pId);
+      expect(p, isNotNull);
+      final asset = p!.assets.firstWhere((a) => a.symbol == 'GPN' && a.category == AssetCategory.hisse);
+      expect(asset.name, equals('Global Payments Inc.'));
+      expect(asset.iconUrl, contains('global-payments.svg'));
+      expect(asset.iconUrl, isNot(contains('garanti.svg')));
+    });
+  });
+
+  group('TEFAS Satis Valor Business Day Calculation Tests', () {
+    test('Para Piyasasi / Likit fon uses T-1 business day', () {
+      final wednesday = DateTime(2026, 10, 21); // Çarşamba
+      final valorDate = MarketDataService.getTefasSatisValorDate(
+        wednesday,
+        symbol: 'GPN',
+        fundName: 'Garanti Portföy Para Piyasası Katılım (TL) Fonu',
+      );
+      // T-1 -> Salı 20
+      expect(valorDate, equals(DateTime(2026, 10, 20)));
+    });
+
+    test('Standard domestic equity/gold fund uses T-2 business days skipping weekends', () {
+      final wednesday = DateTime(2026, 10, 21); // Çarşamba
+      final valorDate = MarketDataService.getTefasSatisValorDate(
+        wednesday,
+        symbol: 'KUT',
+        fundName: 'KUVEYT TÜRK PORTFÖY KIYMETLİ MADENLER KATILIM FONU',
+      );
+      // T-2 -> Pazartesi 19
+      expect(valorDate, equals(DateTime(2026, 10, 19)));
+
+      // Pazartesi'den geriye 2 iş günü -> Cuma ve Perşembe
+      final monday = DateTime(2026, 10, 19); // Pazartesi
+      final mondayValor = MarketDataService.getTefasSatisValorDate(
+        monday,
+        symbol: 'KUT',
+      );
+      expect(mondayValor, equals(DateTime(2026, 10, 15))); // Perşembe
+    });
+
+    test('Foreign equity fund uses T-3 business days skipping weekends', () {
+      final wednesday = DateTime(2026, 10, 21); // Çarşamba
+      final valorDate = MarketDataService.getTefasSatisValorDate(
+        wednesday,
+        symbol: 'AFT',
+        fundName: 'Ak Portföy Yeni Teknolojiler Yabancı Hisse Senedi Fonu',
+      );
+      // T-3: Salı 20 -> Pazartesi 19 -> Cuma 16
+      expect(valorDate, equals(DateTime(2026, 10, 16)));
     });
   });
 }
