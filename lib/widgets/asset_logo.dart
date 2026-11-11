@@ -209,7 +209,79 @@ class _AssetLogoState extends State<AssetLogo> {
       return buildGoldCard();
     }
 
+    final isAsset = effectiveUrl.startsWith('assets/');
     final isSvg = effectiveUrl.toLowerCase().contains('.svg');
+
+    Widget imageContent;
+    if (isAsset) {
+      if (isSvg) {
+        imageContent = SvgPicture.asset(
+          effectiveUrl,
+          fit: BoxFit.cover,
+          placeholderBuilder: (_) => Center(
+            child: SizedBox(
+              width: widget.iconSize,
+              height: widget.iconSize,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: cat.color,
+              ),
+            ),
+          ),
+          errorBuilder: (context, error, stackTrace) {
+            _tryNextCandidate();
+            return Center(
+              child: cat.buildIcon(size: widget.iconSize, color: cat.color),
+            );
+          },
+        );
+      } else {
+        imageContent = Image.asset(
+          effectiveUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            _tryNextCandidate();
+            return Center(
+              child: cat.buildIcon(size: widget.iconSize, color: cat.color),
+            );
+          },
+        );
+      }
+    } else {
+      if (isSvg) {
+        imageContent = SvgPicture.network(
+          effectiveUrl,
+          fit: BoxFit.cover,
+          placeholderBuilder: (_) => Center(
+            child: SizedBox(
+              width: widget.iconSize,
+              height: widget.iconSize,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: cat.color,
+              ),
+            ),
+          ),
+          errorBuilder: (context, error, stackTrace) {
+            _tryNextCandidate();
+            return Center(
+              child: cat.buildIcon(size: widget.iconSize, color: cat.color),
+            );
+          },
+        );
+      } else {
+        imageContent = Image.network(
+          effectiveUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            _tryNextCandidate();
+            return Center(
+              child: cat.buildIcon(size: widget.iconSize, color: cat.color),
+            );
+          },
+        );
+      }
+    }
 
     return Container(
       width: widget.size,
@@ -233,37 +305,7 @@ class _AssetLogoState extends State<AssetLogo> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(
             widget.borderRadius > 1 ? widget.borderRadius - 1 : widget.borderRadius),
-        child: isSvg
-            ? SvgPicture.network(
-                effectiveUrl,
-                fit: BoxFit.cover,
-                placeholderBuilder: (_) => Center(
-                  child: SizedBox(
-                    width: widget.iconSize,
-                    height: widget.iconSize,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: cat.color,
-                    ),
-                  ),
-                ),
-                errorBuilder: (context, error, stackTrace) {
-                  _tryNextCandidate();
-                  return Center(
-                    child: cat.buildIcon(size: widget.iconSize, color: cat.color),
-                  );
-                },
-              )
-            : Image.network(
-                effectiveUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  _tryNextCandidate();
-                  return Center(
-                    child: cat.buildIcon(size: widget.iconSize, color: cat.color),
-                  );
-                },
-              ),
+        child: imageContent,
       ),
     );
   }

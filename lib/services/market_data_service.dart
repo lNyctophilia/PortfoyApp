@@ -3,6 +3,7 @@ import '../core/network/app_http_client.dart';
 import '../models/asset_category.dart';
 import 'asset_catalog_service.dart';
 import 'storage_service.dart';
+import 'tefas_service.dart';
 
 class MarketAssetInfo {
   final String symbol;
@@ -295,10 +296,17 @@ class MarketDataService {
     // 10. Kuveyt Türk / KT Portföy
     if (t.contains('KUVEYT') ||
         t.contains('KT PORTFOY') ||
-        ['KZL', 'KPD', 'KTM', 'KTK', 'KLU', 'KPU', 'KGV', 'KTV'].contains(code)) {
+        [
+          'KUT', 'KZL', 'KPD', 'KTM', 'KTK', 'KLU', 'KPU', 'KGV', 'KTV',
+          'KPC', 'KPK', 'KTL', 'KTR', 'KTS', 'KTT', 'KTU', 'DK1', 'EZM',
+          'KAN', 'KAV', 'KBP', 'KBZ', 'KCV', 'KDE', 'KDK', 'KDL', 'KDS',
+          'KDV', 'KDZ', 'KEI', 'KEO', 'KEU', 'KFZ', 'KGM', 'KHP', 'KHU'
+        ].contains(code)) {
       return const [
-        'https://s3-symbol-logo.tradingview.com/kuveyt-turk.svg',
-        'https://s3-symbol-logo.tradingview.com/albaraka-turk.svg',
+        'assets/icons/kuveyt_turk.svg',
+        'https://upload.wikimedia.org/wikipedia/commons/9/97/Kuveyt_T%C3%BCrk_Logo.svg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/Kuveyt_T%C3%BCrk_Logo.svg/250px-Kuveyt_T%C3%BCrk_Logo.svg.png',
+        'https://portfoyapp.nycgamedevs.workers.dev/?url=https%3A%2F%2Fwww.kuveytturk.com.tr%2F_assets%2Fsvg%2Flogo.svg',
       ];
     }
 
@@ -312,7 +320,7 @@ class MarketDataService {
 
     // 12. Albaraka Portföy / Katılım
     if (t.contains('ALBARAKA') ||
-        ['ALB', 'RBH', 'KTV'].contains(code)) {
+        ['ALB', 'RBH'].contains(code)) {
       return const [
         'https://s3-symbol-logo.tradingview.com/albaraka-turk.svg',
       ];
@@ -720,57 +728,21 @@ class MarketDataService {
   }
 
   // -------------------------------------------------------------
-  // 1. TEFAS FONLARI (Resmi TEFAS JSON API)
+  // 1. TEFAS FONLARI (Resmi TEFAS JSON API - Akıllı Kuyruk & Jitter ile)
   // -------------------------------------------------------------
   static Future<MarketAssetInfo?> _fetchTefasFund(
     String fundCode,
     DateTime? purchaseDate,
   ) async {
-    final payload = jsonEncode({
-      'fonKodu': fundCode,
-      'dil': 'TR',
-      'periyod': 60, // 5 yıllık geçmiş
-    });
+    final info = await TefasService.fetchFundPriceHistory(fundCode, periodMonths: 60);
+    if (info == null) return null;
 
-    final response = await AppHttpClient.post(
-      'https://www.tefas.gov.tr/api/funds/fonFiyatBilgiGetir',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Origin': 'https://www.tefas.gov.tr',
-        'Referer': 'https://www.tefas.gov.tr/tr/fon-detayli-analiz/',
-      },
-      body: payload,
-      timeout: const Duration(seconds: 5),
-    );
-
-    if (response == null || response.statusCode != 200) return null;
-
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    final list = data['resultList'] as List<dynamic>?;
-    if (list == null || list.isEmpty) return null;
-
-    final latest = list.last as Map<String, dynamic>;
-    final currentPrice = (latest['fiyat'] as num).toDouble();
-    final fundTitle = latest['fonUnvan'] as String? ?? fundCode;
-
-    // Tarihsel fiyat haritası: DateTime -> double
-    final priceHistory = <DateTime, double>{};
-    for (final item in list) {
-      if (item is Map<String, dynamic>) {
-        final dateStr = item['tarih'] as String?;
-        final price = (item['fiyat'] as num?)?.toDouble();
-        if (dateStr != null && price != null) {
-          final d = DateTime.tryParse(dateStr);
-          if (d != null) {
-            priceHistory[DateTime(d.year, d.month, d.day)] = price;
-          }
-        }
-      }
-    }
+    final currentPrice = info.currentPrice;
+    final fundTitle = info.name.isNotEmpty ? info.name : fundCode;
+    final priceHistory = info.priceHistory;
 
     double? purchasePrice;
-    if (purchaseDate != null) {
+    if (purchaseDate != null && priceHistory.isNotEmpty) {
       purchasePrice = _findClosestPrice(priceHistory, purchaseDate);
     }
 

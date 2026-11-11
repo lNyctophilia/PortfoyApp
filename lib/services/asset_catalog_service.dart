@@ -2,6 +2,7 @@ import 'dart:convert';
 import '../core/network/app_http_client.dart';
 import '../models/asset_category.dart';
 import 'market_data_service.dart';
+import 'tefas_service.dart';
 
 class AssetSuggestion {
   final String symbol;
@@ -23,119 +24,37 @@ class AssetSuggestion {
 
 class AssetCatalogService {
 
-  // -------------------------------------------------------------
-  // 1. POPÜLER TEFAS FONLARI KATALOĞU (100+ Fon)
-  // -------------------------------------------------------------
-  static const List<Map<String, String>> _knownFunds = [
-    // İş Portföy
-    {'code': 'TI2', 'name': 'İş Portföy Hisse Senedi (TL) Fonu (Hisse Senedi Yoğun Fon)', 'sub': 'İş Portföy • Hisse Yoğun'},
-    {'code': 'TI3', 'name': 'İş Portföy BIST 30 Endeksi Hisse Senedi (TL) Fonu', 'sub': 'İş Portföy • BIST 30'},
-    {'code': 'TTE', 'name': 'İş Portföy BIST Teknoloji Ağırlıklı Sınırlamalı Hisse Senedi Fonu', 'sub': 'İş Portföy • Teknoloji'},
-    {'code': 'TLE', 'name': 'İş Portföy Altın Fonu', 'sub': 'İş Portföy • Kıymetli Maden'},
-    {'code': 'TAU', 'name': 'İş Portföy BIST Banka Endeksi Hisse Senedi Fonu', 'sub': 'İş Portföy • Bankacılık'},
-    {'code': 'TMG', 'name': 'İş Portföy Yabancı Hisse Senedi Fonu', 'sub': 'İş Portföy • Yabancı Hisse'},
-    {'code': 'TET', 'name': 'İş Portföy Elektrikli Araçlar Karma Fon', 'sub': 'İş Portföy • Tematik'},
-    {'code': 'TLP', 'name': 'İş Portföy Para Piyasası (TL) Fonu', 'sub': 'İş Portföy • Para Piyasası'},
-    {'code': 'IST', 'name': 'İş Portföy İhracatçı Şirketler Hisse Senedi Fonu', 'sub': 'İş Portföy • İhracat'},
-    {'code': 'IHK', 'name': 'İş Portföy İş\'te Kadın Hisse Senedi Fonu', 'sub': 'İş Portföy • Hisse Yoğun'},
-    {'code': 'IEY', 'name': 'İş Portföy Eurobond (Amerikan Doları) Borçlanma Araçları Fonu', 'sub': 'İş Portföy • Eurobond'},
-
-    // Ak Portföy
-    {'code': 'AFT', 'name': 'Ak Portföy Yeni Teknolojiler Yabancı Hisse Senedi Fonu', 'sub': 'Ak Portföy • Yabancı Teknoloji'},
-    {'code': 'AFA', 'name': 'Ak Portföy Amerika Yabancı Hisse Senedi Fonu', 'sub': 'Ak Portföy • ABD Piyasaları'},
-    {'code': 'AFS', 'name': 'Ak Portföy Sağlık Sektörü Yabancı Hisse Senedi Fonu', 'sub': 'Ak Portföy • Sağlık'},
-    {'code': 'AES', 'name': 'Ak Portföy Petrol Yabancı BYF Fon Sepeti Fonu', 'sub': 'Ak Portföy • Emtia Petrol'},
-    {'code': 'AGH', 'name': 'Ak Portföy BIST 100 Dışı Şirketler Hisse Senedi Fonu', 'sub': 'Ak Portföy • Yan Tahtalar'},
-    {'code': 'AK2', 'name': 'Ak Portföy Hisse Senedi Fonu (Hisse Senedi Yoğun Fon)', 'sub': 'Ak Portföy • Hisse Yoğun'},
-    {'code': 'AK3', 'name': 'Ak Portföy BIST 30 Endeksi Hisse Senedi Fonu', 'sub': 'Ak Portföy • BIST 30'},
-    {'code': 'ALE', 'name': 'Ak Portföy Altın Fonu', 'sub': 'Ak Portföy • Altın'},
-    {'code': 'ALR', 'name': 'Ak Portföy Serbest Fon', 'sub': 'Ak Portföy • Serbest'},
-    {'code': 'APB', 'name': 'Ak Portföy Para Piyasası Fonu', 'sub': 'Ak Portföy • Para Piyasası'},
-
-    // Yapı Kredi Portföy
-    {'code': 'YAS', 'name': 'Yapı Kredi Portföy Koç Holding İştirakleri Hisse Senedi Fonu', 'sub': 'Yapı Kredi • Koç İştirakleri'},
-    {'code': 'YAC', 'name': 'Yapı Kredi Portföy İkinci Değişken Fon', 'sub': 'Yapı Kredi • Değişken'},
-    {'code': 'YTD', 'name': 'Yapı Kredi Portföy BIST Teknoloji Ağırlıklı Sınırlamalı Fon', 'sub': 'Yapı Kredi • Teknoloji'},
-    {'code': 'YPG', 'name': 'Yapı Kredi Portföy Altın Fonu', 'sub': 'Yapı Kredi • Altın'},
-    {'code': 'YHK', 'name': 'Yapı Kredi Portföy Hisse Senedi Fonu', 'sub': 'Yapı Kredi • Hisse Yoğun'},
-    {'code': 'YAY', 'name': 'Yapı Kredi Portföy Yabancı Teknoloji Sektörü Hisse Senedi Fonu', 'sub': 'Yapı Kredi • Yabancı Teknoloji'},
-    {'code': 'YAZ', 'name': 'Yapı Kredi Portföy Eurobond Borçlanma Araçları Fonu', 'sub': 'Yapı Kredi • Eurobond'},
-    {'code': 'YBE', 'name': 'Yapı Kredi Portföy Eurobond Dolar Borçlanma Araçları Fonu', 'sub': 'Yapı Kredi • Eurobond'},
-
-    // Garanti Portföy (Garanti Bankası / Garanti BBVA)
-    {'code': 'GPN', 'name': 'Garanti Portföy Para Piyasası Katılım (TL) Fonu', 'sub': 'Garanti Bankası BBVA • Para Piyasası Katılım'},
-    {'code': 'GPB', 'name': 'Garanti Portföy Birinci Para Piyasası (TL) Fonu', 'sub': 'Garanti Bankası BBVA • Para Piyasası'},
-    {'code': 'GZL', 'name': 'Garanti Portföy İkinci Para Piyasası (TL) Fonu', 'sub': 'Garanti Bankası BBVA • Para Piyasası'},
-    {'code': 'GMR', 'name': 'Garanti Portföy İkinci Hisse Senedi Fonu (Hisse Senedi Yoğun)', 'sub': 'Garanti Bankası BBVA • Hisse Yoğun'},
-    {'code': 'GTA', 'name': 'Garanti Portföy Altın Fonu', 'sub': 'Garanti Bankası BBVA • Altın'},
-    {'code': 'GAF', 'name': 'Garanti Portföy Altın Katılım Fonu', 'sub': 'Garanti Bankası BBVA • Altın Katılım'},
-    {'code': 'GBV', 'name': 'Garanti Portföy BIST 100 Dışı Şirketler Hisse Senedi Fonu', 'sub': 'Garanti Bankası BBVA • BIST Dışı'},
-    {'code': 'GL1', 'name': 'Garanti Portföy Hisse Senedi Fonu', 'sub': 'Garanti Bankası BBVA • Hisse Yoğun'},
-    {'code': 'GTL', 'name': 'Garanti Portföy Para Piyasası Fonu', 'sub': 'Garanti Bankası BBVA • Para Piyasası'},
-    {'code': 'GMA', 'name': 'Garanti Portföy Birinci Değişken Fon', 'sub': 'Garanti Bankası BBVA • Değişken'},
-    {'code': 'GPY', 'name': 'Garanti Portföy İhracatçı Şirketler Hisse Senedi Fonu', 'sub': 'Garanti Bankası BBVA • İhracat'},
-    {'code': 'GKV', 'name': 'Garanti Portföy Kısa Vadeli Borçlanma Araçları Fonu', 'sub': 'Garanti Bankası BBVA • Borçlanma'},
-    {'code': 'GKK', 'name': 'Garanti Portföy Kira Sertifikaları Katılım Fonu', 'sub': 'Garanti Bankası BBVA • Katılım Kira Sertifikası'},
-    {'code': 'GOH', 'name': 'Garanti Portföy Birinci Hisse Senedi Fonu', 'sub': 'Garanti Bankası BBVA • Hisse Yoğun'},
-    {'code': 'GPO', 'name': 'Garanti Portföy BIST 30 Endeksi Fonu', 'sub': 'Garanti Bankası BBVA • BIST 30'},
-    {'code': 'GNZ', 'name': 'Garanti Portföy Yabancı Teknoloji Fon Sepeti Fonu', 'sub': 'Garanti Bankası BBVA • Yabancı Teknoloji'},
-    {'code': 'GEL', 'name': 'Garanti Portföy BIST Banka Dışı Likit 10 Fonu', 'sub': 'Garanti Bankası BBVA • Likit 10'},
-    {'code': 'GSY', 'name': 'Garanti Portföy Sürdürülebilirlik Hisse Senedi Fonu', 'sub': 'Garanti Bankası BBVA • Sürdürülebilirlik'},
-
-    // Ziraat Portföy
-    {'code': 'ZPE', 'name': 'Ziraat Portföy Katılım Endeksi Hisse Senedi Fonu', 'sub': 'Ziraat • Katılım Hisse'},
-    {'code': 'ZPF', 'name': 'Ziraat Portföy Altın Katılım Fonu', 'sub': 'Ziraat • Altın Katılım'},
-    {'code': 'ZRE', 'name': 'Ziraat Portföy BIST 30 Endeksi Hisse Senedi Fonu', 'sub': 'Ziraat • BIST 30'},
-    {'code': 'ZKP', 'name': 'Ziraat Portföy Kısa Vadeli Kira Sertifikaları Fonu', 'sub': 'Ziraat • Kira Sertifikası'},
-    {'code': 'ZEL', 'name': 'Ziraat Portföy Para Piyasası Fonu', 'sub': 'Ziraat • Para Piyasası'},
-    {'code': 'ZAS', 'name': 'Ziraat Portföy BIST Banka Dışı Likit 10 Fonu', 'sub': 'Ziraat • Likit 10'},
-
-    // Tacirler Portföy
-    {'code': 'TCD', 'name': 'Tacirler Portföy Değişken Fon', 'sub': 'Tacirler • Değişken'},
-    {'code': 'TKF', 'name': 'Tacirler Portföy Hisse Senedi Fonu (Hisse Senedi Yoğun)', 'sub': 'Tacirler • Hisse Yoğun'},
-
-    // İstanbul Portföy
-    {'code': 'IIH', 'name': 'İstanbul Portföy Üçüncü Hisse Senedi Fonu (Hisse Senedi Yoğun)', 'sub': 'İstanbul Portföy • Hisse Yoğun'},
-    {'code': 'IRF', 'name': 'İstanbul Portföy Serbest Fon', 'sub': 'İstanbul Portföy • Serbest'},
-    {'code': 'IJT', 'name': 'İstanbul Portföy Yabancı Teknoloji Hisse Senedi Fonu', 'sub': 'İstanbul Portföy • Teknoloji'},
-
-    // Marmara Capital
-    {'code': 'MAC', 'name': 'Marmara Capital Portföy Hisse Senedi Fonu (Hisse Senedi Yoğun)', 'sub': 'Marmara Capital • Hisse Yoğun'},
-
-    // Hedef Portföy
-    {'code': 'NNF', 'name': 'Hedef Portföy Birinci Hisse Senedi Fonu (Hisse Senedi Yoğun)', 'sub': 'Hedef Portföy • Hisse Yoğun'},
-    {'code': 'HHK', 'name': 'Hedef Portföy Katılım Hisse Senedi Fonu', 'sub': 'Hedef Portföy • Katılım'},
-
-    // QNB Finans Portföy
-    {'code': 'FNC', 'name': 'QNB Finansinvest BIST 30 Endeksi Hisse Senedi Fonu', 'sub': 'QNB Finans • BIST 30'},
-    {'code': 'FBK', 'name': 'QNB Portföy İkinci Değişken Fon', 'sub': 'QNB Finans • Değişken'},
-
-    // Vakıf Portföy
-    {'code': 'VK6', 'name': 'Vakıf Portföy Katılım Fonu', 'sub': 'Vakıf Portföy • Katılım'},
-    {'code': 'VAK', 'name': 'Vakıf Portföy Hisse Senedi Fonu', 'sub': 'Vakıf Portföy • Hisse Yoğun'},
-    {'code': 'VFP', 'name': 'Vakıf Portföy Para Piyasası (TL) Fonu', 'sub': 'Vakıf Portföy • Para Piyasası'},
-
-    // TEB Portföy
-    {'code': 'TPZ', 'name': 'TEB Portföy Kira Sertifikaları (Döviz) Katılım Fonu', 'sub': 'TEB Portföy • Katılım Sukuk'},
-    {'code': 'TKP', 'name': 'TEB Portföy Hisse Senedi Fonu (Hisse Senedi Yoğun)', 'sub': 'TEB Portföy • Hisse Yoğun'},
-    {'code': 'TEP', 'name': 'TEB Portföy Birinci Para Piyasası Fonu', 'sub': 'TEB Portföy • Para Piyasası'},
-    {'code': 'TPF', 'name': 'TEB Portföy Eurobond Borçlanma Araçları Fonu', 'sub': 'TEB Portföy • Eurobond'},
-    {'code': 'TGE', 'name': 'TEB Portföy Emtia Yabancı BYF Fon Sepeti Fonu', 'sub': 'TEB Portföy • Emtia BYF'},
-
-    // Oyak Portföy
-    {'code': 'OYP', 'name': 'Oyak Portföy Birinci Hisse Senedi Fonu', 'sub': 'Oyak Portföy • Hisse Yoğun'},
-    {'code': 'OKP', 'name': 'Oyak Portföy Katılım Hisse Senedi Fonu', 'sub': 'Oyak Portföy • Katılım'},
-
-    // Gedik Portföy
-    {'code': 'GDK', 'name': 'Gedik Portföy İkinci Hisse Senedi Fonu', 'sub': 'Gedik Portföy • Hisse Yoğun'},
-    {'code': 'GKP', 'name': 'Gedik Portföy Karma Fon', 'sub': 'Gedik Portföy • Karma'},
-
-    // BV Portföy
-    {'code': 'BIO', 'name': 'BV Portföy İnovasyon ve Teknoloji Değişken Fon', 'sub': 'BV Portföy • İnovasyon Teknoloji'},
-  ];
+  /// Fon unvanından kurumsal altyazı türetir
+  static String resolveFundSubtitle(String fundName) {
+    final upper = fundName
+        .toUpperCase()
+        .replaceAll('İ', 'I')
+        .replaceAll('Ş', 'S')
+        .replaceAll('Ğ', 'G')
+        .replaceAll('Ü', 'U')
+        .replaceAll('Ö', 'O')
+        .replaceAll('Ç', 'C');
+    if (upper.contains('KUVEYT')) return 'Kuveyt Türk • Katılım Fonu';
+    if (upper.contains('ALBARAKA')) return 'Albaraka • Katılım Fonu';
+    if (upper.contains('GARANTI')) return 'Garanti BBVA • Fon';
+    if (upper.contains('IS PORTFOY')) return 'İş Portföy • Fon';
+    if (upper.contains('AK PORTFOY')) return 'Ak Portföy • Fon';
+    if (upper.contains('YAPI KREDI')) return 'Yapı Kredi • Fon';
+    if (upper.contains('ZIRAAT')) return 'Ziraat • Fon';
+    if (upper.contains('VAKIF')) return 'Vakıf Portföy • Fon';
+    if (upper.contains('TEB')) return 'TEB Portföy • Fon';
+    if (upper.contains('QNB') || upper.contains('FINANS')) return 'QNB Finans • Fon';
+    if (upper.contains('TACIRLER')) return 'Tacirler • Fon';
+    if (upper.contains('HEDEF')) return 'Hedef Portföy • Fon';
+    if (upper.contains('MARMARA') || upper.contains('MAC')) return 'Marmara Capital • Fon';
+    if (upper.contains('ISTANBUL PORTFOY')) return 'İstanbul Portföy • Fon';
+    if (upper.contains('OYAK')) return 'Oyak Portföy • Fon';
+    if (upper.contains('GEDIK')) return 'Gedik Portföy • Fon';
+    return 'TEFAS • Yatırım Fonu';
+  }
 
   // -------------------------------------------------------------
-  // 2. POPÜLER BIST & GLOBAL HİSSELERİ (Yerel Hızlı Arama)
+  // 1. POPÜLER BIST & GLOBAL HİSSELERİ (Yerel Hızlı Arama)
   // -------------------------------------------------------------
   static const List<Map<String, String>> _knownStocks = [
     // Popüler Borsa Yatırım Fonları (BYF / ETF)
@@ -284,11 +203,18 @@ class AssetCatalogService {
         .replaceAll('ç', 'c');
   }
 
-  /// Bilinen TEFAS fonu mu kontrolü
+  /// TEFAS fonu mu kontrolü (GPN, KUT, TPZ vb. veya TEFAS formatında 3 karakterli fon kodları)
   static bool isKnownTefasFund(String symbol) {
     final sym = symbol.trim().toUpperCase();
     if (sym.isEmpty) return false;
-    return _knownFunds.any((f) => f['code']!.toUpperCase() == sym);
+    if (TefasService.isCachedFund(sym)) return true;
+    if (sym == 'GPN' || sym == 'KUT' || sym == 'TPZ' || sym == 'TI2' || sym == 'KZL') return true;
+    const nonFunds = {
+      'USD', 'EUR', 'GBP', 'CHF', 'CAD', 'JPY', 'RUB', 'SAR', 'AUD', 'AED', 'KWD',
+      'BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOT', 'TRX', 'LTC', 'BCH', 'UNI',
+      'ONS', 'BYF', 'ETF', 'SPY', 'QQQ', 'VOO', 'AMD'
+    };
+    return RegExp(r'^[A-Z0-9]{3}$').hasMatch(sym) && !nonFunds.contains(sym);
   }
 
   /// Bilinen sabit katalogdan sembol tam eşleşmesi bulur
@@ -309,17 +235,16 @@ class AssetCatalogService {
       }
     }
 
-    // 2. Fonlar
-    for (final f in _knownFunds) {
-      if (f['code']!.toUpperCase() == sym) {
-        return AssetSuggestion(
-          symbol: f['code']!,
-          name: f['name']!,
-          category: AssetCategory.fon,
-          iconUrl: MarketDataService.resolveFundLogo(f['code']!, f['name']!),
-          subtitle: f['sub'],
-        );
-      }
+    // 2. Fonlar (TefasService önbelleğinde varsa)
+    final cachedFund = TefasService.getCachedFund(sym);
+    if (cachedFund != null) {
+      return AssetSuggestion(
+        symbol: cachedFund.code,
+        name: cachedFund.name,
+        category: AssetCategory.fon,
+        iconUrl: MarketDataService.resolveFundLogo(cachedFund.code, cachedFund.name),
+        subtitle: resolveFundSubtitle(cachedFund.name),
+      );
     }
 
     // 3. Kriptolar
@@ -440,84 +365,84 @@ class AssetCatalogService {
     return combined.take(35).toList();
   }
 
-  // Fon arama
-  static Future<List<AssetSuggestion>> _searchFunds(String q) async {
-    final results = <AssetSuggestion>[];
-    final tokens = q.split(' ').where((t) => t.isNotEmpty).toList();
+  /// Tahvil (bond), Eurobond, ISIN kodları ve tezgahüstü borçlanma araçlarını filtreler
+  static bool _isInvalidStockOrDebtInstrument(
+    String sym,
+    String? type,
+    String desc,
+    String? ex,
+  ) {
+    if (sym.isEmpty) return true;
 
-    for (final item in _knownFunds) {
-      final code = item['code']!;
-      final name = item['name']!;
-      final sub = item['sub']!;
+    // 1. Tür kontrolü: Yalnızca hisse (stock) ve borsa yatırım fonu (fund/etf) kabul edilir.
+    // Tahviller (bond), Eurobondlar, vadeli işlemler (futures), CFD, varant (warrant),
+    // yapılandırılmış borçlanma ürünleri (structured) ve endeksler kesinlikle elenir.
+    final t = type?.toLowerCase();
+    if (t != null && t != 'stock' && t != 'fund' && t != 'etf') {
+      return true;
+    }
 
-      final cCode = _cleanText(code);
-      final cName = _cleanText(name);
-      final cSub = _cleanText(sub);
+    // 2. ISIN / Borçlanma kodu Regex filtresi:
+    // Örn: ES34330702, XS2384355520, US0378331005 veya 6+ haneli karmaşık tahvil kodları
+    if (RegExp(r'^[A-Z]{2}\d{6,}').hasMatch(sym) ||
+        RegExp(r'^[A-Z]{2}[0-9A-Z]{10}$').hasMatch(sym) ||
+        RegExp(r'^\d{5,}$').hasMatch(sym)) {
+      return true;
+    }
 
-      final matchesSingle = q.isEmpty ||
-          cCode.contains(q) ||
-          cName.contains(q) ||
-          cSub.contains(q);
+    // 3. Açıklama metni filtresi (Tahvil, bono, faiz kuponu içeren enstrümanlar)
+    final d = desc.toLowerCase();
+    if (d.contains('bond') ||
+        d.contains('regs') ||
+        d.contains('144a') ||
+        d.contains('treasury') ||
+        d.contains('tahvil') ||
+        d.contains('bono') ||
+        d.contains('obligation') ||
+        RegExp(r'\d+\.?\d*%\s+\d{2}-[a-z]{3}-\d{2,4}').hasMatch(d)) {
+      return true;
+    }
 
-      final matchesTokens = tokens.length > 1 &&
-          tokens.every((t) => cCode.contains(t) || cName.contains(t) || cSub.contains(t));
-
-      if (matchesSingle || matchesTokens) {
-        final logo = MarketDataService.resolveFundLogo(code, name);
-        results.add(AssetSuggestion(
-          symbol: code,
-          name: name,
-          category: AssetCategory.fon,
-          iconUrl: logo,
-          subtitle: sub,
-        ));
+    // 4. Borsa (Exchange) filtresi:
+    // Yalnızca SPK / regüle resmi ana borsaları kabul et; tezgahüstü borçlanma platformlarını ele
+    if (ex != null && ex.isNotEmpty) {
+      const allowedExchanges = {
+        'BIST',
+        'NASDAQ',
+        'NYSE',
+        'AMEX',
+        'EURONEXT',
+        'LSE',
+        'XETRA',
+        'FWB',
+        'TSX',
+        'SIX',
+      };
+      if (!allowedExchanges.contains(ex.toUpperCase())) {
+        return true;
       }
     }
 
-    // Kullanıcı 3 harfli yeni bir fon kodu yazdıysa ve listede yoksa TEFAS'tan kontrol et
-    final cleanUpper = q.replaceAll(' ', '').toUpperCase();
-    if (cleanUpper.length == 3 &&
-        !results.any((r) => r.symbol.toUpperCase() == cleanUpper)) {
-      try {
-        final payload = jsonEncode({
-          'fonKodu': cleanUpper,
-          'dil': 'TR',
-          'periyod': 1,
-        });
-        final resp = await AppHttpClient.post(
-          'https://www.tefas.gov.tr/api/funds/fonFiyatBilgiGetir',
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Origin': 'https://www.tefas.gov.tr',
-            'Referer': 'https://www.tefas.gov.tr/tr/fon-detayli-analiz/',
-          },
-          body: payload,
-          timeout: const Duration(seconds: 4),
-        );
-        if (resp != null && resp.statusCode == 200) {
-          final data = jsonDecode(resp.body) as Map<String, dynamic>;
-          final list = data['resultList'] as List<dynamic>?;
-          if (list != null && list.isNotEmpty) {
-            final latest = list.last as Map<String, dynamic>;
-            final title = latest['fonUnvan'] as String? ?? cleanUpper;
-            final logo = MarketDataService.resolveFundLogo(cleanUpper, title);
-            results.insert(
-              0,
-              AssetSuggestion(
-                symbol: cleanUpper,
-                name: title,
-                category: AssetCategory.fon,
-                iconUrl: logo,
-                subtitle: 'TEFAS • Yatırım Fonu',
-              ),
-            );
-          }
-        }
-      } catch (_) {}
-    }
+    return false;
+  }
 
-    return results.take(15).toList();
+  // Fon arama (TEFAS Resmi JSON API'sinden Canlı ve Dinamik Arama)
+  static Future<List<AssetSuggestion>> _searchFunds(String q) async {
+    final cleanQ = q.trim();
+    if (cleanQ.isEmpty) return const [];
+
+    final tefasResults = await TefasService.searchFunds(cleanQ);
+
+    return tefasResults.map((f) {
+      final logo = MarketDataService.resolveFundLogo(f.code, f.name);
+      return AssetSuggestion(
+        symbol: f.code,
+        name: f.name,
+        category: AssetCategory.fon,
+        iconUrl: logo,
+        subtitle: resolveFundSubtitle(f.name),
+      );
+    }).take(25).toList();
   }
 
   // Hisse arama (Yerel BIST/Global + TradingView Canlı Arama)
@@ -555,19 +480,22 @@ class AssetCatalogService {
       try {
         final url =
             'https://symbol-search.tradingview.com/symbol_search/v3/?text=${Uri.encodeComponent(q)}&exchange=BIST';
-        final resp = await AppHttpClient.get(url, timeout: const Duration(seconds: 4));
+        final resp = await AppHttpClient.get(url, timeout: const Duration(seconds: 5));
         if (resp != null && resp.statusCode == 200) {
           final data = jsonDecode(resp.body) as Map<String, dynamic>;
           final list = data['symbols'] as List<dynamic>? ?? [];
 
           for (final item in list) {
             if (item is Map<String, dynamic>) {
-              final type = (item['type'] as String?)?.toLowerCase();
-              if (type == 'futures' || type == 'index' || type == 'war' || type == 'warrant') {
+              final sym = (item['symbol'] as String?)?.toUpperCase() ?? '';
+              final type = item['type'] as String?;
+              final desc = (item['description'] as String?) ?? sym;
+              final ex = item['exchange'] as String? ?? 'BIST';
+
+              if (_isInvalidStockOrDebtInstrument(sym, type, desc, ex)) {
                 continue;
               }
-              final sym = (item['symbol'] as String?)?.toUpperCase() ?? '';
-              if (sym.isEmpty || seen.contains(sym)) continue;
+              if (seen.contains(sym)) continue;
               seen.add(sym);
 
               final curated = findCurated(sym);
@@ -576,26 +504,16 @@ class AssetCatalogService {
                 continue;
               }
 
-              final desc = (item['description'] as String?) ?? sym;
               final logoid = item['logoid'] as String?;
-              final ex = item['exchange'] as String? ?? 'BIST';
 
               AssetCategory itemCat = AssetCategory.hisse;
               String sub = '$ex • Hisse';
               bool isByf = false;
-              if (type == 'fund' || type == 'etf') {
+              final tLower = type?.toLowerCase();
+              if (tLower == 'fund' || tLower == 'etf') {
                 itemCat = AssetCategory.fon;
                 sub = '$ex • BYF/ETF';
                 isByf = true;
-              } else if (type == 'crypto') {
-                itemCat = AssetCategory.kripto;
-                sub = 'Kripto Para';
-              } else if (type == 'forex' || type == 'currency') {
-                itemCat = AssetCategory.doviz;
-                sub = 'Döviz';
-              } else if (type == 'commodity') {
-                itemCat = AssetCategory.emtia;
-                sub = 'Emtia';
               }
 
               final logoUrl = (logoid != null && logoid.isNotEmpty)
@@ -620,19 +538,22 @@ class AssetCatalogService {
         try {
           final url =
               'https://symbol-search.tradingview.com/symbol_search/v3/?text=${Uri.encodeComponent(q)}';
-          final resp = await AppHttpClient.get(url, timeout: const Duration(seconds: 4));
+          final resp = await AppHttpClient.get(url, timeout: const Duration(seconds: 5));
           if (resp != null && resp.statusCode == 200) {
             final data = jsonDecode(resp.body) as Map<String, dynamic>;
             final list = data['symbols'] as List<dynamic>? ?? [];
 
             for (final item in list) {
               if (item is Map<String, dynamic>) {
-                final type = (item['type'] as String?)?.toLowerCase();
-                if (type == 'futures' || type == 'index' || type == 'war' || type == 'warrant') {
+                final sym = (item['symbol'] as String?)?.toUpperCase() ?? '';
+                final type = item['type'] as String?;
+                final desc = (item['description'] as String?) ?? sym;
+                final ex = item['exchange'] as String? ?? 'Yabancı';
+
+                if (_isInvalidStockOrDebtInstrument(sym, type, desc, ex)) {
                   continue;
                 }
-                final sym = (item['symbol'] as String?)?.toUpperCase() ?? '';
-                if (sym.isEmpty || seen.contains(sym)) continue;
+                if (seen.contains(sym)) continue;
                 seen.add(sym);
 
                 final curated = findCurated(sym);
@@ -641,26 +562,16 @@ class AssetCatalogService {
                   continue;
                 }
 
-                final desc = (item['description'] as String?) ?? sym;
-                final ex = item['exchange'] as String? ?? 'Yabancı';
                 final logoid = item['logoid'] as String?;
 
                 AssetCategory itemCat = AssetCategory.hisse;
                 String sub = '$ex • Hisse';
                 bool isByf = false;
-                if (type == 'fund' || type == 'etf') {
+                final tLower = type?.toLowerCase();
+                if (tLower == 'fund' || tLower == 'etf') {
                   itemCat = AssetCategory.fon;
                   sub = '$ex • BYF/ETF';
                   isByf = true;
-                } else if (type == 'crypto') {
-                  itemCat = AssetCategory.kripto;
-                  sub = 'Kripto Para';
-                } else if (type == 'forex' || type == 'currency') {
-                  itemCat = AssetCategory.doviz;
-                  sub = 'Döviz';
-                } else if (type == 'commodity') {
-                  itemCat = AssetCategory.emtia;
-                  sub = 'Emtia';
                 }
 
                 final logoUrl = (logoid != null && logoid.isNotEmpty)

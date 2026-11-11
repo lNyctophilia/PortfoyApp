@@ -176,11 +176,11 @@
   - **Lines 301-423:** Realtime Firestore stream handlers (\_startRealtimeSubscriptions, \_cancelRealtimeSubscriptions, \_onPortfoliosSnapshot preserving sortIndex order, \_onSettingsSnapshot).
   - **Lines 424-477:** Data loading (loadData() preserving sortIndex), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
   - **Lines 478-525:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
-  - **Lines 526-592:** Missing asset icon resolution & self-healing corrupted fund names and logos (\_backfillMissingAssetIcons()).
-  - **Lines 593-704:** Category filtering setter and portfolio CRUD operations (addPortfolio adding to bottom with sequential sortIndex, updatePortfolio, togglePortfolioVisibility, deletePortfolio normalizing indices, reorderPortfolios assigning sequential sortIndex).
-  - **Lines 705-762:** Direct asset management (addAsset, updateAsset, deleteAsset).
-  - **Lines 763-968:** Transaction handling (addTransaction with FIFO calculations, auto-healing corrupted fund transactions, deleteTransaction with buy rollback reducing quantity/recalculating average cost and deleting when 0, and sell rollback).
-  - **Lines 969-1118:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()) preserving established asset names, and getPortfolioById lookup.
+  - **Lines 526-610:** Missing asset icon resolution & self-healing corrupted fund names and logos (\_backfillMissingAssetIcons()), including correcting Kuveyt Türk funds previously assigned Albaraka logos.
+  - **Lines 611-722:** Category filtering setter and portfolio CRUD operations (addPortfolio adding to bottom with sequential sortIndex, updatePortfolio, togglePortfolioVisibility, deletePortfolio normalizing indices, reorderPortfolios assigning sequential sortIndex).
+  - **Lines 723-780:** Direct asset management (addAsset, updateAsset, deleteAsset).
+  - **Lines 781-995:** Transaction handling (addTransaction with FIFO calculations, auto-healing corrupted fund transactions & Kuveyt Türk logos, deleteTransaction with buy rollback reducing quantity/recalculating average cost and deleting when 0, and sell rollback).
+  - **Lines 996-1146:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()) preserving established asset names, and getPortfolioById lookup.
 - **File:** `lib/screens/settings_screen.dart`
   - **Lines 1-15:** Imports and SettingsScreen declaration.
   - **Lines 16-46:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
@@ -191,14 +191,16 @@
   - **Lines 575-742:** \_buildSignedInContent(), user avatar fallback builder, and sync/sign-out actions.
   - **Lines 743-837:** \_confirmSignOut() modal dialog, section header, and TUFE badge helpers.
 - **File:** `lib/services/asset_catalog_service.dart`
-  - **Lines 1-24:** Imports and AssetSuggestion model class with isByf flag.
-  - **Lines 25-274:** Static catalogs for funds (with verified active TEFAS funds including TEB funds like TPZ, TPF, TGE), stocks, cryptos, commodities, and currencies.
-  - **Lines 275-294:** \_cleanText normalizer and isKnownTefasFund() helper preventing TEFAS fund disambiguation errors.
-  - **Lines 295-365:** findCurated() - Helper resolving curated metadata, verified Turkish names, and correct category badges.
-  - **Lines 366-441:** Search query normalizer (\_cleanText) and unified search() entry point with cross-category deduplication key prioritizing TEFAS funds and relevance sorting.
-  - **Lines 442-521:** \_searchFunds() - Multi-token fund query matcher and live TEFAS API lookup without fake fund fallbacks.
-  - **Lines 522-687:** \_searchStocks() - Query matcher and online lookup for BIST & Global stocks via TradingView with accurate category mapping, BYF identification, and futures filtering.
-  - **Lines 688-811:** Cryptos, commodities, and currencies search.
+  - **Lines 1-27:** Imports and AssetSuggestion model class with isByf flag.
+  - **Lines 28-58:** resolveFundSubtitle() - Derives clean institutional subtitles from TEFAS fund names (e.g. Kuveyt Türk Portföy, TEB Portföy).
+  - **Lines 59-192:** Curated catalogs for popular stocks, cryptos, commodities, and currencies (static fund catalog removed in favor of dynamic live TEFAS integration).
+  - **Lines 193-220:** \_cleanText normalizer and isKnownTefasFund() helper validating 3-letter TEFAS fund codes.
+  - **Lines 221-292:** findCurated() - Helper resolving curated metadata, verified Turkish names, and correct category badges from local catalogs and active TEFAS cache.
+  - **Lines 293-368:** Unified search() entry point with cross-category deduplication key prioritizing TEFAS funds and exact symbol match sorting.
+  - **Lines 369-429:** \_isInvalidStockOrDebtInstrument() - Strict filter excluding European corporate bonds, ISIN patterns (e.g., ES34330702), coupons, OTC debt boards, and non-major debt exchanges.
+  - **Lines 430-448:** \_searchFunds() - Dynamic TEFAS fund search delegating directly to TefasService.searchFunds() with subtitle resolution.
+  - **Lines 449-603:** \_searchStocks() - Query matcher and online lookup for BIST & Global stocks via TradingView with debt instrument filtering, BYF identification, and futures exclusion.
+  - **Lines 604-722:** Cryptos, commodities, and currencies search routines.
 - **File:** `lib/services/auth_service.dart`
   - **Lines 1-30:** Imports, AuthService singleton declaration, and state getters.
   - **Lines 31-90:** signInWithGoogle() - Cross-platform Google sign-in with web popup, friendly error translations, and mobile credential exchange.
@@ -225,21 +227,27 @@
   - **Lines 569-592:** Mathematical formulas for calculating real return percent and real profit amount.
 - **File:** `lib/services/market_data_service.dart`
   - **Lines 1-94:** Imports and MarketAssetInfo data model (currentPrice, change percentages, history map).
-  - **Lines 95-235:** MarketDataService initialization, cached getUsdTryRate() and getEurTryRate() forex fetchers, logo caching, and resolveFundLogoCandidates() / TEFAS fund logo resolver mapping with multi-source fallbacks (TradingView, WorldVectorLogo CDN, Fintables, etc.).
+  - **Lines 95-235:** MarketDataService initialization, cached getUsdTryRate() and getEurTryRate() forex fetchers, logo caching, and resolveFundLogoCandidates() / TEFAS fund logo resolver mapping with multi-source fallbacks (local SVG, Wikimedia, TradingView, WorldVectorLogo CDN, Fintables, etc.) with dedicated Kuveyt Türk SVG resolution avoiding Albaraka.
   - **Lines 236-591:** Static logos for popular crypto, stock, forex, and fund tickers, and web logo lookup.
   - **Lines 592-720:** Main dispatch function fetchAssetData() routing by AssetCategory with fund disambiguation preventing TEFAS funds from falling back to Yahoo foreign single stocks.
-  - **Lines 721-840:** TEFAS fund data fetcher (\_fetchTefasFund()) with origin/referer headers via AppHttpClient and fallback to BIST/BYF.
+  - **Lines 721-840:** TEFAS fund data fetcher (\_fetchTefasFund()) delegating directly to TefasService.fetchFundPriceHistory() with periodic returns calculation and dynamic withholding tax rates.
   - **Lines 841-937:** BIST & Global stock price fetcher (\_fetchBistStock(), \_fetchYahooChart() with automatic currency conversion from USD/EUR to TRY via live rates).
   - **Lines 938-1032:** Currency / Forex rate fetcher (\_fetchCurrency(), \_fetchYahooForex()).
   - **Lines 1033-1262:** Commodities & precious metals fetcher (\_fetchCommodity(), Ons Altın USD to TRY conversion, Truncgil API / Gold price parsers).
   - **Lines 1263-1482:** Cryptocurrency live prices & history fetchers via Binance & Yahoo Finance (\_fetchCrypto(), \_fetchYahooCrypto() with centralized getUsdTryRate()).
-  - **Lines 1483-1577:** Historical price interpolation helpers (\_findClosestPrice, \_calcChange, \_currencyName).
+  - **Lines 1483-1549:** Historical price interpolation helpers (\_findClosestPrice, \_calcChange, \_currencyName).
 - **File:** `lib/services/storage_service.dart`
   - **Lines 1-13:** Imports and StorageService class declaration with storage key constants.
   - **Lines 14-36:** App settings persistence (loadSettings() defaulting to brut, saveSettings()) using SharedPreferences.
   - **Lines 37-58:** Logo cache persistence (loadLogoCache(), saveLogoCache()).
   - **Lines 59-80:** Inflation cache persistence (loadInflationCache(), saveInflationCache()).
   - **Lines 81-107:** Portfolios persistence (loadPortfolios(), savePortfolios()) supporting cross-platform web localStorage.
+- **File:** `lib/services/tefas_service.dart`
+  - **Lines 1-60:** Imports and TefasFundInfo data model (symbol, name, fundType, currentPrice, dailyReturn, priceHistory, date).
+  - **Lines 61-125:** TefasService class declaration, official TEFAS endpoints (fonGnlBlgSiraliGetir, fonFiyatBilgiGetir), rate limiter state, and in-memory caches (\_fundCache, \_searchCache).
+  - **Lines 126-175:** Business day calculators (getLatestBusinessDateString, getPreviousBusinessDateString) and rate limit throttling with randomized jitter (\_throttleWithJitter: 150-400ms delay).
+  - **Lines 176-310:** searchFunds() and \_executeGnlSearch() - Dynamic live TEFAS search querying official JSON API, query normalization, caching, and retry logic with backoff.
+  - **Lines 311-419:** fetchFundPriceHistory() - TEFAS historical price fetching, fallback business days, rate limiting, and cache management.
 - **File:** `lib/theme/app_colors.dart`
   - **Lines 1-46:** Class AppColors declaring Apple-minimalist theme palette constants (background, surface, card, cardLight, accent, text, semantic status, and aliases).
 - **File:** `lib/theme/app_theme.dart`
@@ -271,9 +279,9 @@
   - **Lines 302-318:** Historical period performance section delegating to responsive PeriodPerformanceRow.fromAsset ensuring unified responsive expansion on PC and sleek horizontal scroll on mobile.
 - **File:** `lib/widgets/asset_logo.dart`
   - **Lines 1-30:** Imports, constants, and AssetLogo widget declaration.
-  - **Lines 31-135:** \_AssetLogoState lifecycle, SVG icon detection, candidate URLs cascading fallback mechanism (\_candidateUrls, \_candidateIndex, \_tryNextCandidate).
-  - **Lines 136-160:** build() method: Image network loader with cached network image and SVG fallback logic, fallback category icon, or initials avatar.
-  - **Lines 161-270:** buildGoldCard() - Vector gold ingot badge for gold and precious metal assets.
+  - **Lines 31-135:** \_AssetLogoState lifecycle, SVG detection, candidate URLs cascading fallback mechanism (\_candidateUrls, \_candidateIndex, \_tryNextCandidate).
+  - **Lines 136-195:** build() method fallback category badge, gold asset card detection, and buildGoldCard() vector gold ingot badge.
+  - **Lines 196-312:** Multi-format image loader supporting local assets (assets/icons/...) and remote network URLs (SVG via SvgPicture, raster via Image) with automatic candidate cascading fallback on load errors.
 - **File:** `lib/widgets/asset_symbol_autocomplete.dart`
   - **Lines 1-43:** Imports and AssetSymbolAutocomplete declaration with assetName, labelText, prefixIcon, and showRefreshButton support.
   - **Lines 44-165:** State initialization, focus listeners (without aggressive blur hide timer), TapRegion group setup, and debounced search.
@@ -318,6 +326,10 @@
   - **Lines 1-152:** Unit & widget tests verifying Portfolio sortIndex serialization/deserialization, PortfolioProvider reorderPortfolios sequential sortIndex updates, addPortfolio bottom insertion, cloud sync sortIndex priority over createdAt, and AssetSymbolAutocomplete TapRegion touch dismissal prevention.
 - **File:** `test/period_performance_test.dart`
   - **Lines 1-182:** Unit & widget tests verifying PeriodPerformanceRow.fromAsset data mapping, empty portfolio reel mode 0.0 neutrality, same-day asset purchase reel mode holding duration logic, 7-period rendering on desktop with expanded layout, and responsive mobile scroll behavior.
+- **File:** `test/tefas_and_stock_filter_test.dart`
+  - **Lines 1-60:** Unit tests verifying Kuveyt Türk fund logo candidate resolution (ensuring local Kuveyt Türk SVG & Wikimedia are used, and Albaraka fallback is completely excluded) and business day calculation.
+  - **Lines 61-105:** Unit tests verifying junk/debt instrument filtering (blocking ES34330702 Kutxabank bond, European corporate debt boards, and ISIN patterns while accepting standard BIST/US equities like THYAO and AAPL).
+  - **Lines 106-134:** Unit tests verifying dynamic KUT fund search via TefasService.
 - **File:** `test/transaction_undo_and_disambiguation_test.dart`
   - **Lines 1-123:** Unit tests covering TEB fund logo candidate resolution, TPZ search disambiguation (TEFAS vs foreign ETF), BYF tagging, and buy transaction rollback (decreasing quantity, weighted average cost recalculation, and asset deletion upon reaching zero).
   - **Lines 124-162:** GPN & TEFAS fund protection tests and self-healing tests restoring corrupted fund names/logos from Global Payments back to Garanti Portföy.

@@ -571,6 +571,17 @@ class PortfolioProvider extends ChangeNotifier {
           }
         }
 
+        // Kuveyt Türk fonlarına yanlışlıkla Albaraka logosu atanmışsa düzelt
+        final isKuveyt = asset.symbol.toUpperCase() == 'KUT' || asset.name.toLowerCase().contains('kuveyt');
+        if (isKuveyt && (asset.iconUrl == null || asset.iconUrl!.contains('albaraka') || asset.iconUrl!.contains('kuveyt-turk.svg'))) {
+          final correctedLogo = MarketDataService.resolveFundLogo(asset.symbol, asset.name);
+          if (correctedLogo != null) {
+            asset = asset.copyWith(iconUrl: correctedLogo);
+            MarketDataService.cacheLogo(asset.symbol, correctedLogo);
+            hasChanges = true;
+          }
+        }
+
         if (asset.iconUrl == null || asset.iconUrl!.trim().isEmpty) {
           final matchingTx = portfolio.transactions.firstWhere(
             (t) =>
@@ -611,10 +622,19 @@ class PortfolioProvider extends ChangeNotifier {
                 (t.symbol.toUpperCase() == 'GPN' && !t.name.toLowerCase().contains('garanti'));
             if (isCorrupted) {
               hasChanges = true;
-              return t.copyWith(
+              t = t.copyWith(
                 name: curated.name,
                 iconUrl: curated.iconUrl ?? t.iconUrl,
               );
+            }
+          }
+
+          final isKuveytTx = t.symbol.toUpperCase() == 'KUT' || t.name.toLowerCase().contains('kuveyt');
+          if (isKuveytTx && (t.iconUrl == null || t.iconUrl!.contains('albaraka') || t.iconUrl!.contains('kuveyt-turk.svg'))) {
+            final correctedLogo = MarketDataService.resolveFundLogo(t.symbol, t.name);
+            if (correctedLogo != null) {
+              hasChanges = true;
+              t = t.copyWith(iconUrl: correctedLogo);
             }
           }
         }
@@ -780,6 +800,14 @@ class PortfolioProvider extends ChangeNotifier {
             name: curated.name,
             iconUrl: curated.iconUrl ?? tx.iconUrl,
           );
+        }
+      }
+
+      final isKuveyt = tx.symbol.toUpperCase() == 'KUT' || tx.name.toLowerCase().contains('kuveyt');
+      if (isKuveyt && (tx.iconUrl == null || tx.iconUrl!.contains('albaraka') || tx.iconUrl!.contains('kuveyt-turk.svg'))) {
+        final correctedLogo = MarketDataService.resolveFundLogo(tx.symbol, tx.name);
+        if (correctedLogo != null) {
+          tx = tx.copyWith(iconUrl: correctedLogo);
         }
       }
     }
