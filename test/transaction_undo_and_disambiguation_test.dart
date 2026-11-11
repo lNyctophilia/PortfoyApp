@@ -210,15 +210,15 @@ void main() {
   });
 
   group('TEFAS Satis Valor Business Day Calculation Tests', () {
-    test('Para Piyasasi / Likit fon uses T-1 business day', () {
+    test('Para Piyasasi / Likit fon uses T-0 (same day) for in-house/liquid funds', () {
       final wednesday = DateTime(2026, 10, 21); // Çarşamba
       final valorDate = MarketDataService.getTefasSatisValorDate(
         wednesday,
         symbol: 'GPN',
         fundName: 'Garanti Portföy Para Piyasası Katılım (TL) Fonu',
       );
-      // T-1 -> Salı 20
-      expect(valorDate, equals(DateTime(2026, 10, 20)));
+      // T-0 -> Aynı gün (Çarşamba 21)
+      expect(valorDate, equals(DateTime(2026, 10, 21)));
     });
 
     test('Standard domestic equity/gold fund uses T-2 business days skipping weekends', () {

@@ -183,8 +183,8 @@
   - **Lines 526-625:** Missing asset icon resolution & self-healing corrupted fund names and logos (_backfillMissingAssetIcons()), including correcting Kuveyt Türk funds previously assigned Albaraka logos, and protecting Global Payments Inc. US stock logos from Garanti Bank.
   - **Lines 626-737:** Category filtering setter and portfolio CRUD operations (addPortfolio adding to bottom with sequential sortIndex, updatePortfolio, togglePortfolioVisibility, deletePortfolio normalizing indices, reorderPortfolios assigning sequential sortIndex).
   - **Lines 738-795:** Direct asset management (addAsset, updateAsset, deleteAsset).
-  - **Lines 796-1017:** Transaction handling (addTransaction with FIFO calculations, auto-healing corrupted fund transactions, Global Payments US stock protection, Kuveyt Türk logos, deleteTransaction with buy rollback reducing quantity/recalculating average cost and deleting when 0, and sell rollback).
-  - **Lines 1018-1168:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()) preserving established asset names, and getPortfolioById lookup.
+  - **Lines 796-1023:** Transaction handling (addTransaction preserving weighted average cost on partial sales in alignment with Turkish banking standards, auto-healing corrupted fund transactions, Global Payments US stock protection, Kuveyt Türk logos, deleteTransaction with buy rollback reducing quantity/recalculating average cost and deleting when 0, and sell rollback).
+  - **Lines 1024-1174:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()) preserving established asset names, and getPortfolioById lookup.
 - **File:** `lib/screens/settings_screen.dart`
   - **Lines 1-15:** Imports and SettingsScreen declaration.
   - **Lines 16-46:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
@@ -231,7 +231,7 @@
   - **Lines 569-592:** Mathematical formulas for calculating real return percent and real profit amount.
 - **File:** `lib/services/market_data_service.dart`
   - **Lines 1-94:** Imports and MarketAssetInfo data model (currentPrice, change percentages, history map).
-  - **Lines 95-279:** MarketDataService initialization, cached forex fetchers, category-namespaced logo caching (buildLogoCacheKey, cacheLogo), TEFAS sale valör business day calculation (getTefasSatisValorDate, subtractBusinessDays), and resolveFundLogoCandidates() with 1:1 square SVGs (Kuveyt Türk 41x41 circular vector, TEB BNP Paribas 18x18 square, etc.).
+  - **Lines 95-279:** MarketDataService initialization, cached forex fetchers, category-namespaced logo caching (buildLogoCacheKey, cacheLogo), TEFAS sale valör business day calculation (getTefasSatisValorDate with T+0 for liquid money market funds like GPN, subtractBusinessDays), and resolveFundLogoCandidates() with 1:1 square SVGs (Kuveyt Türk 41x41 circular vector, TEB BNP Paribas 18x18 square, etc.).
   - **Lines 280-684:** Static logos for popular crypto, stock, forex, and fund tickers (with GPN mapped to Global Payments for hisse and Garanti for fon), and web logo lookup.
   - **Lines 685-812:** Main dispatch function fetchAssetData() routing by AssetCategory with fund disambiguation preventing TEFAS funds from falling back to Yahoo foreign single stocks.
   - **Lines 813-932:** TEFAS fund data fetcher (_fetchTefasFund()) delegating directly to TefasService.fetchFundPriceHistory() with periodic returns calculation and dynamic withholding tax rates.
@@ -340,6 +340,6 @@
 - **File:** `test/transaction_undo_and_disambiguation_test.dart`
   - **Lines 1-123:** Unit tests covering TEB fund logo candidate resolution (verifying square paribas.svg emblem), TPZ search disambiguation (TEFAS vs foreign ETF), BYF tagging, and buy transaction rollback (decreasing quantity, weighted average cost recalculation, and asset deletion upon reaching zero).
   - **Lines 124-213:** GPN TEFAS fund vs Global Payments stock category-isolated protection and self-healing tests restoring corrupted fund names/logos without cross-category collisions.
-  - **Lines 214-254:** TEFAS sale valör business day calculation unit tests (T-1 for money market, T-2 for domestic funds skipping weekends, T-3 for foreign funds).
+  - **Lines 214-254:** TEFAS sale valör business day calculation unit tests (T-0 for money market / in-house funds like GPN, T-2 for domestic funds skipping weekends, T-3 for foreign funds).
 - **File:** `web/manifest.json`
   - **Lines 1-42:** PWA web app manifest specifying app name (PortfoyApp), short_name, icons, standalone display mode, and dark theme colors.

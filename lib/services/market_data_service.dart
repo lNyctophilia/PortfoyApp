@@ -242,13 +242,13 @@ class MarketDataService {
 
     int valorDays = 2; // Varsayılan TEFAS satış valörü T+2
 
-    // 1. Para piyasası / likit fonlar -> T+1
+    // 1. Para piyasası / likit fonlar -> T+0 (Aynı gün valörlüdür; kurucu bankada ve saat 13:30/16:30 öncesi anında hesaba geçer)
     if (title.contains('PARA PIYASASI') ||
         title.contains('LIKIT') ||
         title.contains('KISA VADELI') ||
         title.contains('KISA VADE') ||
         ['GPN', 'GPB', 'TI1', 'TI6', 'PPF', 'PPZ', 'ZPK', 'HLL', 'NRC'].contains(code)) {
-      valorDays = 1;
+      valorDays = 0;
     }
     // 2. Yabancı hisse ve yabancı fon sepetleri -> T+3
     else if (title.contains('YABANCI') ||

@@ -862,11 +862,17 @@ class PortfolioProvider extends ChangeNotifier {
           if (fifoResult.remainingQuantity <= 0.00001) {
             updatedAssets.removeAt(aIndex);
           } else {
+            // Garanti Bankası ve Türk bankacılık standartlarında kısmi satış yapıldığında
+            // varlığın ağırlıklı ortalama birim maliyeti korunur; sadece eldeki pay adedi düşer.
+            final double preservedCost = target.purchasePrice > 0
+                ? target.purchasePrice
+                : (fifoResult.averageRemainingCost > 0
+                    ? fifoResult.averageRemainingCost
+                    : target.purchasePrice);
+
             updatedAssets[aIndex] = target.copyWith(
               quantity: fifoResult.remainingQuantity,
-              purchasePrice: fifoResult.averageRemainingCost > 0
-                  ? fifoResult.averageRemainingCost
-                  : target.purchasePrice,
+              purchasePrice: preservedCost,
             );
           }
         }
