@@ -20,8 +20,14 @@ class PortfolioAsset {
   final double threeMonthlyChangePercent;
   final double sixMonthlyChangePercent;
   final double yearlyChangePercent;
+  final double twoYearlyChangePercent;
+  final double threeYearlyChangePercent;
+  final double fiveYearlyChangePercent;
   final String? iconUrl;
   final double? withholdingTaxRate;
+  final DateTime? earliestDate;
+  final double targetAllocationPercent;
+  final Map<String, double> monthlyReturns;
 
   PortfolioAsset({
     required this.id,
@@ -38,8 +44,14 @@ class PortfolioAsset {
     this.threeMonthlyChangePercent = 0.0,
     this.sixMonthlyChangePercent = 0.0,
     this.yearlyChangePercent = 0.0,
+    this.twoYearlyChangePercent = 0.0,
+    this.threeYearlyChangePercent = 0.0,
+    this.fiveYearlyChangePercent = 0.0,
     this.iconUrl,
     this.withholdingTaxRate,
+    this.earliestDate,
+    this.targetAllocationPercent = 0.0,
+    this.monthlyReturns = const {},
   });
 
   double get effectiveWithholdingTaxRate =>
@@ -185,8 +197,14 @@ class PortfolioAsset {
     double? threeMonthlyChangePercent,
     double? sixMonthlyChangePercent,
     double? yearlyChangePercent,
+    double? twoYearlyChangePercent,
+    double? threeYearlyChangePercent,
+    double? fiveYearlyChangePercent,
     String? iconUrl,
     double? withholdingTaxRate,
+    DateTime? earliestDate,
+    double? targetAllocationPercent,
+    Map<String, double>? monthlyReturns,
   }) {
     return PortfolioAsset(
       id: id ?? this.id,
@@ -203,8 +221,14 @@ class PortfolioAsset {
       threeMonthlyChangePercent: threeMonthlyChangePercent ?? this.threeMonthlyChangePercent,
       sixMonthlyChangePercent: sixMonthlyChangePercent ?? this.sixMonthlyChangePercent,
       yearlyChangePercent: yearlyChangePercent ?? this.yearlyChangePercent,
+      twoYearlyChangePercent: twoYearlyChangePercent ?? this.twoYearlyChangePercent,
+      threeYearlyChangePercent: threeYearlyChangePercent ?? this.threeYearlyChangePercent,
+      fiveYearlyChangePercent: fiveYearlyChangePercent ?? this.fiveYearlyChangePercent,
       iconUrl: iconUrl ?? this.iconUrl,
       withholdingTaxRate: withholdingTaxRate ?? this.withholdingTaxRate,
+      earliestDate: earliestDate ?? this.earliestDate,
+      targetAllocationPercent: targetAllocationPercent ?? this.targetAllocationPercent,
+      monthlyReturns: monthlyReturns ?? this.monthlyReturns,
     );
   }
 
@@ -224,8 +248,14 @@ class PortfolioAsset {
       'threeMonthlyChangePercent': threeMonthlyChangePercent,
       'sixMonthlyChangePercent': sixMonthlyChangePercent,
       'yearlyChangePercent': yearlyChangePercent,
+      'twoYearlyChangePercent': twoYearlyChangePercent,
+      'threeYearlyChangePercent': threeYearlyChangePercent,
+      'fiveYearlyChangePercent': fiveYearlyChangePercent,
       'iconUrl': iconUrl,
       'withholdingTaxRate': withholdingTaxRate,
+      'earliestDate': earliestDate?.toIso8601String(),
+      'targetAllocationPercent': targetAllocationPercent,
+      'monthlyReturns': monthlyReturns,
     };
   }
 
@@ -245,8 +275,17 @@ class PortfolioAsset {
       threeMonthlyChangePercent: (json['threeMonthlyChangePercent'] as num?)?.toDouble() ?? 0.0,
       sixMonthlyChangePercent: (json['sixMonthlyChangePercent'] as num?)?.toDouble() ?? 0.0,
       yearlyChangePercent: (json['yearlyChangePercent'] as num?)?.toDouble() ?? 0.0,
+      twoYearlyChangePercent: (json['twoYearlyChangePercent'] as num?)?.toDouble() ?? 0.0,
+      threeYearlyChangePercent: (json['threeYearlyChangePercent'] as num?)?.toDouble() ?? 0.0,
+      fiveYearlyChangePercent: (json['fiveYearlyChangePercent'] as num?)?.toDouble() ?? 0.0,
       iconUrl: json['iconUrl'] as String?,
       withholdingTaxRate: (json['withholdingTaxRate'] as num?)?.toDouble(),
+      earliestDate: json['earliestDate'] != null ? DateTime.tryParse(json['earliestDate'] as String) : null,
+      targetAllocationPercent: (json['targetAllocationPercent'] as num?)?.toDouble() ?? 0.0,
+      monthlyReturns: (json['monthlyReturns'] as Map<String, dynamic>?)?.map(
+            (k, v) => MapEntry(k, (v as num).toDouble()),
+          ) ??
+          const {},
     );
   }
 }

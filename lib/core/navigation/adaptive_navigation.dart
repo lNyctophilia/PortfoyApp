@@ -160,7 +160,7 @@ class AdaptiveNavigation {
   static Future<T?> openAddEditPortfolio<T>(
     BuildContext context, {
     Portfolio? portfolio,
-    required Function(String name, String description) onSave,
+    required Function onSave,
   }) {
     if (isMobile(context)) {
       return showModalBottomSheet<T>(

@@ -4,7 +4,7 @@ import '../theme/app_theme.dart';
 
 class AddEditPortfolioDialog extends StatefulWidget {
   final Portfolio? portfolio;
-  final Function(String name, String description) onSave;
+  final Function onSave;
   final bool isBottomSheet;
 
   const AddEditPortfolioDialog({
@@ -22,6 +22,7 @@ class _AddEditPortfolioDialogState extends State<AddEditPortfolioDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _descController;
+  late bool _isModel;
 
   @override
   void initState() {
@@ -29,6 +30,7 @@ class _AddEditPortfolioDialogState extends State<AddEditPortfolioDialog> {
     _nameController = TextEditingController(text: widget.portfolio?.name ?? '');
     _descController =
         TextEditingController(text: widget.portfolio?.description ?? '');
+    _isModel = widget.portfolio?.isModel ?? false;
   }
 
   @override
@@ -40,9 +42,78 @@ class _AddEditPortfolioDialogState extends State<AddEditPortfolioDialog> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
-      widget.onSave(_nameController.text.trim(), _descController.text.trim());
+      final name = _nameController.text.trim();
+      final desc = _descController.text.trim();
+      try {
+        (widget.onSave as dynamic)(name, desc, _isModel);
+      } catch (_) {
+        (widget.onSave as dynamic)(name, desc);
+      }
       Navigator.of(context).pop();
     }
+  }
+
+  Widget _buildTypeCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.primary.withValues(alpha: 0.15)
+              : AppTheme.surfaceElevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppTheme.primary : AppTheme.borderSubtle,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: isSelected ? AppTheme.primaryLight : AppTheme.textMuted,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      color: isSelected ? AppTheme.primaryLight : AppTheme.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 3),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppTheme.textMuted,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildFormFields(BuildContext context, bool isEditing) {
@@ -68,6 +139,32 @@ class _AddEditPortfolioDialogState extends State<AddEditPortfolioDialog> {
             ),
           ],
         ),
+        if (!isEditing) ...[
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTypeCard(
+                  title: 'Canlı Portföy',
+                  subtitle: 'Alış/Satış & K/Z',
+                  icon: Icons.account_balance_wallet_outlined,
+                  isSelected: !_isModel,
+                  onTap: () => setState(() => _isModel = false),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildTypeCard(
+                  title: 'Model Portföy',
+                  subtitle: 'Yüzdelik & Backtest',
+                  icon: Icons.auto_graph_rounded,
+                  isSelected: _isModel,
+                  onTap: () => setState(() => _isModel = true),
+                ),
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 18),
         TextFormField(
           controller: _nameController,

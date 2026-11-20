@@ -72,29 +72,32 @@ class PortfolioProvider extends ChangeNotifier {
   List<Portfolio> get visiblePortfolios =>
       _portfolios.where((p) => p.isVisible).toList();
 
-  // Yalnızca görünür portföylerin toplam değerleri
+  List<Portfolio> get visibleStandardPortfolios =>
+      visiblePortfolios.where((p) => !p.isModel).toList();
+
+  // Yalnızca görünür canlı portföylerin toplam değerleri
   double get grandTotalValue =>
-      visiblePortfolios.fold(0.0, (sum, p) => sum + p.totalValue);
+      visibleStandardPortfolios.fold(0.0, (sum, p) => sum + p.totalValue);
 
   double get grandTotalCost =>
-      visiblePortfolios.fold(0.0, (sum, p) => sum + p.totalCost);
+      visibleStandardPortfolios.fold(0.0, (sum, p) => sum + p.totalCost);
 
   double get grandTotalProfit => grandTotalValue - grandTotalCost;
 
   double get grandTotalWithholdingTax =>
-      visiblePortfolios.fold(0.0, (sum, p) => sum + p.totalWithholdingTax);
+      visibleStandardPortfolios.fold(0.0, (sum, p) => sum + p.totalWithholdingTax);
 
   double get grandTotalNetProfit =>
       grandTotalProfit - grandTotalWithholdingTax;
 
   double get grandTotalRealizedProfit =>
-      visiblePortfolios.fold(0.0, (sum, p) => sum + p.realizedProfit);
+      visibleStandardPortfolios.fold(0.0, (sum, p) => sum + p.realizedProfit);
 
   double get grandTotalRealizedWithholdingTax =>
-      visiblePortfolios.fold(0.0, (sum, p) => sum + p.realizedWithholdingTax);
+      visibleStandardPortfolios.fold(0.0, (sum, p) => sum + p.realizedWithholdingTax);
 
   double get grandTotalNetRealizedProfit =>
-      visiblePortfolios.fold(0.0, (sum, p) => sum + p.netRealizedProfit);
+      visibleStandardPortfolios.fold(0.0, (sum, p) => sum + p.netRealizedProfit);
 
   double get grandTotalProfitPercent =>
       grandTotalCost > 0 ? (grandTotalProfit / grandTotalCost) * 100 : 0.0;
@@ -106,12 +109,12 @@ class PortfolioProvider extends ChangeNotifier {
       grandTotalValue - grandTotalWithholdingTax;
 
   // Enflasyona göre düzeltilmiş genel toplamlar (Reel Getiri)
-  double get grandTotalRealCost => visiblePortfolios.fold(
+  double get grandTotalRealCost => visibleStandardPortfolios.fold(
         0.0,
         (sum, p) => sum + p.realCost(_assetInflationRates),
       );
 
-  double get grandTotalRealProfit => visiblePortfolios.fold(
+  double get grandTotalRealProfit => visibleStandardPortfolios.fold(
         0.0,
         (sum, p) => sum + p.realTotalProfit(_assetInflationRates),
       );
@@ -678,6 +681,7 @@ class PortfolioProvider extends ChangeNotifier {
   Future<void> addPortfolio({
     required String name,
     String description = '',
+    bool isModel = false,
   }) async {
     final nextSortIndex = _portfolios.isEmpty
         ? 0
@@ -690,6 +694,7 @@ class PortfolioProvider extends ChangeNotifier {
       createdAt: DateTime.now(),
       assets: [],
       sortIndex: nextSortIndex,
+      isModel: isModel,
     );
 
     // Yeni portföy listenin en altına eklenir
@@ -1092,6 +1097,13 @@ class PortfolioProvider extends ChangeNotifier {
                 threeMonthlyChangePercent: info.threeMonthlyChangePercent,
                 sixMonthlyChangePercent: info.sixMonthlyChangePercent,
                 yearlyChangePercent: info.yearlyChangePercent,
+                twoYearlyChangePercent: info.twoYearlyChangePercent,
+                threeYearlyChangePercent: info.threeYearlyChangePercent,
+                fiveYearlyChangePercent: info.fiveYearlyChangePercent,
+                earliestDate: info.earliestDate ?? asset.earliestDate,
+                monthlyReturns: info.monthlyReturns.isNotEmpty
+                    ? info.monthlyReturns
+                    : asset.monthlyReturns,
               ),
             );
           } else {
@@ -1148,6 +1160,13 @@ class PortfolioProvider extends ChangeNotifier {
               threeMonthlyChangePercent: info.threeMonthlyChangePercent,
               sixMonthlyChangePercent: info.sixMonthlyChangePercent,
               yearlyChangePercent: info.yearlyChangePercent,
+              twoYearlyChangePercent: info.twoYearlyChangePercent,
+              threeYearlyChangePercent: info.threeYearlyChangePercent,
+              fiveYearlyChangePercent: info.fiveYearlyChangePercent,
+              earliestDate: info.earliestDate ?? asset.earliestDate,
+              monthlyReturns: info.monthlyReturns.isNotEmpty
+                  ? info.monthlyReturns
+                  : asset.monthlyReturns,
             ),
           );
         } else {

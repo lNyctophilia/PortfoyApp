@@ -16,10 +16,14 @@ class MarketAssetInfo {
   final double threeMonthlyChangePercent;
   final double sixMonthlyChangePercent;
   final double yearlyChangePercent;
+  final double twoYearlyChangePercent;
+  final double threeYearlyChangePercent;
+  final double fiveYearlyChangePercent;
   final AssetCategory? resolvedCategory;
   final String? iconUrl;
   final DateTime? earliestDate;
   final double? withholdingTaxRate;
+  final Map<String, double> monthlyReturns;
 
   MarketAssetInfo({
     required this.symbol,
@@ -32,10 +36,14 @@ class MarketAssetInfo {
     this.threeMonthlyChangePercent = 0.0,
     this.sixMonthlyChangePercent = 0.0,
     this.yearlyChangePercent = 0.0,
+    this.twoYearlyChangePercent = 0.0,
+    this.threeYearlyChangePercent = 0.0,
+    this.fiveYearlyChangePercent = 0.0,
     this.resolvedCategory,
     this.iconUrl,
     this.earliestDate,
     this.withholdingTaxRate,
+    this.monthlyReturns = const {},
   });
 
   MarketAssetInfo withResolvedCategory(AssetCategory category) {
@@ -50,10 +58,14 @@ class MarketAssetInfo {
       threeMonthlyChangePercent: threeMonthlyChangePercent,
       sixMonthlyChangePercent: sixMonthlyChangePercent,
       yearlyChangePercent: yearlyChangePercent,
+      twoYearlyChangePercent: twoYearlyChangePercent,
+      threeYearlyChangePercent: threeYearlyChangePercent,
+      fiveYearlyChangePercent: fiveYearlyChangePercent,
       resolvedCategory: category,
       iconUrl: iconUrl,
       earliestDate: earliestDate,
       withholdingTaxRate: withholdingTaxRate,
+      monthlyReturns: monthlyReturns,
     );
   }
 
@@ -68,10 +80,14 @@ class MarketAssetInfo {
     double? threeMonthlyChangePercent,
     double? sixMonthlyChangePercent,
     double? yearlyChangePercent,
+    double? twoYearlyChangePercent,
+    double? threeYearlyChangePercent,
+    double? fiveYearlyChangePercent,
     AssetCategory? resolvedCategory,
     String? iconUrl,
     DateTime? earliestDate,
     double? withholdingTaxRate,
+    Map<String, double>? monthlyReturns,
   }) {
     return MarketAssetInfo(
       symbol: symbol ?? this.symbol,
@@ -86,10 +102,17 @@ class MarketAssetInfo {
       sixMonthlyChangePercent:
           sixMonthlyChangePercent ?? this.sixMonthlyChangePercent,
       yearlyChangePercent: yearlyChangePercent ?? this.yearlyChangePercent,
+      twoYearlyChangePercent:
+          twoYearlyChangePercent ?? this.twoYearlyChangePercent,
+      threeYearlyChangePercent:
+          threeYearlyChangePercent ?? this.threeYearlyChangePercent,
+      fiveYearlyChangePercent:
+          fiveYearlyChangePercent ?? this.fiveYearlyChangePercent,
       resolvedCategory: resolvedCategory ?? this.resolvedCategory,
       iconUrl: iconUrl ?? this.iconUrl,
       earliestDate: earliestDate ?? this.earliestDate,
       withholdingTaxRate: withholdingTaxRate ?? this.withholdingTaxRate,
+      monthlyReturns: monthlyReturns ?? this.monthlyReturns,
     );
   }
 }
@@ -846,6 +869,10 @@ class MarketDataService {
     final threeMonthly = _calcChange(sortedDates, priceHistory, 90, currentPrice);
     final sixMonthly = _calcChange(sortedDates, priceHistory, 180, currentPrice);
     final yearly = _calcChange(sortedDates, priceHistory, 365, currentPrice);
+    final twoYearly = _calcChange(sortedDates, priceHistory, 730, currentPrice);
+    final threeYearly = _calcChange(sortedDates, priceHistory, 1095, currentPrice);
+    final fiveYearly = _calcChange(sortedDates, priceHistory, 1825, currentPrice);
+    final monthlyReturns = calcMonthlyReturns(priceHistory);
 
     final fundLogo = resolveFundLogo(fundCode, fundTitle);
     final stopajRate = defaultWithholdingTaxRate(AssetCategory.fon, fundTitle, fundCode);
@@ -862,8 +889,12 @@ class MarketDataService {
       threeMonthlyChangePercent: threeMonthly,
       sixMonthlyChangePercent: sixMonthly,
       yearlyChangePercent: yearly,
+      twoYearlyChangePercent: twoYearly,
+      threeYearlyChangePercent: threeYearly,
+      fiveYearlyChangePercent: fiveYearly,
       earliestDate: sortedDates.isNotEmpty ? sortedDates.first : null,
       withholdingTaxRate: stopajRate,
+      monthlyReturns: monthlyReturns,
     );
   }
 
@@ -997,6 +1028,10 @@ class MarketDataService {
       final threeMonthly = _calcChange(sortedDates, priceHistory, 90, currentPrice);
       final sixMonthly = _calcChange(sortedDates, priceHistory, 180, currentPrice);
       final yearly = _calcChange(sortedDates, priceHistory, 365, currentPrice);
+      final twoYearly = _calcChange(sortedDates, priceHistory, 730, currentPrice);
+      final threeYearly = _calcChange(sortedDates, priceHistory, 1095, currentPrice);
+      final fiveYearly = _calcChange(sortedDates, priceHistory, 1825, currentPrice);
+      final monthlyReturns = calcMonthlyReturns(priceHistory);
 
       return MarketAssetInfo(
         symbol: displaySymbol,
@@ -1009,7 +1044,11 @@ class MarketDataService {
         threeMonthlyChangePercent: threeMonthly,
         sixMonthlyChangePercent: sixMonthly,
         yearlyChangePercent: yearly,
+        twoYearlyChangePercent: twoYearly,
+        threeYearlyChangePercent: threeYearly,
+        fiveYearlyChangePercent: fiveYearly,
         earliestDate: sortedDates.isNotEmpty ? sortedDates.first : null,
+        monthlyReturns: monthlyReturns,
       );
     } catch (_) {
       return null;
@@ -1088,6 +1127,10 @@ class MarketDataService {
       final threeMonthly = _calcChange(sortedDates, priceHistory, 90, currentPrice);
       final sixMonthly = _calcChange(sortedDates, priceHistory, 180, currentPrice);
       final yearly = _calcChange(sortedDates, priceHistory, 365, currentPrice);
+      final twoYearly = _calcChange(sortedDates, priceHistory, 730, currentPrice);
+      final threeYearly = _calcChange(sortedDates, priceHistory, 1095, currentPrice);
+      final fiveYearly = _calcChange(sortedDates, priceHistory, 1825, currentPrice);
+      final monthlyReturns = calcMonthlyReturns(priceHistory);
 
       final displayName = _currencyName(code);
 
@@ -1102,7 +1145,11 @@ class MarketDataService {
         threeMonthlyChangePercent: threeMonthly,
         sixMonthlyChangePercent: sixMonthly,
         yearlyChangePercent: yearly,
+        twoYearlyChangePercent: twoYearly,
+        threeYearlyChangePercent: threeYearly,
+        fiveYearlyChangePercent: fiveYearly,
         earliestDate: sortedDates.isNotEmpty ? sortedDates.first : null,
+        monthlyReturns: monthlyReturns,
       );
     } catch (_) {
       return null;
@@ -1204,6 +1251,10 @@ class MarketDataService {
     double threeMonthly = 0.0;
     double sixMonthly = 0.0;
     double yearly = 0.0;
+    double twoYearly = 0.0;
+    double threeYearly = 0.0;
+    double fiveYearly = 0.0;
+    Map<String, double> monthlyReturns = const {};
 
     if (history.isNotEmpty && latestHistoryPrice > 0) {
       if (daily == 0.0) {
@@ -1214,6 +1265,10 @@ class MarketDataService {
       threeMonthly = _calcChange(sortedDates, history, 90, latestHistoryPrice);
       sixMonthly = _calcChange(sortedDates, history, 180, latestHistoryPrice);
       yearly = _calcChange(sortedDates, history, 365, latestHistoryPrice);
+      twoYearly = _calcChange(sortedDates, history, 730, latestHistoryPrice);
+      threeYearly = _calcChange(sortedDates, history, 1095, latestHistoryPrice);
+      fiveYearly = _calcChange(sortedDates, history, 1825, latestHistoryPrice);
+      monthlyReturns = calcMonthlyReturns(history);
     }
 
     return MarketAssetInfo(
@@ -1227,7 +1282,11 @@ class MarketDataService {
       threeMonthlyChangePercent: threeMonthly,
       sixMonthlyChangePercent: sixMonthly,
       yearlyChangePercent: yearly,
+      twoYearlyChangePercent: twoYearly,
+      threeYearlyChangePercent: threeYearly,
+      fiveYearlyChangePercent: fiveYearly,
       earliestDate: sortedDates.isNotEmpty ? sortedDates.first : null,
+      monthlyReturns: monthlyReturns,
     );
   }
 
@@ -1447,6 +1506,13 @@ class MarketDataService {
               _calcChange(sortedDates, priceHistory, 180, currentPrice);
           final yearly =
               _calcChange(sortedDates, priceHistory, 365, currentPrice);
+          final twoYearly =
+              _calcChange(sortedDates, priceHistory, 730, currentPrice);
+          final threeYearly =
+              _calcChange(sortedDates, priceHistory, 1095, currentPrice);
+          final fiveYearly =
+              _calcChange(sortedDates, priceHistory, 1825, currentPrice);
+          final monthlyReturns = calcMonthlyReturns(priceHistory);
 
           final logo = getKnownAssetLogo(sym, AssetCategory.kripto, name);
 
@@ -1461,9 +1527,13 @@ class MarketDataService {
             threeMonthlyChangePercent: threeMonthly,
             sixMonthlyChangePercent: sixMonthly,
             yearlyChangePercent: yearly,
+            twoYearlyChangePercent: twoYearly,
+            threeYearlyChangePercent: threeYearly,
+            fiveYearlyChangePercent: fiveYearly,
             iconUrl: logo,
             resolvedCategory: AssetCategory.kripto,
             earliestDate: sortedDates.isNotEmpty ? sortedDates.first : null,
+            monthlyReturns: monthlyReturns,
           );
         }
       }
@@ -1542,6 +1612,10 @@ class MarketDataService {
       final sixMonthly =
           _calcChange(sortedDates, priceHistory, 180, currentPrice);
       final yearly = _calcChange(sortedDates, priceHistory, 365, currentPrice);
+      final twoYearly = _calcChange(sortedDates, priceHistory, 730, currentPrice);
+      final threeYearly = _calcChange(sortedDates, priceHistory, 1095, currentPrice);
+      final fiveYearly = _calcChange(sortedDates, priceHistory, 1825, currentPrice);
+      final monthlyReturns = calcMonthlyReturns(priceHistory);
 
       final logo = getKnownAssetLogo(sym, AssetCategory.kripto, name);
 
@@ -1556,9 +1630,13 @@ class MarketDataService {
         threeMonthlyChangePercent: threeMonthly,
         sixMonthlyChangePercent: sixMonthly,
         yearlyChangePercent: yearly,
+        twoYearlyChangePercent: twoYearly,
+        threeYearlyChangePercent: threeYearly,
+        fiveYearlyChangePercent: fiveYearly,
         iconUrl: logo,
         resolvedCategory: AssetCategory.kripto,
         earliestDate: sortedDates.isNotEmpty ? sortedDates.first : null,
+        monthlyReturns: monthlyReturns,
       );
     } catch (_) {
       return null;
@@ -1568,6 +1646,46 @@ class MarketDataService {
   // -------------------------------------------------------------
   // YARDIMCI HESAPLAMALAR
   // -------------------------------------------------------------
+  static Map<String, double> calcMonthlyReturns(
+    Map<DateTime, double> history,
+  ) {
+    if (history.isEmpty) return {};
+    final sortedDates = history.keys.toList()..sort();
+    if (sortedDates.isEmpty) return {};
+
+    final Map<String, List<DateTime>> months = {};
+    for (final d in sortedDates) {
+      final key = '${d.year}-${d.month.toString().padLeft(2, '0')}';
+      months.putIfAbsent(key, () => []).add(d);
+    }
+
+    final sortedMonthKeys = months.keys.toList()..sort();
+    final Map<String, double> monthlyReturns = {};
+
+    for (int i = 0; i < sortedMonthKeys.length; i++) {
+      final mKey = sortedMonthKeys[i];
+      final datesInMonth = months[mKey]!;
+      final lastDate = datesInMonth.last;
+      final closePrice = history[lastDate] ?? 0.0;
+
+      double openPrice = 0.0;
+      if (i > 0) {
+        final prevKey = sortedMonthKeys[i - 1];
+        final prevLastDate = months[prevKey]!.last;
+        openPrice = history[prevLastDate] ?? 0.0;
+      } else {
+        final firstDate = datesInMonth.first;
+        openPrice = history[firstDate] ?? 0.0;
+      }
+
+      if (openPrice > 0 && closePrice > 0) {
+        final ret = ((closePrice - openPrice) / openPrice) * 100.0;
+        monthlyReturns[mKey] = double.parse(ret.toStringAsFixed(2));
+      }
+    }
+
+    return monthlyReturns;
+  }
   static double? _findClosestPrice(
     Map<DateTime, double> history,
     DateTime targetDate,

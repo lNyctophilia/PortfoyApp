@@ -41,23 +41,20 @@
   - **Lines 462-492:** \_buildDesktopHeader() - PC header with title, icon, and close button.
   - **Lines 493-1143:** \_buildFormContent() - Category selection, symbol autocomplete, quantity & price fields with TurkishNumberInputFormatter (dot thousand, comma decimal), stopaj, summary preview without '+' prefix on positive returns, and actions.
 - **File:** `lib/dialogs/add_edit_portfolio_dialog.dart`
-  - **Lines 1-28:** Imports, AddEditPortfolioDialog declaration with isBottomSheet flag, and state setup.
-  - **Lines 29-50:** Lifecycle methods (initState, dispose) and form submission logic (\_submit).
-  - **Lines 51-120:** \_buildFormFields() - Input fields (clean name without star or hintText, clean description without hintText), validation, and action buttons.
-  - **Lines 121-180:** build() method - Adaptive layout rendering as a draggable rounded bottom sheet (when isBottomSheet is true) or responsive Dialog shell on desktop.
+  - **Lines 1-277:** AddEditPortfolioDialog supporting choice between Canlı Portföy and Model Portföy, segmented selection card, clean title/description, and form submission.
 - **File:** `lib/dialogs/add_transaction_dialog.dart`
-  - **Lines 1-75:** Imports, AddTransactionDialog declaration with isFullScreen flag, initialAsset, initialType, and state variables (_satisQuantityFocusNode).
-  - **Lines 76-180:** initState() (focus node listeners, clean start with no preselected asset on sell, today's date), dispose(), _clampSatisQuantity() (auto-clamping quantity to max portfolio holding on enter/unfocus), Turkish price/number parsing and formatting helpers with precision (_formatPriceGrouped, Formatters.parseDouble).
+  - **Lines 1-75:** Imports, AddTransactionDialog declaration with isFullScreen flag, initialAsset, initialType, and state variables (\_satisQuantityFocusNode).
+  - **Lines 76-180:** initState() (focus node listeners, clean start with no preselected asset on sell, today's date), dispose(), \_clampSatisQuantity() (auto-clamping quantity to max portfolio holding on enter/unfocus), Turkish price/number parsing and formatting helpers with precision (\_formatPriceGrouped, Formatters.parseDouble).
   - **Lines 181-282:** Buy (Alis) transaction logic: suggestion selection, market data fetching.
-  - **Lines 283-419:** Custom calendar picker dialog (_showCalendarPicker()) and buy date selection (_pickAlisDate()).
+  - **Lines 283-419:** Custom calendar picker dialog (\_showCalendarPicker()) and buy date selection (\_pickAlisDate()).
   - **Lines 420-524:** Sell (Satis) transaction logic: asset selection from portfolio, automatic TEFAS valör (T-1, T-2, T-3) business day historical price lookup without UI clutter, and date picker.
-  - **Lines 525-616:** _saveTransaction() - FIFO validation, quantity clamping, cost estimation, transaction persistence, and asset updating.
+  - **Lines 525-616:** \_saveTransaction() - FIFO validation, quantity clamping, cost estimation, transaction persistence, and asset updating.
   - **Lines 617-687:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile (with dynamic green shopping cart for Alış and red sell tag for Satış) or responsive Dialog shell on desktop with 'İşlem Ekle' title.
-  - **Lines 688-719:** _buildDesktopHeader() - PC header row with dynamic shopping cart / sell tag icon, 'İşlem Ekle' title, and close button.
-  - **Lines 720-937:** _buildFormContent() - Form switcher (Alis/Satis tabs) and responsive actions (full-width expanded buttons on mobile).
-  - **Lines 938-1111:** _buildAlisForm() - Minimalist purchase form with clean inline code/name, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-green "Toplam" cost card.
-  - **Lines 1112-1255:** _showSatisAssetPicker() - Modern modal bottom sheet picker listing portfolio assets with logo, symbol, category badge, and name (omitting quantity and price per user rule).
-  - **Lines 1256-1593:** _buildSatisForm() - Minimalist sale form with clickable asset selection container (neutral subtle border without red outline), horizontally centered Toplam Adet and Toplam Fiyat summary card, matching Alış field layout (Row: Tarih + Adet with auto-clamping on enter/unfocus, below: full-width Satış Fiyatı with TL icon), and centered soft-red "Toplam" revenue card.
+  - **Lines 688-719:** \_buildDesktopHeader() - PC header row with dynamic shopping cart / sell tag icon, 'İşlem Ekle' title, and close button.
+  - **Lines 720-937:** \_buildFormContent() - Form switcher (Alis/Satis tabs) and responsive actions (full-width expanded buttons on mobile).
+  - **Lines 938-1111:** \_buildAlisForm() - Minimalist purchase form with clean inline code/name, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-green "Toplam" cost card.
+  - **Lines 1112-1255:** \_showSatisAssetPicker() - Modern modal bottom sheet picker listing portfolio assets with logo, symbol, category badge, and name (omitting quantity and price per user rule).
+  - **Lines 1256-1593:** \_buildSatisForm() - Minimalist sale form with clickable asset selection container (neutral subtle border without red outline), horizontally centered Toplam Adet and Toplam Fiyat summary card, matching Alış field layout (Row: Tarih + Adet with auto-clamping on enter/unfocus, below: full-width Satış Fiyatı with TL icon), and centered soft-red "Toplam" revenue card.
 - **File:** `lib/dialogs/asset_status_dialog.dart`
   - **Lines 1-34:** Imports, AssetStatusDialog declaration with isFullScreen flag, and state setup.
   - **Lines 35-117:** build() method: Adaptive layout setup, FIFO calculation, responsive dimensions.
@@ -68,13 +65,16 @@
   - **Lines 824-1062:** \_buildSalesTab() - Realized sales history with responsive 2-layer PC and mobile layouts, top-right K/Z box (`profitBox`), and 4 divider-separated columns (`Satış Fiyatı | Adet | Maliyet Farkı | Toplam Gelir`).
   - **Lines 1063-1109:** \_buildItemDivider(), \_buildSubStat, and \_formatQty formatters.
 - **File:** `lib/dialogs/portfolio_detail_dialog.dart`
-  - **Lines 1-33:** Imports, PortfolioDetailDialog declaration with isFullScreen flag, and state setup (_txSortCriterion, _txSortAscending).
-  - **Lines 34-201:** build() method - Adaptive screen shell wrapped in LayoutBuilder providing availableHeight for empty state vertical centering: full-screen Scaffold with AppBar on mobile vs responsive Dialog shell on desktop.
-  - **Lines 202-263:** \_buildDesktopHeader() - PC desktop header with wallet icon, portfolio title, and close icon.
-  - **Lines 264-676:** \_buildDetailContent() - Core stretched content: 'Portföy Değeri' header metric with clean value, aggregate metric cards (Maliyet, Açık K/Z with percentage next to amount without '+' prefix, Gerçekleşen K/Z), direct PeriodPerformanceRow without redundant title, tightened vertical dividers, distribution bar, tab bar switcher with clean 'İşlem Geçmişi' tab button, and dynamic TransactionSortBar on desktop when transaction tab is active.
-  - **Lines 677-782:** \_buildAssetsTab() - Clean full-width search input, vertically and horizontally centered empty state ("Bu portföyde henüz varlık yok"), and full-width AssetItemTile list opening status via AdaptiveNavigation.openAssetStatus.
-  - **Lines 783-1253:** \_buildTransactionsTab() - Minimalist vertically and horizontally centered empty state ("Bu portföyde henüz işlem kaydı yok"), responsive mobile TransactionSortBar, sorted transaction history cards using sortPortfolioTransactions with fixed-position slots on PC and mobile, and undo button.
-  - **Lines 1254-1320:** \_confirmUndoTransaction() and \_confirmDeleteAsset().
+  - **Lines 1-43:** Imports and PortfolioDetailDialog declaration with isFullScreen flag, and state setup (\_txSortCriterion, \_txSortAscending).
+  - **Lines 44-219:** build() method - Adaptive screen shell wrapped in LayoutBuilder: full-screen Scaffold with AppBar on mobile (with ModelPortfolioBadge support) vs responsive Dialog shell on desktop.
+  - **Lines 220-292:** \_buildDesktopHeader() - PC desktop header with wallet icon / model badge, portfolio title, and close icon.
+  - **Lines 293-716:** \_buildDetailContent() - Core standard portfolio view: 'Portföy Değeri' header metric with clean value, aggregate metric cards (Maliyet, Açık K/Z, Gerçekleşen K/Z), direct PeriodPerformanceRow, distribution bar, and tab switcher.
+  - **Lines 717-822:** \_buildAssetsTab() - Clean full-width search input, empty state, and AssetItemTile list.
+  - **Lines 823-1293:** \_buildTransactionsTab() - Minimalist empty state, responsive mobile TransactionSortBar, sorted transaction cards with fixed-position slots, and undo button.
+  - **Lines 1294-1360:** \_confirmUndoTransaction() and \_confirmDeleteAsset().
+  - **Lines 1361-1394:** \_openAddModelAsset() and \_openEditModelAsset() triggers launching AddEditModelAssetDialog.
+  - **Lines 1395-1732:** \_buildModelDetailContent() - Backtest summary cards (Ortalama Aylık Getiri, En İyi Ay, En Kötü Ay, Hedef Dağılım), ModelPeriodPerformanceRow (1G-5Y), tab switcher ('Varlıklar' vs 'Aylık Getiri Analizi'), and ModelMonthlyHistoryView integration.
+  - **Lines 1733-1955:** \_buildModelAssetsTab(), \_buildModelAssetTile() with percentage badge, current price, mini historical return chips, edit/delete actions, and \_buildMiniReturn().
 - **File:** `lib/dialogs/widgets/transaction_sort_bar.dart`
   - **Lines 1-15:** Imports and TransactionSortCriterion enum (date, fund, type, profitLoss, amount).
   - **Lines 16-60:** sortPortfolioTransactions() comparator with net profit consideration and deterministic date tie-breaker.
@@ -129,6 +129,27 @@
   - **Lines 93-274:** build() method - Apple-minimalist surface card, lock icon badge, obscured textfield with reveal toggle, and submit button.
 - **File:** `lib/features/auth_gate/widgets/auth_gate_wrapper.dart`
   - **Lines 1-74:** AuthGateWrapper stateful widget dynamically rendering PortfolioHomeScreen when authorized or AuthGateScreen when locked.
+- **File:** `lib/features/model_portfolio/dialogs/add_edit_model_asset_dialog.dart`
+  - **Lines 1-404:** AddEditModelAssetDialog allowing asset autocomplete selection, target allocation percentage input with TurkishNumberInputFormatter, remaining allocation helper chip, quick percentage selector chips (+5%, +10%, +25%, Kalanı Doldur), market data fetching, and percentage validation (0.1%-100%, total <= 100%).
+- **File:** `lib/features/model_portfolio/models/model_portfolio_analysis.dart`
+  - **Lines 1-22:** ModelMonthReturn data class (monthKey, monthLabel, returnPercent, warnedAssetNames, warningMessage).
+  - **Lines 23-49:** ModelPortfolioAnalysis data class (averageMonthlyReturn, bestMonth, worstMonth, monthlyHistory, periodReturns, periodMissingAssets).
+- **File:** `lib/features/model_portfolio/services/model_portfolio_service.dart`
+  - **Lines 1-25:** Imports and ModelPortfolioService class declaration.
+  - **Lines 26-120:** analyze() core backtesting engine calculating weighted returns for 1G, 1H, 1A, 3A, 6A, 1Y, 2Y, 3Y, 5Y and detecting boundary exceedance for each period.
+  - **Lines 121-185:** Monthly timeline generation in descending chronological order (newest to oldest), warning trigger logic firing once per asset in the exact boundary month when earliestDate is reached.
+  - **Lines 186-227:** Statistical aggregations for average monthly return, best month, worst month, and period label formatters.
+- **File:** `lib/features/model_portfolio/widgets/model_monthly_history_view.dart`
+  - **Lines 1-40:** Imports and ModelMonthlyHistoryView declaration.
+  - **Lines 41-110:** build() method - Header stats card (Ortalama Aylık Getiri, En İyi Ay, En Kötü Ay) and monthly history timeline.
+  - **Lines 111-200:** \_buildSummaryCard() - Apple-minimalist 3-column stats bar with dynamic positive/negative coloration.
+  - **Lines 201-324:** \_buildMonthTile() - Monthly return item with month label, return pill, and one-time exclamation warning icon with interactive hover tooltip ("Bu varlığın son verisi geçildi: [Varlık Adı] için bu tarihten öncesi veri bulunmuyor").
+- **File:** `lib/features/model_portfolio/widgets/model_period_performance_row.dart`
+  - **Lines 1-45:** Imports and ModelPeriodPerformanceRow declaration with analysis and compact mode.
+  - **Lines 46-130:** build() method - Responsive LayoutBuilder with desktop expanded strip and mobile horizontal scroll with mouse wheel support.
+  - **Lines 131-252:** \_buildTile() - Minimalist return metric tile with warning indicator and interactive Tooltip detailing assets whose historical data limit was exceeded for that duration.
+- **File:** `lib/features/model_portfolio/widgets/model_portfolio_badge.dart`
+  - **Lines 1-46:** Apple-minimalist badge widget rendering compact 'Model Portföy' pill with auto_graph icon and cityInner themed background.
 - **File:** `lib/firebase_options.dart`
   - **Lines 1-73:** DefaultFirebaseOptions auto-generated and configured mapping platform options for Web, Android, and Windows.
 - **File:** `lib/main.dart`
@@ -148,21 +169,21 @@
   - **Lines 41-55:** Getter defaultIcon mapping category to Material icon.
   - **Lines 56-86:** Method buildIcon() with custom SVG/vector handling for emtia/metals.
 - **File:** `lib/models/portfolio.dart`
-  - **Lines 1-25:** Imports, Portfolio class declaration, properties including sortIndex, and constructor with default sortIndex = 0.
-  - **Lines 26-52:** Aggregate getters for asset counts, gross total cost, gross total value, and net values.
-  - **Lines 53-113:** Real (inflation-adjusted) return calculations and mode-based profit evaluation methods (profitForMode, valueForMode).
-  - **Lines 114-231:** Realized gains from transactions, earliestActivePurchaseDate, active holding duration (holdingDays based on active assets), and neutral-duration sensitive period performance metrics (daily, weekly, monthly, threeMonthly, sixMonthly, yearly returning 0.0 when duration is insufficient).
-  - **Lines 232-314:** Asset allocation breakdown calculations (assetAllocations, categoryPercentages, categoryValues).
-  - **Lines 315-370:** Immutable helper copyWith() and JSON serialization methods (toJson, fromJson) supporting sortIndex.
-  - **Lines 371-385:** AssetAllocationItem model representing category and asset distribution weights.
+  - **Lines 1-45:** Imports, Portfolio class declaration, properties including isModel, sortIndex, and constructor with default sortIndex = 0.
+  - **Lines 46-75:** Aggregate getters for asset counts, gross total cost, gross total value, and net values.
+  - **Lines 76-140:** Real (inflation-adjusted) return calculations and mode-based profit evaluation methods (profitForMode, valueForMode).
+  - **Lines 141-255:** Realized gains from transactions, earliestActivePurchaseDate, active holding duration (holdingDays based on active assets), and neutral-duration sensitive period performance metrics (daily, weekly, monthly, threeMonthly, sixMonthly, yearly returning 0.0 when duration is insufficient).
+  - **Lines 256-385:** Asset allocation breakdown calculations (assetAllocations, categoryPercentages, categoryValues) with targetAllocationPercent support for model portfolios, totalAllocationPercent.
+  - **Lines 386-430:** Immutable helper copyWith() and JSON serialization methods (toJson, fromJson) supporting isModel and sortIndex.
+  - **Lines 431-443:** AssetAllocationItem model representing category and asset distribution weights.
 - **File:** `lib/models/portfolio_asset.dart`
-  - **Lines 1-25:** Imports, PortfolioAsset class declaration, and properties.
-  - **Lines 26-44:** Constructor definition with default parameter values.
-  - **Lines 45-72:** Withholding tax getters (withholdingTaxAmount), net values, gross cost, and current values.
-  - **Lines 73-130:** Real (inflation-adjusted) cost/profit calculations and mode-aware getters (profitForMode, valueForMode).
-  - **Lines 131-172:** Holding period calculation (holdingDays) and neutral-duration sensitive historical period profit estimators (weekly, monthly, threeMonthly, sixMonthly, yearly returning 0.0 when holding duration is insufficient, dailyProfit using totalProfit for same-day buys).
-  - **Lines 173-210:** copyWith() method for immutable updates.
-  - **Lines 211-252:** JSON serialization methods (toJson, fromJson).
+  - **Lines 1-38:** Imports, PortfolioAsset class declaration, and properties (including targetAllocationPercent, twoYearlyChangePercent, threeYearlyChangePercent, fiveYearlyChangePercent, earliestDate, monthlyReturns).
+  - **Lines 39-60:** Constructor definition with default parameter values.
+  - **Lines 61-90:** Withholding tax getters (withholdingTaxAmount), net values, gross cost, and current values.
+  - **Lines 91-145:** Real (inflation-adjusted) cost/profit calculations and mode-aware getters (profitForMode, valueForMode).
+  - **Lines 146-190:** Holding period calculation (holdingDays) and neutral-duration sensitive historical period profit estimators.
+  - **Lines 191-240:** copyWith() method for immutable updates.
+  - **Lines 241-291:** JSON serialization methods (toJson, fromJson) serializing targetAllocationPercent, multi-year returns, earliestDate, and monthlyReturns.
 - **File:** `lib/models/portfolio_transaction.dart`
   - **Lines 1-18:** TransactionType enum declaration (alis, satis) with JSON helpers.
   - **Lines 19-68:** PortfolioTransaction class declaration, fields, and constructor.
@@ -173,37 +194,37 @@
   - **Lines 1-6:** Enum declaration ReturnCalculationMode (brut, net, reel).
   - **Lines 7-63:** Extension ReturnCalculationModeExtension with labels, badgeText, title, shortDescription, and detailedDescription.
 - **File:** `lib/providers/portfolio_provider.dart`
-  - **Lines 1-53:** Imports (including dart:math), PortfolioProvider declaration, auth/firestore services, and internal state variables (realtime stream subscriptions and isLiveConnected state).
-  - **Lines 54-116:** Filtered portfolio getters, auth state getters (currentUser, isSignedIn, isSyncing, lastSyncTime, syncError, isLiveConnected), and category filter accessors.
-  - **Lines 117-164:** Grand total aggregate getters across all visible portfolios (cost, value, profit, profit percent for brut/net/reel).
-  - **Lines 165-300:** Auth lifecycle listener, dispose teardown, cloud synchronization with local merge (syncWithCloud() with sortIndex preservation, auto markUserApproved and gate unlocking), Google sign-in/out dispatch with syncing status tracking, and background Firestore persistence (_persistPortfolios()).
-  - **Lines 301-423:** Realtime Firestore stream handlers (_startRealtimeSubscriptions, _cancelRealtimeSubscriptions, _onPortfoliosSnapshot preserving sortIndex order, _onSettingsSnapshot).
-  - **Lines 424-477:** Data loading (loadData() preserving sortIndex), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
-  - **Lines 478-525:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
-  - **Lines 526-625:** Missing asset icon resolution & self-healing corrupted fund names and logos (_backfillMissingAssetIcons()), including correcting Kuveyt Türk funds previously assigned Albaraka logos, and protecting Global Payments Inc. US stock logos from Garanti Bank.
-  - **Lines 626-737:** Category filtering setter and portfolio CRUD operations (addPortfolio adding to bottom with sequential sortIndex, updatePortfolio, togglePortfolioVisibility, deletePortfolio normalizing indices, reorderPortfolios assigning sequential sortIndex).
-  - **Lines 738-795:** Direct asset management (addAsset, updateAsset, deleteAsset).
-  - **Lines 796-1023:** Transaction handling (addTransaction preserving weighted average cost on partial sales in alignment with Turkish banking standards, auto-healing corrupted fund transactions, Global Payments US stock protection, Kuveyt Türk logos, deleteTransaction with buy rollback reducing quantity/recalculating average cost and deleting when 0, and sell rollback).
-  - **Lines 1024-1174:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()) preserving established asset names, and getPortfolioById lookup.
+  - **Lines 1-55:** Imports (including dart:math), PortfolioProvider declaration, auth/firestore services, and internal state variables (realtime stream subscriptions and isLiveConnected state).
+  - **Lines 56-125:** Filtered portfolio getters (including visibleStandardPortfolios isolating model portfolios from net worth), auth state getters (currentUser, isSignedIn, isSyncing, lastSyncTime, syncError, isLiveConnected), and category filter accessors.
+  - **Lines 126-175:** Grand total aggregate getters across all visible standard portfolios (cost, value, profit, profit percent for brut/net/reel).
+  - **Lines 176-310:** Auth lifecycle listener, dispose teardown, cloud synchronization with local merge (syncWithCloud() with sortIndex preservation, auto markUserApproved and gate unlocking), Google sign-in/out dispatch with syncing status tracking, and background Firestore persistence (\_persistPortfolios()).
+  - **Lines 311-435:** Realtime Firestore stream handlers (\_startRealtimeSubscriptions, \_cancelRealtimeSubscriptions, \_onPortfoliosSnapshot preserving sortIndex order, \_onSettingsSnapshot).
+  - **Lines 436-490:** Data loading (loadData() preserving sortIndex), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
+  - **Lines 491-540:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
+  - **Lines 541-645:** Missing asset icon resolution & self-healing corrupted fund names and logos (\_backfillMissingAssetIcons()), including correcting Kuveyt Türk funds previously assigned Albaraka logos, and protecting Global Payments Inc. US stock logos from Garanti Bank.
+  - **Lines 646-760:** Category filtering setter and portfolio CRUD operations (addPortfolio supporting isModel, updatePortfolio, togglePortfolioVisibility, deletePortfolio normalizing indices, reorderPortfolios assigning sequential sortIndex).
+  - **Lines 761-820:** Direct asset management (addAsset, updateAsset, deleteAsset).
+  - **Lines 821-1050:** Transaction handling (addTransaction preserving weighted average cost on partial sales in alignment with Turkish banking standards, auto-healing corrupted fund transactions, Global Payments US stock protection, Kuveyt Türk logos, deleteTransaction with buy rollback reducing quantity/recalculating average cost and deleting when 0, and sell rollback).
+  - **Lines 1051-1193:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()) preserving established asset names, earliestDate, multi-year returns, monthlyReturns, and getPortfolioById lookup.
 - **File:** `lib/screens/settings_screen.dart`
   - **Lines 1-15:** Imports and SettingsScreen declaration.
   - **Lines 16-46:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.
   - **Lines 47-236:** Return calculation mode settings section ('Getiri Hesaplama Tercihi', starting directly with radio options, stretched active mode indicator, and minimalist TÜFE period chips with refresh button without extra explanatory text).
   - **Lines 237-347:** About app section with official app icon, version, AppUpdateAction trigger, developer, and copyright info.
-  - **Lines 348-421:** _buildRadioOption() - Minimalist radio selection tile with mode titles, badges, and status indicators without redundant subtitles, and compact icons.
-  - **Lines 422-574:** _buildAccountSection() ('Hesap Senkronizasyonu') & _buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
-  - **Lines 575-742:** _buildSignedInContent(), user avatar fallback builder, and sync/sign-out actions.
-  - **Lines 743-837:** _confirmSignOut() modal dialog, section header, and TUFE badge helpers.
+  - **Lines 348-421:** \_buildRadioOption() - Minimalist radio selection tile with mode titles, badges, and status indicators without redundant subtitles, and compact icons.
+  - **Lines 422-574:** \_buildAccountSection() ('Hesap Senkronizasyonu') & \_buildSignedOutContent() - Google sign-in CTA card with authentic vector logo and sync feedback.
+  - **Lines 575-742:** \_buildSignedInContent(), user avatar fallback builder, and sync/sign-out actions.
+  - **Lines 743-837:** \_confirmSignOut() modal dialog, section header, and TUFE badge helpers.
 - **File:** `lib/services/asset_catalog_service.dart`
   - **Lines 1-27:** Imports and AssetSuggestion model class with isByf flag.
   - **Lines 28-58:** resolveFundSubtitle() - Derives clean institutional subtitles from TEFAS fund names (e.g. Kuveyt Türk Portföy, TEB Portföy).
   - **Lines 59-192:** Curated catalogs for popular stocks, cryptos, commodities, and currencies (static fund catalog removed in favor of dynamic live TEFAS integration).
-  - **Lines 193-220:** _cleanText normalizer and isKnownTefasFund() helper validating 3-letter TEFAS fund codes.
+  - **Lines 193-220:** \_cleanText normalizer and isKnownTefasFund() helper validating 3-letter TEFAS fund codes.
   - **Lines 221-300:** findCurated() - Helper resolving curated metadata, verified Turkish names, and correct category badges from local catalogs and active TEFAS cache with category filtering preventing stock queries from returning cached TEFAS funds.
   - **Lines 301-376:** Unified search() entry point with cross-category deduplication key prioritizing TEFAS funds and exact symbol match sorting.
-  - **Lines 377-437:** _isInvalidStockOrDebtInstrument() - Strict filter excluding European corporate bonds, ISIN patterns (e.g., ES34330702), coupons, OTC debt boards, and non-major debt exchanges.
-  - **Lines 438-456:** _searchFunds() - Dynamic TEFAS fund search delegating directly to TefasService.searchFunds() with subtitle resolution.
-  - **Lines 457-611:** _searchStocks() - Query matcher and online lookup for BIST & Global stocks via TradingView with debt instrument filtering, BYF identification, and futures exclusion, routing curated matches with AssetCategory.hisse.
+  - **Lines 377-437:** \_isInvalidStockOrDebtInstrument() - Strict filter excluding European corporate bonds, ISIN patterns (e.g., ES34330702), coupons, OTC debt boards, and non-major debt exchanges.
+  - **Lines 438-456:** \_searchFunds() - Dynamic TEFAS fund search delegating directly to TefasService.searchFunds() with subtitle resolution.
+  - **Lines 457-611:** \_searchStocks() - Query matcher and online lookup for BIST & Global stocks via TradingView with debt instrument filtering, BYF identification, and futures exclusion, routing curated matches with AssetCategory.hisse.
   - **Lines 612-730:** Cryptos, commodities, and currencies search routines.
 - **File:** `lib/services/auth_service.dart`
   - **Lines 1-30:** Imports, AuthService singleton declaration, and state getters.
@@ -222,24 +243,24 @@
 - **File:** `lib/services/inflation_service.dart`
   - **Lines 1-50:** Imports and InflationInfo data class with JSON serialization.
   - **Lines 51-95:** PeriodInflationData data model representing 1-month, 3-month, 6-month, 1-year, and 5-year CPI rates.
-  - **Lines 96-187:** InflationService setup and historical monthly TUFE fallback index table (_fallbackTufeIndices).
+  - **Lines 96-187:** InflationService setup and historical monthly TUFE fallback index table (\_fallbackTufeIndices).
   - **Lines 188-305:** Cache loading (ensureCacheLoaded()) and live CPI inflation fetcher (fetchInflationRate()) via TCMB API through AppHttpClient.
-  - **Lines 306-356:** Fallback calculation logic (_calculateFromFallback, _findClosestIndex, _saveToCache).
+  - **Lines 306-356:** Fallback calculation logic (\_calculateFromFallback, \_findClosestIndex, \_saveToCache).
   - **Lines 357-407:** Helper to determine latest officially released CPI month/year (getLatestAvailablePeriod()).
   - **Lines 408-505:** Multi-period inflation fetcher (getPeriodInflationRates()).
   - **Lines 506-568:** Annual and custom purchase date inflation calculators (getLatestAnnualInflation(), getInflationSince()).
   - **Lines 569-592:** Mathematical formulas for calculating real return percent and real profit amount.
 - **File:** `lib/services/market_data_service.dart`
-  - **Lines 1-94:** Imports and MarketAssetInfo data model (currentPrice, change percentages, history map).
-  - **Lines 95-279:** MarketDataService initialization, cached forex fetchers, category-namespaced logo caching (buildLogoCacheKey, cacheLogo), TEFAS sale valör business day calculation (getTefasSatisValorDate with T+0 for liquid money market funds like GPN, subtractBusinessDays), and resolveFundLogoCandidates() with 1:1 square SVGs (Kuveyt Türk 41x41 circular vector, TEB BNP Paribas 18x18 square, etc.).
-  - **Lines 280-684:** Static logos for popular crypto, stock, forex, and fund tickers (with GPN mapped to Global Payments for hisse and Garanti for fon), and web logo lookup.
-  - **Lines 685-812:** Main dispatch function fetchAssetData() routing by AssetCategory with fund disambiguation preventing TEFAS funds from falling back to Yahoo foreign single stocks.
-  - **Lines 813-932:** TEFAS fund data fetcher (_fetchTefasFund()) delegating directly to TefasService.fetchFundPriceHistory() with periodic returns calculation and dynamic withholding tax rates.
-  - **Lines 933-1029:** BIST & Global stock price fetcher (_fetchBistStock(), _fetchYahooChart() with automatic currency conversion from USD/EUR to TRY via live rates).
-  - **Lines 1030-1124:** Currency / Forex rate fetcher (_fetchCurrency(), _fetchYahooForex()).
-  - **Lines 1125-1354:** Commodities & precious metals fetcher (_fetchCommodity(), Ons Altın USD to TRY conversion, Truncgil API / Gold price parsers).
-  - **Lines 1355-1574:** Cryptocurrency live prices & history fetchers via Binance & Yahoo Finance (_fetchCrypto(), _fetchYahooCrypto() with centralized getUsdTryRate()).
-  - **Lines 1575-1641:** Historical price interpolation helpers (_findClosestPrice, _calcChange, _currencyName).
+  - **Lines 1-115:** Imports and MarketAssetInfo data model (currentPrice, change percentages including 2Y, 3Y, 5Y, earliestDate, monthlyReturns, history map).
+  - **Lines 116-300:** MarketDataService initialization, cached forex fetchers, category-namespaced logo caching (buildLogoCacheKey, cacheLogo), TEFAS sale valör business day calculation (getTefasSatisValorDate with T+0 for liquid money market funds like GPN, subtractBusinessDays), and resolveFundLogoCandidates() with 1:1 square SVGs (Kuveyt Türk 41x41 circular vector, TEB BNP Paribas 18x18 square, etc.).
+  - **Lines 301-705:** Static logos for popular crypto, stock, forex, and fund tickers (with GPN mapped to Global Payments for hisse and Garanti for fon), and web logo lookup.
+  - **Lines 706-835:** Main dispatch function fetchAssetData() routing by AssetCategory with fund disambiguation preventing TEFAS funds from falling back to Yahoo foreign single stocks.
+  - **Lines 836-980:** TEFAS fund data fetcher (\_fetchTefasFund()) delegating directly to TefasService.fetchFundPriceHistory() with periodic returns (including 2Y, 3Y, 5Y), monthly returns calculation, and dynamic withholding tax rates.
+  - **Lines 981-1110:** BIST & Global stock price fetcher (\_fetchBistStock(), \_fetchYahooChart() with automatic currency conversion from USD/EUR to TRY via live rates and monthly returns).
+  - **Lines 1111-1225:** Currency / Forex rate fetcher (\_fetchCurrency(), \_fetchYahooForex() with monthly series).
+  - **Lines 1226-1475:** Commodities & precious metals fetcher (\_fetchCommodity(), Ons Altın USD to TRY conversion, Truncgil API / Gold price parsers with monthly series).
+  - **Lines 1476-1700:** Cryptocurrency live prices & history fetchers via Binance & Yahoo Finance (\_fetchCrypto(), \_fetchYahooCrypto() with centralized getUsdTryRate() and monthly series).
+  - **Lines 1701-1759:** calcMonthlyReturns, historical price interpolation helpers (\_findClosestPrice, \_calcChange, \_currencyName).
 - **File:** `lib/services/storage_service.dart`
   - **Lines 1-13:** Imports and StorageService class declaration with storage key constants.
   - **Lines 14-36:** App settings persistence (loadSettings() defaulting to brut, saveSettings()) using SharedPreferences.
@@ -311,12 +332,12 @@
   - **Lines 347-453:** \_buildMetricTile() - Responsive percentage-only metric pill (larger horizontal width, sleek vertical padding 4.0/4.5) with mode tooltips.
   - **Lines 454-553:** \_ScrollablePeriodStrip - Stateful horizontal scroll widget capturing PointerScrollEvent for desktop mouse wheel scrolling with adaptive minWidth constraints (66 mobile, 58 desktop).
 - **File:** `lib/widgets/portfolio_card.dart`
-  - **Lines 1-33:** Imports, PortfolioCard declaration with onReorder callback support.
-  - **Lines 34-92:** \_PortfolioCardState and build(): immediate-response hover state without frame delay, constant border width preventing subpixel jitter, opaque hitbox, and shadow elevations.
-  - **Lines 93-240:** Header with portfolio name, description, and popup menu actions.
-  - **Lines 241-325:** Total portfolio value, cost, and profit/loss banner.
-  - **Lines 326-360:** Direct PeriodPerformanceRow between tightened dividers without redundant text.
-  - **Lines 361-405:** Category distribution bar, asset allocation summary, and footer action area.
+  - **Lines 1-35:** Imports, PortfolioCard declaration with onReorder callback support.
+  - **Lines 36-95:** \_PortfolioCardState and build(): immediate-response hover state without frame delay, constant border width preventing subpixel jitter, opaque hitbox, and shadow elevations.
+  - **Lines 96-250:** Header with portfolio name, description, ModelPortfolioBadge (when isModel is true), and popup menu actions.
+  - **Lines 251-340:** Total portfolio value, cost, and profit/loss banner (or 1Y backtest return and monthly average return for model portfolios).
+  - **Lines 341-395:** Direct PeriodPerformanceRow (standard portfolios) or ModelPeriodPerformanceRow (model portfolios) between tightened dividers without redundant text.
+  - **Lines 396-495:** Category distribution bar, asset allocation summary, and footer action area.
 - **File:** `test/asset_status_and_transaction_history_test.dart`
   - **Lines 1-105:** Mock HTTP network overrides and client stubs for SVG logo requests.
   - **Lines 106-235:** AssetStatusDialog widget tests verifying removal of 'İşlem Ekle' on mobile, 'Adet' label, pure number value, 'Ort. Maliyet' label, centered metric alignment, mobile 2-row layout without horizontal scroll, desktop stretched single row layout, and removal of redundant historical performance titles.
@@ -329,6 +350,13 @@
   - **Lines 1182-1320:** Widget & unit tests verifying 'Maliyet Detayı' button on AssetItemTile, filtering out exhausted/tükenen lots from AssetStatusDialog without 'Tükendi' badge, and Formatters.daysAgo '$diff Gün' formatting.
 - **File:** `test/mobile_autocomplete_and_reorder_sync_test.dart`
   - **Lines 1-152:** Unit & widget tests verifying Portfolio sortIndex serialization/deserialization, PortfolioProvider reorderPortfolios sequential sortIndex updates, addPortfolio bottom insertion, cloud sync sortIndex priority over createdAt, and AssetSymbolAutocomplete TapRegion touch dismissal prevention.
+- **File:** `test/model_portfolio_test.dart`
+  - **Lines 1-70:** Model portfolio serialization, copyWith, targetAllocationPercent, and categoryPercentages weighted tests.
+  - **Lines 71-150:** ModelPortfolioService backtesting engine tests (weighted 1G-5Y returns, boundary exceedance detection, monthly returns calculation).
+  - **Lines 151-210:** Historical data limit warning tests verifying one-time warning trigger per asset in the exact boundary month and suppression in older months.
+  - **Lines 211-260:** AddEditPortfolioDialog widget tests verifying Canlı Portföy vs Model Portföy selection.
+  - **Lines 261-310:** PortfolioCard widget tests verifying ModelPortfolioBadge rendering, 1Y return, and monthly average display.
+  - **Lines 311-370:** ModelMonthlyHistoryView widget tests verifying summary stats card and boundary warning exclamation icon with hover tooltip.
 - **File:** `test/period_performance_test.dart`
   - **Lines 1-182:** Unit & widget tests verifying PeriodPerformanceRow.fromAsset data mapping, empty portfolio reel mode 0.0 neutrality, same-day asset purchase reel mode holding duration logic, 7-period rendering on desktop with expanded layout, and responsive mobile scroll behavior.
 - **File:** `test/tefas_and_stock_filter_test.dart`

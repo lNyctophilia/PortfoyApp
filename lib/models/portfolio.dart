@@ -12,6 +12,7 @@ class Portfolio {
   final List<PortfolioTransaction> transactions;
   final bool isVisible;
   final int sortIndex;
+  final bool isModel;
 
   Portfolio({
     required this.id,
@@ -22,7 +23,11 @@ class Portfolio {
     this.transactions = const [],
     this.isVisible = true,
     this.sortIndex = 0,
+    this.isModel = false,
   });
+
+  double get totalAllocationPercent =>
+      assets.fold(0.0, (sum, a) => sum + a.targetAllocationPercent);
 
   int get assetCount => assets.length;
 
@@ -231,8 +236,26 @@ class Portfolio {
 
   // Varlık bazlı dağılım (yüzde cinsinden, büyükten küçüğe sıralı)
   List<AssetAllocationItem> get assetAllocations {
+    if (assets.isEmpty) return [];
+
+    if (isModel) {
+      final totalAlloc = totalAllocationPercent > 0 ? totalAllocationPercent : 100.0;
+      final list = assets.map((a) {
+        final key = a.symbol.trim().isNotEmpty ? a.symbol.trim() : a.name.trim();
+        return AssetAllocationItem(
+          symbol: key,
+          name: a.name,
+          category: a.category,
+          value: a.targetAllocationPercent,
+          percentage: (a.targetAllocationPercent / totalAlloc) * 100,
+        );
+      }).toList();
+      list.sort((a, b) => b.percentage.compareTo(a.percentage));
+      return list;
+    }
+
     final effectiveTotal = totalWithholdingTax > 0 ? netTotalValue : totalValue;
-    if (effectiveTotal <= 0 || assets.isEmpty) return [];
+    if (effectiveTotal <= 0) return [];
 
     final Map<String, AssetAllocationItem> map = {};
     for (final asset in assets) {
@@ -272,6 +295,22 @@ class Portfolio {
 
   // Kategori bazlı dağılım (yüzde cinsinden)
   Map<AssetCategory, double> get categoryPercentages {
+    if (assets.isEmpty) return {};
+
+    if (isModel) {
+      final totalAlloc = totalAllocationPercent > 0 ? totalAllocationPercent : 100.0;
+      final Map<AssetCategory, double> result = {};
+      for (final cat in AssetCategory.values) {
+        final catAlloc = assets
+            .where((a) => a.category == cat)
+            .fold(0.0, (sum, a) => sum + a.targetAllocationPercent);
+        if (catAlloc > 0) {
+          result[cat] = (catAlloc / totalAlloc) * 100;
+        }
+      }
+      return result;
+    }
+
     final effectiveTotal = totalWithholdingTax > 0 ? netTotalValue : totalValue;
     if (effectiveTotal <= 0) return {};
     final Map<AssetCategory, double> result = {};
@@ -294,6 +333,21 @@ class Portfolio {
   }
 
   Map<AssetCategory, double> get categoryValues {
+    if (assets.isEmpty) return {};
+
+    if (isModel) {
+      final Map<AssetCategory, double> result = {};
+      for (final cat in AssetCategory.values) {
+        final catAlloc = assets
+            .where((a) => a.category == cat)
+            .fold(0.0, (sum, a) => sum + a.targetAllocationPercent);
+        if (catAlloc > 0) {
+          result[cat] = catAlloc;
+        }
+      }
+      return result;
+    }
+
     final Map<AssetCategory, double> result = {};
     for (final cat in AssetCategory.values) {
       final catValue = assets
@@ -322,6 +376,7 @@ class Portfolio {
     List<PortfolioTransaction>? transactions,
     bool? isVisible,
     int? sortIndex,
+    bool? isModel,
   }) {
     return Portfolio(
       id: id ?? this.id,
@@ -332,6 +387,7 @@ class Portfolio {
       transactions: transactions ?? this.transactions,
       isVisible: isVisible ?? this.isVisible,
       sortIndex: sortIndex ?? this.sortIndex,
+      isModel: isModel ?? this.isModel,
     );
   }
 
@@ -345,6 +401,7 @@ class Portfolio {
       'transactions': transactions.map((t) => t.toJson()).toList(),
       'isVisible': isVisible,
       'sortIndex': sortIndex,
+      'isModel': isModel,
     };
   }
 
@@ -364,6 +421,7 @@ class Portfolio {
           [],
       isVisible: json['isVisible'] as bool? ?? true,
       sortIndex: json['sortIndex'] as int? ?? (json['order'] as int? ?? 0),
+      isModel: json['isModel'] as bool? ?? false,
     );
   }
 }

@@ -6,6 +6,9 @@ import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 import 'category_distribution_bar.dart';
 import 'period_performance_badge.dart';
+import '../features/model_portfolio/services/model_portfolio_service.dart';
+import '../features/model_portfolio/widgets/model_portfolio_badge.dart';
+import '../features/model_portfolio/widgets/model_period_performance_row.dart';
 
 class PortfolioCard extends StatefulWidget {
   final Portfolio portfolio;
@@ -135,6 +138,10 @@ class _PortfolioCardState extends State<PortfolioCard> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          if (p.isModel) ...[
+                            const ModelPortfolioBadge(compact: true),
+                            const SizedBox(width: 6),
+                          ],
                           if (!p.isVisible) ...[
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -258,101 +265,184 @@ class _PortfolioCardState extends State<PortfolioCard> {
                   ),
               const SizedBox(height: 12),
 
-              // TOPLAM DEĞER & KAZANÇ
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
+              if (p.isModel) ...[
+                Builder(
+                  builder: (context) {
+                    final modelAnalysis = ModelPortfolioService.analyze(p);
+                    final oneYearVal = modelAnalysis.periodReturns['1Y'] ?? 0.0;
+                    final avgVal = modelAnalysis.averageMonthlyReturn;
+                    final isModelProfit = oneYearVal >= 0;
+                    final modelColor = isModelProfit ? AppTheme.profit : AppTheme.loss;
+
+                    return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Portföy Değeri',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            Formatters.currency(displayValue),
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 21,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // Toplam Kazanç
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isProfit
-                            ? AppTheme.profitBg
-                            : AppTheme.lossBg,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: profitColor.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerRight,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Icon(
-                              isProfit
-                                  ? Icons.arrow_outward_rounded
-                                  : Icons.arrow_downward_rounded,
-                              color: profitColor,
-                              size: 13,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    '1 Yıllık Getiri (Backtest)',
+                                    style: TextStyle(
+                                      color: AppTheme.textMuted,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      Formatters.percent(oneYearVal),
+                                      style: TextStyle(
+                                        color: modelColor,
+                                        fontSize: 21,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(width: 3),
-                            Text(
-                              '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
-                              style: TextStyle(
-                                color: profitColor,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (avgVal >= 0 ? AppTheme.profitBg : AppTheme.lossBg),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: (avgVal >= 0 ? AppTheme.profit : AppTheme.loss).withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Text(
+                                'Ort. Aylık: ${Formatters.percent(avgVal)}',
+                                style: TextStyle(
+                                  color: avgVal >= 0 ? AppTheme.profit : AppTheme.loss,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ],
                         ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: Divider(color: AppTheme.borderSubtle, height: 1),
+                        ),
+                        ModelPeriodPerformanceRow(
+                          analysis: modelAnalysis,
+                          compact: true,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ] else ...[
+                // TOPLAM DEĞER & KAZANÇ
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Portföy Değeri',
+                            style: TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              Formatters.currency(displayValue),
+                              style: const TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontSize: 21,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 8),
 
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Divider(color: AppTheme.borderSubtle, height: 1),
-              ),
+                    // Toplam Kazanç
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isProfit
+                              ? AppTheme.profitBg
+                              : AppTheme.lossBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: profitColor.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isProfit
+                                    ? Icons.arrow_outward_rounded
+                                    : Icons.arrow_downward_rounded,
+                                color: profitColor,
+                                size: 13,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                '${Formatters.currency(displayProfit)} (${Formatters.percent(displayProfitPercent)})',
+                                style: TextStyle(
+                                  color: profitColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
 
-              // ORTA KISIM: TARİHSEL DÖNEM PERFORMANSI
-              PeriodPerformanceRow.fromPortfolio(
-                p,
-                compact: true,
-                mode: mode,
-                periodInflation: provider.periodInflation,
-                assetInflationRates: inflationRates,
-              ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(color: AppTheme.borderSubtle, height: 1),
+                ),
+
+                // ORTA KISIM: TARİHSEL DÖNEM PERFORMANSI
+                PeriodPerformanceRow.fromPortfolio(
+                  p,
+                  compact: true,
+                  mode: mode,
+                  periodInflation: provider.periodInflation,
+                  assetInflationRates: inflationRates,
+                ),
+              ],
 
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),

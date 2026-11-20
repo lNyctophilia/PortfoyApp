@@ -4,15 +4,22 @@ import '../models/portfolio.dart';
 import '../models/portfolio_asset.dart';
 import '../models/portfolio_transaction.dart';
 import '../providers/portfolio_provider.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 import '../widgets/asset_item_tile.dart';
+import '../widgets/asset_logo.dart';
 import '../widgets/category_distribution_bar.dart';
 import '../models/return_mode.dart';
 import '../widgets/period_performance_badge.dart';
 import '../core/navigation/adaptive_navigation.dart';
 import 'add_transaction_dialog.dart';
 import 'widgets/transaction_sort_bar.dart';
+import '../features/model_portfolio/dialogs/add_edit_model_asset_dialog.dart';
+import '../features/model_portfolio/services/model_portfolio_service.dart';
+import '../features/model_portfolio/widgets/model_monthly_history_view.dart';
+import '../features/model_portfolio/widgets/model_period_performance_row.dart';
+import '../features/model_portfolio/widgets/model_portfolio_badge.dart';
 
 class PortfolioDetailDialog extends StatefulWidget {
   final String portfolioId;
@@ -103,14 +110,25 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                portfolio.name,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
-                ),
-                overflow: TextOverflow.ellipsis,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      portfolio.name,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (portfolio.isModel) ...[
+                    const SizedBox(width: 6),
+                    const ModelPortfolioBadge(compact: true),
+                  ],
+                ],
               ),
               if (portfolio.description.isNotEmpty)
                 Text(
@@ -227,14 +245,25 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          portfolio.name,
-                          style: TextStyle(
-                            fontSize: isMobile ? 18 : 22,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                portfolio.name,
+                                style: TextStyle(
+                                  fontSize: isMobile ? 18 : 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (portfolio.isModel) ...[
+                              const SizedBox(width: 8),
+                              const ModelPortfolioBadge(compact: false),
+                            ],
+                          ],
                         ),
                         if (portfolio.description.isNotEmpty) ...[
                           const SizedBox(height: 2),
@@ -277,6 +306,17 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     bool isMobile, {
     double availableHeight = 500,
   }) {
+    if (portfolio.isModel) {
+      return _buildModelDetailContent(
+        context,
+        portfolio,
+        provider,
+        filteredAssets,
+        isMobile,
+        availableHeight: availableHeight,
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1315,6 +1355,601 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           ),
         ],
       ),
+    );
+  }
+
+  void _openAddModelAsset(
+    BuildContext context,
+    Portfolio portfolio,
+    PortfolioProvider provider,
+  ) {
+    showDialog(
+      context: context,
+      builder: (_) => AddEditModelAssetDialog(
+        portfolio: portfolio,
+        onSave: (asset) {
+          provider.addAsset(portfolio.id, asset);
+        },
+      ),
+    );
+  }
+
+  void _openEditModelAsset(
+    BuildContext context,
+    Portfolio portfolio,
+    PortfolioAsset asset,
+    PortfolioProvider provider,
+  ) {
+    showDialog(
+      context: context,
+      builder: (_) => AddEditModelAssetDialog(
+        portfolio: portfolio,
+        asset: asset,
+        onSave: (updated) {
+          provider.updateAsset(portfolio.id, updated);
+        },
+      ),
+    );
+  }
+
+  Widget _buildModelDetailContent(
+    BuildContext context,
+    Portfolio portfolio,
+    PortfolioProvider provider,
+    List<PortfolioAsset> filteredAssets,
+    bool isMobile, {
+    double availableHeight = 500,
+  }) {
+    final modelAnalysis = ModelPortfolioService.analyze(portfolio);
+    final totalAlloc = portfolio.totalAllocationPercent;
+    final isFullAllocation = (totalAlloc - 100.0).abs() < 0.1;
+    final allocColor = isFullAllocation
+        ? AppColors.success
+        : (totalAlloc > 100 ? AppColors.danger : AppColors.warning);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ÖZET KART (BACKTEST & MODEL METRİKLERİ)
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceLight,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.borderSubtle),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Builder(
+                builder: (context) {
+                  final metricAvg = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Ortalama Aylık Getiri',
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          Formatters.percent(modelAnalysis.averageMonthlyReturn),
+                          style: TextStyle(
+                            color: modelAnalysis.averageMonthlyReturn >= 0
+                                ? AppColors.success
+                                : AppColors.danger,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+
+                  final metricBestWorst = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'En İyi / En Kötü Ay',
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            modelAnalysis.bestMonth != null
+                                ? Formatters.percent(modelAnalysis.bestMonth!.returnPercent)
+                                : '-',
+                            style: const TextStyle(
+                              color: AppColors.success,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const Text(' / ', style: TextStyle(color: AppTheme.textMuted)),
+                          Text(
+                            modelAnalysis.worstMonth != null
+                                ? Formatters.percent(modelAnalysis.worstMonth!.returnPercent)
+                                : '-',
+                            style: const TextStyle(
+                              color: AppColors.danger,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+
+                  final metricAlloc = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Hedef Dağılım',
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '%${totalAlloc.toStringAsFixed(1).replaceAll('.0', '')}',
+                            style: TextStyle(
+                              color: allocColor,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: allocColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: allocColor.withValues(alpha: 0.4)),
+                            ),
+                            child: Text(
+                              isFullAllocation
+                                  ? 'Tamamlandı'
+                                  : (totalAlloc > 100 ? 'Aşıldı' : 'Eksik Pay'),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: allocColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+
+                  if (isMobile) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        metricAvg,
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 10),
+                          child: Divider(color: AppTheme.borderSubtle, height: 1),
+                        ),
+                        Row(
+                          children: [
+                            Expanded(child: metricBestWorst),
+                            Container(
+                              width: 1,
+                              height: 38,
+                              color: AppTheme.borderSubtle,
+                              margin: const EdgeInsets.symmetric(horizontal: 10),
+                            ),
+                            Expanded(child: metricAlloc),
+                          ],
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(child: metricAvg),
+                      Container(
+                        width: 1,
+                        height: 44,
+                        color: AppTheme.borderSubtle,
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      Expanded(child: metricBestWorst),
+                      Container(
+                        width: 1,
+                        height: 44,
+                        color: AppTheme.borderSubtle,
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      Expanded(child: metricAlloc),
+                    ],
+                  );
+                },
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Divider(color: AppTheme.borderSubtle, height: 1),
+              ),
+
+              // Geriye Dönük Getiriler (1G, 1H, 1A, 3A, 6A, 1Y, 2Y, 3Y, 5Y)
+              ModelPeriodPerformanceRow(
+                analysis: modelAnalysis,
+                compact: false,
+              ),
+
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Divider(color: AppTheme.borderSubtle, height: 1),
+              ),
+
+              // Dağılım Çubuğu
+              Row(
+                children: const [
+                  Icon(Icons.pie_chart_outline_rounded, size: 16, color: AppTheme.textSecondary),
+                  SizedBox(width: 6),
+                  Text(
+                    'Hedef Ağırlık Dağılımı',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              CategoryDistributionBar(
+                portfolio: portfolio,
+                showAmounts: false,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // SEKME SEÇİCİ VE BUTONLAR
+        if (isMobile) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLight,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.borderSubtle),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildTabButton(
+                    index: 0,
+                    icon: Icons.pie_chart_rounded,
+                    label: 'Varlıklar (${portfolio.assets.length})',
+                    compact: true,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: _buildTabButton(
+                    index: 1,
+                    icon: Icons.calendar_month_rounded,
+                    label: 'Aylık Getiri Analizi',
+                    compact: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.cityInner.withValues(alpha: 0.15),
+                foregroundColor: AppColors.cityInner,
+                side: const BorderSide(color: AppColors.cityInner),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              onPressed: () => _openAddModelAsset(context, portfolio, provider),
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text(
+                'Varlık Ekle',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ] else ...[
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceLight,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.borderSubtle),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildTabButton(
+                      index: 0,
+                      icon: Icons.pie_chart_rounded,
+                      label: 'Varlıklar (${portfolio.assets.length})',
+                    ),
+                    const SizedBox(width: 4),
+                    _buildTabButton(
+                      index: 1,
+                      icon: Icons.calendar_month_rounded,
+                      label: 'Aylık Getiri Analizi',
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cityInner.withValues(alpha: 0.15),
+                  foregroundColor: AppColors.cityInner,
+                  side: const BorderSide(color: AppColors.cityInner),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                onPressed: () => _openAddModelAsset(context, portfolio, provider),
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text(
+                  'Varlık Ekle',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ],
+        const SizedBox(height: 14),
+
+        _selectedTab == 0
+            ? _buildModelAssetsTab(portfolio, filteredAssets, provider, isMobile, availableHeight: availableHeight)
+            : ModelMonthlyHistoryView(analysis: modelAnalysis, isMobile: isMobile),
+      ],
+    );
+  }
+
+  Widget _buildModelAssetsTab(
+    Portfolio portfolio,
+    List<PortfolioAsset> filteredAssets,
+    PortfolioProvider provider,
+    bool isMobile, {
+    double availableHeight = 500,
+  }) {
+    if (filteredAssets.isEmpty) {
+      return Container(
+        constraints: BoxConstraints(
+          minHeight: (availableHeight - 380).clamp(220.0, 800.0),
+        ),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.pie_chart_outline_rounded,
+                size: 48,
+                color: AppTheme.textMuted.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                portfolio.assets.isEmpty
+                    ? 'Bu model portföyde henüz varlık yok'
+                    : 'Aramaya uygun varlık bulunamadı',
+                style: const TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 14,
+                ),
+              ),
+              if (portfolio.assets.isEmpty) ...[
+                const SizedBox(height: 14),
+                ElevatedButton.icon(
+                  onPressed: () => _openAddModelAsset(context, portfolio, provider),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('İlk Varlığı Ekle'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: filteredAssets.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final asset = filteredAssets[index];
+        return _buildModelAssetTile(context, portfolio, asset, provider, isMobile);
+      },
+    );
+  }
+
+  Widget _buildModelAssetTile(
+    BuildContext context,
+    Portfolio portfolio,
+    PortfolioAsset asset,
+    PortfolioProvider provider,
+    bool isMobile,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderSubtle),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              AssetLogo(
+                iconUrl: asset.iconUrl,
+                symbol: asset.symbol,
+                category: asset.category,
+                size: 32,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          asset.symbol,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceElevated,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppTheme.borderSubtle),
+                          ),
+                          child: Text(
+                            asset.category.shortName,
+                            style: const TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      asset.name,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Hedef Pay Rozeti
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.cityInner.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.cityInner.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Text(
+                  '%${asset.targetAllocationPercent.toStringAsFixed(1).replaceAll('.0', '')} Pay',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.cityInner,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+
+              // Düzenle
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, size: 16),
+                color: AppTheme.textMuted,
+                tooltip: 'Düzenle',
+                onPressed: () => _openEditModelAsset(context, portfolio, asset, provider),
+              ),
+
+              // Sil
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                color: AppColors.danger.withValues(alpha: 0.8),
+                tooltip: 'Varlığı Sil',
+                onPressed: () => _confirmDeleteAsset(context, provider, portfolio.id, asset),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Divider(color: AppTheme.borderSubtle, height: 1),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Fiyat: ${Formatters.currency(asset.currentPrice)}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Row(
+                children: [
+                  _buildMiniReturn('1G', asset.dailyChangePercent),
+                  const SizedBox(width: 8),
+                  _buildMiniReturn('1A', asset.monthlyChangePercent),
+                  const SizedBox(width: 8),
+                  _buildMiniReturn('1Y', asset.yearlyChangePercent),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniReturn(String label, double val) {
+    final isProfit = val >= 0;
+    final color = isProfit ? AppColors.success : AppColors.danger;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$label: ',
+          style: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
+        ),
+        Text(
+          Formatters.percent(val),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }

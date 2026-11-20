@@ -155,8 +155,12 @@ class _PortfolioHomeScreenState extends State<PortfolioHomeScreen> {
     final provider = context.read<PortfolioProvider>();
     AdaptiveNavigation.openAddEditPortfolio(
       context,
-      onSave: (name, description) {
-        provider.addPortfolio(name: name, description: description);
+      onSave: (name, description, [isModel]) {
+        provider.addPortfolio(
+          name: name,
+          description: description,
+          isModel: isModel ?? false,
+        );
       },
     );
   }
