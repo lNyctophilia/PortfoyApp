@@ -298,17 +298,20 @@ class Portfolio {
     if (assets.isEmpty) return {};
 
     if (isModel) {
-      final totalAlloc = totalAllocationPercent > 0 ? totalAllocationPercent : 100.0;
-      final Map<AssetCategory, double> result = {};
-      for (final cat in AssetCategory.values) {
-        final catAlloc = assets
-            .where((a) => a.category == cat)
-            .fold(0.0, (sum, a) => sum + a.targetAllocationPercent);
-        if (catAlloc > 0) {
-          result[cat] = (catAlloc / totalAlloc) * 100;
+      final hasExplicitTargets = assets.any((a) => a.targetAllocationPercent > 0);
+      if (hasExplicitTargets) {
+        final totalAlloc = totalAllocationPercent > 0 ? totalAllocationPercent : 100.0;
+        final Map<AssetCategory, double> result = {};
+        for (final cat in AssetCategory.values) {
+          final catAlloc = assets
+              .where((a) => a.category == cat)
+              .fold(0.0, (sum, a) => sum + a.targetAllocationPercent);
+          if (catAlloc > 0) {
+            result[cat] = (catAlloc / totalAlloc) * 100;
+          }
         }
+        return result;
       }
-      return result;
     }
 
     final effectiveTotal = totalWithholdingTax > 0 ? netTotalValue : totalValue;
@@ -336,16 +339,19 @@ class Portfolio {
     if (assets.isEmpty) return {};
 
     if (isModel) {
-      final Map<AssetCategory, double> result = {};
-      for (final cat in AssetCategory.values) {
-        final catAlloc = assets
-            .where((a) => a.category == cat)
-            .fold(0.0, (sum, a) => sum + a.targetAllocationPercent);
-        if (catAlloc > 0) {
-          result[cat] = catAlloc;
+      final hasExplicitTargets = assets.any((a) => a.targetAllocationPercent > 0);
+      if (hasExplicitTargets) {
+        final Map<AssetCategory, double> result = {};
+        for (final cat in AssetCategory.values) {
+          final catAlloc = assets
+              .where((a) => a.category == cat)
+              .fold(0.0, (sum, a) => sum + a.targetAllocationPercent);
+          if (catAlloc > 0) {
+            result[cat] = catAlloc;
+          }
         }
+        return result;
       }
-      return result;
     }
 
     final Map<AssetCategory, double> result = {};

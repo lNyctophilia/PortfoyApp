@@ -54,8 +54,10 @@ class AdaptiveNavigation {
     required Portfolio portfolio,
     PortfolioAsset? initialAsset,
     TransactionType initialType = TransactionType.alis,
+    bool? allowSell,
     Function(PortfolioTransaction transaction, bool updateHoldings)? onSave,
   }) {
+    final effectiveAllowSell = allowSell ?? !portfolio.isModel;
     final saveCallback = onSave ??
         (tx, updateHoldings) {
           context.read<PortfolioProvider>().addTransaction(
@@ -72,6 +74,7 @@ class AdaptiveNavigation {
             portfolio: portfolio,
             initialAsset: initialAsset,
             initialType: initialType,
+            allowSell: effectiveAllowSell,
             onSave: saveCallback,
             isFullScreen: true,
           ),
@@ -84,6 +87,7 @@ class AdaptiveNavigation {
           portfolio: portfolio,
           initialAsset: initialAsset,
           initialType: initialType,
+          allowSell: effectiveAllowSell,
           onSave: saveCallback,
           isFullScreen: false,
         ),

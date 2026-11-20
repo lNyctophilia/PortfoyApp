@@ -1363,14 +1363,10 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     Portfolio portfolio,
     PortfolioProvider provider,
   ) {
-    showDialog(
-      context: context,
-      builder: (_) => AddEditModelAssetDialog(
-        portfolio: portfolio,
-        onSave: (asset) {
-          provider.addAsset(portfolio.id, asset);
-        },
-      ),
+    AdaptiveNavigation.openAddTransaction(
+      context,
+      portfolio: portfolio,
+      allowSell: false,
     );
   }
 
@@ -1380,15 +1376,24 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     PortfolioAsset asset,
     PortfolioProvider provider,
   ) {
-    showDialog(
-      context: context,
-      builder: (_) => AddEditModelAssetDialog(
-        portfolio: portfolio,
-        asset: asset,
-        onSave: (updated) {
-          provider.updateAsset(portfolio.id, updated);
-        },
-      ),
+    AdaptiveNavigation.openAddTransaction(
+      context,
+      portfolio: portfolio,
+      initialAsset: asset,
+      allowSell: false,
+      onSave: (tx, _) {
+        final updated = asset.copyWith(
+          name: tx.name,
+          symbol: tx.symbol,
+          category: tx.category,
+          quantity: tx.quantity,
+          purchasePrice: tx.price,
+          purchaseDate: tx.date,
+          currentPrice: tx.currentPrice ?? asset.currentPrice,
+          iconUrl: tx.iconUrl ?? asset.iconUrl,
+        );
+        provider.updateAsset(portfolio.id, updated);
+      },
     );
   }
 
@@ -1797,6 +1802,14 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
     PortfolioProvider provider,
     bool isMobile,
   ) {
+    final totalPortfolioVal = portfolio.totalValue > 0
+        ? portfolio.totalValue
+        : portfolio.totalCost;
+    final assetVal = asset.currentValue > 0 ? asset.currentValue : asset.totalCost;
+    final pct = asset.targetAllocationPercent > 0
+        ? asset.targetAllocationPercent
+        : (totalPortfolioVal > 0 ? (assetVal / totalPortfolioVal) * 100 : 0.0);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -1863,7 +1876,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
               ),
               const SizedBox(width: 8),
 
-              // Hedef Pay Rozeti
+              // Pay Rozeti
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -1874,7 +1887,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
                   ),
                 ),
                 child: Text(
-                  '%${asset.targetAllocationPercent.toStringAsFixed(1).replaceAll('.0', '')} Pay',
+                  '%${pct.toStringAsFixed(1).replaceAll('.0', '')} Pay',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -1905,25 +1918,21 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           const Divider(color: AppTheme.borderSubtle, height: 1),
           const SizedBox(height: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Fiyat: ${Formatters.currency(asset.currentPrice)}',
+                '${Formatters.formatNumber(asset.quantity)} Adet • ${Formatters.currency(assetVal)}',
                 style: const TextStyle(
                   fontSize: 11,
                   color: AppTheme.textMuted,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              Row(
-                children: [
-                  _buildMiniReturn('1G', asset.dailyChangePercent),
-                  const SizedBox(width: 8),
-                  _buildMiniReturn('1A', asset.monthlyChangePercent),
-                  const SizedBox(width: 8),
-                  _buildMiniReturn('1Y', asset.yearlyChangePercent),
-                ],
-              ),
+              const Spacer(),
+              _buildMiniReturn('1G', asset.dailyChangePercent),
+              const SizedBox(width: 8),
+              _buildMiniReturn('1A', asset.monthlyChangePercent),
+              const SizedBox(width: 8),
+              _buildMiniReturn('1Y', asset.yearlyChangePercent),
             ],
           ),
         ],

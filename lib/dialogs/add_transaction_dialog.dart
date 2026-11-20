@@ -19,6 +19,7 @@ class AddTransactionDialog extends StatefulWidget {
   final TransactionType initialType;
   final Function(PortfolioTransaction transaction, bool updateHoldings) onSave;
   final bool isFullScreen;
+  final bool allowSell;
 
   const AddTransactionDialog({
     super.key,
@@ -27,6 +28,7 @@ class AddTransactionDialog extends StatefulWidget {
     this.initialType = TransactionType.alis,
     required this.onSave,
     this.isFullScreen = false,
+    this.allowSell = true,
   });
 
   @override
@@ -110,7 +112,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       }
     });
 
-    _selectedType = widget.initialType;
+    final showTypeTabs = widget.allowSell && !widget.portfolio.isModel;
+    _selectedType = showTypeTabs ? widget.initialType : TransactionType.alis;
     if (widget.initialAsset != null) {
       _alisCategory = widget.initialAsset!.category;
       _alisSymbolController.text = widget.initialAsset!.symbol;
@@ -118,7 +121,15 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       _alisIconUrl = widget.initialAsset!.iconUrl;
       _alisLastSymbol = widget.initialAsset!.symbol;
       _alisHasSelectedAsset = true;
-      _fetchAlisMarketData(widget.initialAsset!.symbol, forceHistoricalPrice: true);
+      if (widget.initialAsset!.quantity > 0) {
+        _alisQuantityController.text = _formatNumber(widget.initialAsset!.quantity);
+      }
+      if (widget.initialAsset!.purchasePrice > 0) {
+        _alisPurchasePriceController.text = _formatPrice(widget.initialAsset!.purchasePrice);
+        _isAlisPurchasePriceManual = true;
+      }
+      _alisDate = widget.initialAsset!.purchaseDate;
+      _fetchAlisMarketData(widget.initialAsset!.symbol, forceHistoricalPrice: false);
     }
     // Satış sekmesinde varsayılan olarak hiçbir varlık seçili gelmez,
     // adet ve fiyat boş kalır, tarih bugünün tarihi olur.
@@ -615,7 +626,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
   @override
   Widget build(BuildContext context) {
-        final isAlis = _selectedType == TransactionType.alis;
+    final showTypeTabs = widget.allowSell && !widget.portfolio.isModel;
+    final isAlis = !showTypeTabs || _selectedType == TransactionType.alis;
     final isMobile = MediaQuery.sizeOf(context).width < 600;
 
     if (widget.isFullScreen) {
@@ -644,9 +656,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
-                'İşlem Ekle',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+              Text(
+                showTypeTabs ? 'İşlem Ekle' : 'Varlık Ekle',
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -689,6 +701,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   }
 
   Widget _buildDesktopHeader(BuildContext context, bool isAlis) {
+    final showTypeTabs = widget.allowSell && !widget.portfolio.isModel;
+    final title = showTypeTabs ? 'İşlem Ekle' : 'Varlık Ekle';
     return Row(
       children: [
         Container(
@@ -707,10 +721,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           ),
         ),
         const SizedBox(width: 14),
-        const Expanded(
+        Expanded(
           child: Text(
-            'İşlem Ekle',
-            style: TextStyle(
+            title,
+            style: const TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.w700,
               color: AppTheme.textPrimary,
@@ -727,207 +741,214 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   }
 
   Widget _buildFormContent(BuildContext context, bool isAlis, {required bool isMobile}) {
+    final showTypeTabs = widget.allowSell && !widget.portfolio.isModel;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ÜST SEKME: ALIŞ (SOLDA) / SATIŞ (SAĞDA)
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceLight,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.borderSubtle),
-                    ),
-                    child: Row(
-                      children: [
-                        // ALIŞ BUTONU (SOLDA)
-                        Expanded(
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: () {
-                              setState(
-                                  () => _selectedType = TransactionType.alis);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(
+        if (showTypeTabs) ...[
+          // ÜST SEKME: ALIŞ (SOLDA) / SATIŞ (SAĞDA)
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLight,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.borderSubtle),
+            ),
+            child: Row(
+              children: [
+                // ALIŞ BUTONU (SOLDA)
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () {
+                      setState(
+                          () => _selectedType = TransactionType.alis);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isAlis
+                            ? AppTheme.profit.withValues(alpha: 0.18)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: isAlis
+                            ? Border.all(color: AppTheme.profit, width: 1.2)
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.arrow_downward_rounded,
+                            size: 16,
+                            color: isAlis
+                                ? AppTheme.profit
+                                : AppTheme.textSecondary,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'Alış',
+                              style: TextStyle(
+                                fontWeight: isAlis
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
                                 color: isAlis
-                                    ? AppTheme.profit.withValues(alpha: 0.18)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(8),
-                                border: isAlis
-                                    ? Border.all(color: AppTheme.profit, width: 1.2)
-                                    : null,
+                                    ? AppTheme.profit
+                                    : AppTheme.textSecondary,
+                                fontSize: 13,
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.arrow_downward_rounded,
-                                    size: 16,
-                                    color: isAlis
-                                        ? AppTheme.profit
-                                        : AppTheme.textSecondary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(
-                                      'Alış',
-                                      style: TextStyle(
-                                        fontWeight: isAlis
-                                            ? FontWeight.w700
-                                            : FontWeight.w500,
-                                        color: isAlis
-                                            ? AppTheme.profit
-                                            : AppTheme.textSecondary,
-                                        fontSize: 13,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-
-                        // SATIŞ BUTONU (SAĞDA)
-                        Expanded(
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: () {
-                              setState(
-                                  () => _selectedType = TransactionType.satis);
-                              if (_selectedExistingAsset != null) {
-                                _fetchSatisMarketPriceForDate(
-                                  symbol: _selectedExistingAsset!.symbol,
-                                  category: _selectedExistingAsset!.category,
-                                  date: _satisDate,
-                                );
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(
-                                color: !isAlis
-                                    ? AppTheme.loss.withValues(alpha: 0.18)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(8),
-                                border: !isAlis
-                                    ? Border.all(color: AppTheme.loss, width: 1.2)
-                                    : null,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.arrow_upward_rounded,
-                                    size: 16,
-                                    color: !isAlis
-                                        ? AppTheme.loss
-                                        : AppTheme.textSecondary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(
-                                      'Satış',
-                                      style: TextStyle(
-                                        fontWeight: !isAlis
-                                            ? FontWeight.w700
-                                            : FontWeight.w500,
-                                        color: !isAlis
-                                            ? AppTheme.loss
-                                            : AppTheme.textSecondary,
-                                        fontSize: 13,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 18),
+                ),
+                const SizedBox(width: 4),
 
-                  // İÇERİK: ALIŞ EKRANI (Şu anki Varlık Ekle Ekranı Gibi)
-                  if (isAlis) ...[
-                    _buildAlisForm(),
-                  ] else ...[
-                    // İÇERİK: SATIŞ EKRANI (Portföyde Olan Varlıklar)
-                    _buildSatisForm(),
-                  ],
-
-                  const SizedBox(height: 24),
-
-                  // AKSİYON BUTONLARI (Mobilde tam genişlik, masaüstünde sağa hizalı)
-                  if (isMobile)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              side: const BorderSide(color: AppTheme.borderSubtle),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('İptal', style: TextStyle(color: AppTheme.textSecondary)),
+                // SATIŞ BUTONU (SAĞDA)
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () {
+                      setState(
+                          () => _selectedType = TransactionType.satis);
+                      if (_selectedExistingAsset != null) {
+                        _fetchSatisMarketPriceForDate(
+                          symbol: _selectedExistingAsset!.symbol,
+                          category: _selectedExistingAsset!.category,
+                          date: _satisDate,
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: !isAlis
+                            ? AppTheme.loss.withValues(alpha: 0.18)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: !isAlis
+                            ? Border.all(color: AppTheme.loss, width: 1.2)
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.arrow_upward_rounded,
+                            size: 16,
+                            color: !isAlis
+                                ? AppTheme.loss
+                                : AppTheme.textSecondary,
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  isAlis ? AppTheme.profit : AppTheme.loss,
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            onPressed: (!isAlis && widget.portfolio.assets.isEmpty)
-                                ? null
-                                : _saveTransaction,
+                          const SizedBox(width: 6),
+                          Flexible(
                             child: Text(
-                              isAlis ? 'Alışı Kaydet' : 'Satışı Kaydet',
-                              style: const TextStyle(fontWeight: FontWeight.w700),
+                              'Satış',
+                              style: TextStyle(
+                                fontWeight: !isAlis
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: !isAlis
+                                    ? AppTheme.loss
+                                    : AppTheme.textSecondary,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                  else
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('İptal'),
-                        ),
-                        const SizedBox(width: 12),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                isAlis ? AppTheme.profit : AppTheme.loss,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 14),
-                          ),
-                          onPressed: (!isAlis && widget.portfolio.assets.isEmpty)
-                              ? null
-                              : _saveTransaction,
-                          child: Text(
-                            isAlis ? 'Alışı Kaydet' : 'Satışı Kaydet',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+        ],
+
+        // İÇERİK: ALIŞ EKRANI (Şu anki Varlık Ekle Ekranı Gibi)
+        if (isAlis) ...[
+          _buildAlisForm(),
+        ] else ...[
+          // İÇERİK: SATIŞ EKRANI (Portföyde Olan Varlıklar)
+          _buildSatisForm(),
+        ],
+
+        const SizedBox(height: 24),
+
+        // AKSİYON BUTONLARI (Mobilde tam genişlik, masaüstünde sağa hizalı)
+        if (isMobile)
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    side: const BorderSide(color: AppTheme.borderSubtle),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('İptal', style: TextStyle(color: AppTheme.textSecondary)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        isAlis ? AppTheme.profit : AppTheme.loss,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: (!isAlis && widget.portfolio.assets.isEmpty)
+                      ? null
+                      : _saveTransaction,
+                  child: Text(
+                    showTypeTabs
+                        ? (isAlis ? 'Alışı Kaydet' : 'Satışı Kaydet')
+                        : 'Varlığı Ekle',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          )
+        else
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('İptal'),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      isAlis ? AppTheme.profit : AppTheme.loss,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 14),
+                ),
+                onPressed: (!isAlis && widget.portfolio.assets.isEmpty)
+                    ? null
+                    : _saveTransaction,
+                child: Text(
+                  showTypeTabs
+                      ? (isAlis ? 'Alışı Kaydet' : 'Satışı Kaydet')
+                      : 'Varlığı Ekle',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }

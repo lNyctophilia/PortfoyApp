@@ -13,6 +13,7 @@ import 'package:portfoy_app/features/model_portfolio/widgets/model_monthly_histo
 import 'package:portfoy_app/features/model_portfolio/widgets/model_period_performance_row.dart';
 import 'package:portfoy_app/features/model_portfolio/widgets/model_portfolio_badge.dart';
 import 'package:portfoy_app/widgets/portfolio_card.dart';
+import 'package:portfoy_app/dialogs/add_transaction_dialog.dart';
 
 void main() {
   group('Model Portfolio Unit & Service Tests', () {
@@ -365,6 +366,39 @@ void main() {
         tooltip.message,
         'Bu varlığın son verisi geçildi: THYAO için bu tarihten öncesi veri bulunmuyor.',
       );
+    });
+
+    testWidgets('AddTransactionDialog for model portfolio renders only Alış form without Satış tab',
+        (WidgetTester tester) async {
+      final modelPortfolio = Portfolio(
+        id: 'test_model_tx',
+        name: 'Model Portföy',
+        createdAt: DateTime.now(),
+        isModel: true,
+        assets: const [],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AddTransactionDialog(
+              portfolio: modelPortfolio,
+              onSave: (_, __) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // "Satış" tab is NOT present
+      expect(find.text('Satış'), findsNothing);
+      // Title is "Varlık Ekle"
+      expect(find.text('Varlık Ekle'), findsOneWidget);
+      // Alış inputs (Adet, Alış Fiyatı) are present
+      expect(find.text('Adet'), findsOneWidget);
+      expect(find.text('Alış Fiyatı'), findsOneWidget);
+      // Action button is "Varlığı Ekle"
+      expect(find.text('Varlığı Ekle'), findsOneWidget);
     });
   });
 }

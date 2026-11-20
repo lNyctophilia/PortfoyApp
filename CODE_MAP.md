@@ -26,11 +26,11 @@
 - **File:** `lib/core/navigation/adaptive_navigation.dart`
   - **Lines 1-25:** Imports, AdaptiveNavigation helper class declaration, isMobile check (<720px breakpoint).
   - **Lines 26-60:** openPortfolioDetail - Responsive router pushing full-screen Scaffold on phone or modal Dialog on desktop.
-  - **Lines 61-110:** openAddTransaction - Responsive router pushing full-screen Form Scaffold on phone or modal Dialog on desktop.
-  - **Lines 111-140:** openAssetStatus - Responsive router opening full-screen status page on phone or modal Dialog on desktop.
-  - **Lines 141-165:** openAddEditAsset - Responsive router opening full-screen asset editor on phone or modal Dialog on desktop.
-  - **Lines 166-186:** openAddEditPortfolio - Responsive router opening sleek bottom sheet on phone or modal Dialog on desktop.
-  - **Lines 187-207:** openReorderPortfolios - Responsive router opening reorder bottom sheet on phone or modal Dialog on desktop.
+  - **Lines 61-114:** openAddTransaction - Responsive router pushing full-screen Form Scaffold on phone or modal Dialog on desktop, supporting allowSell flag for model portfolios.
+  - **Lines 115-144:** openAssetStatus - Responsive router opening full-screen status page on phone or modal Dialog on desktop.
+  - **Lines 145-169:** openAddEditAsset - Responsive router opening full-screen asset editor on phone or modal Dialog on desktop.
+  - **Lines 170-190:** openAddEditPortfolio - Responsive router opening sleek bottom sheet on phone or modal Dialog on desktop.
+  - **Lines 191-211:** openReorderPortfolios - Responsive router opening reorder bottom sheet on phone or modal Dialog on desktop.
 - **File:** `lib/dialogs/add_edit_asset_dialog.dart`
   - **Lines 1-58:** Imports, AddEditAssetDialog declaration with isFullScreen flag, and state controllers.
   - **Lines 59-132:** State initialization (initState), teardown (dispose), and numeric formatters (\_formatPrice, \_formatNumber, \_parseVal).
@@ -43,18 +43,18 @@
 - **File:** `lib/dialogs/add_edit_portfolio_dialog.dart`
   - **Lines 1-277:** AddEditPortfolioDialog supporting choice between Canlı Portföy and Model Portföy, segmented selection card, clean title/description, and form submission.
 - **File:** `lib/dialogs/add_transaction_dialog.dart`
-  - **Lines 1-75:** Imports, AddTransactionDialog declaration with isFullScreen flag, initialAsset, initialType, and state variables (\_satisQuantityFocusNode).
-  - **Lines 76-180:** initState() (focus node listeners, clean start with no preselected asset on sell, today's date), dispose(), \_clampSatisQuantity() (auto-clamping quantity to max portfolio holding on enter/unfocus), Turkish price/number parsing and formatting helpers with precision (\_formatPriceGrouped, Formatters.parseDouble).
+  - **Lines 1-75:** Imports, AddTransactionDialog declaration with isFullScreen flag, allowSell parameter, initialAsset, initialType, and state variables (\_satisQuantityFocusNode).
+  - **Lines 76-180:** initState() (focus node listeners, initialAsset prefill for edit mode, clean start with no preselected asset on sell, today's date), dispose(), \_clampSatisQuantity() (auto-clamping quantity to max portfolio holding on enter/unfocus), Turkish price/number parsing and formatting helpers with precision (\_formatPriceGrouped, Formatters.parseDouble).
   - **Lines 181-282:** Buy (Alis) transaction logic: suggestion selection, market data fetching.
   - **Lines 283-419:** Custom calendar picker dialog (\_showCalendarPicker()) and buy date selection (\_pickAlisDate()).
   - **Lines 420-524:** Sell (Satis) transaction logic: asset selection from portfolio, automatic TEFAS valör (T-1, T-2, T-3) business day historical price lookup without UI clutter, and date picker.
-  - **Lines 525-616:** \_saveTransaction() - FIFO validation, quantity clamping, cost estimation, transaction persistence, and asset updating.
-  - **Lines 617-687:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile (with dynamic green shopping cart for Alış and red sell tag for Satış) or responsive Dialog shell on desktop with 'İşlem Ekle' title.
-  - **Lines 688-719:** \_buildDesktopHeader() - PC header row with dynamic shopping cart / sell tag icon, 'İşlem Ekle' title, and close button.
-  - **Lines 720-937:** \_buildFormContent() - Form switcher (Alis/Satis tabs) and responsive actions (full-width expanded buttons on mobile).
-  - **Lines 938-1111:** \_buildAlisForm() - Minimalist purchase form with clean inline code/name, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-green "Toplam" cost card.
-  - **Lines 1112-1255:** \_showSatisAssetPicker() - Modern modal bottom sheet picker listing portfolio assets with logo, symbol, category badge, and name (omitting quantity and price per user rule).
-  - **Lines 1256-1593:** \_buildSatisForm() - Minimalist sale form with clickable asset selection container (neutral subtle border without red outline), horizontally centered Toplam Adet and Toplam Fiyat summary card, matching Alış field layout (Row: Tarih + Adet with auto-clamping on enter/unfocus, below: full-width Satış Fiyatı with TL icon), and centered soft-red "Toplam" revenue card.
+  - **Lines 525-625:** \_saveTransaction() - FIFO validation, quantity clamping, cost estimation, transaction persistence, and asset updating.
+  - **Lines 626-702:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop (dynamic 'Varlık Ekle' when allowSell is false or model portfolio, 'İşlem Ekle' otherwise).
+  - **Lines 703-740:** \_buildDesktopHeader() - PC header row with shopping cart / sell icon, dynamic title, and close button.
+  - **Lines 741-947:** \_buildFormContent() - Form switcher (Alis/Satis tabs omitted when allowSell is false or model portfolio), 'Varlığı Ekle' button, and responsive actions (full-width expanded buttons on mobile).
+  - **Lines 948-1120:** \_buildAlisForm() - Minimalist purchase form with clean inline code/name, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-green "Toplam" cost card.
+  - **Lines 1121-1265:** \_showSatisAssetPicker() - Modern modal bottom sheet picker listing portfolio assets with logo, symbol, category badge, and name (omitting quantity and price per user rule).
+  - **Lines 1266-1614:** \_buildSatisForm() - Minimalist sale form with clickable asset selection container (neutral subtle border without red outline), horizontally centered Toplam Adet and Toplam Fiyat summary card, matching Alış field layout (Row: Tarih + Adet with auto-clamping on enter/unfocus, below: full-width Satış Fiyatı with TL icon), and centered soft-red "Toplam" revenue card.
 - **File:** `lib/dialogs/asset_status_dialog.dart`
   - **Lines 1-34:** Imports, AssetStatusDialog declaration with isFullScreen flag, and state setup.
   - **Lines 35-117:** build() method: Adaptive layout setup, FIFO calculation, responsive dimensions.
@@ -72,9 +72,9 @@
   - **Lines 717-822:** \_buildAssetsTab() - Clean full-width search input, empty state, and AssetItemTile list.
   - **Lines 823-1293:** \_buildTransactionsTab() - Minimalist empty state, responsive mobile TransactionSortBar, sorted transaction cards with fixed-position slots, and undo button.
   - **Lines 1294-1360:** \_confirmUndoTransaction() and \_confirmDeleteAsset().
-  - **Lines 1361-1394:** \_openAddModelAsset() and \_openEditModelAsset() triggers launching AddEditModelAssetDialog.
+  - **Lines 1361-1394:** \_openAddModelAsset() and \_openEditModelAsset() triggers launching AdaptiveNavigation.openAddTransaction with allowSell: false (Alış-only asset addition and edit).
   - **Lines 1395-1732:** \_buildModelDetailContent() - Backtest summary cards (Ortalama Aylık Getiri, En İyi Ay, En Kötü Ay, Hedef Dağılım), ModelPeriodPerformanceRow (1G-5Y), tab switcher ('Varlıklar' vs 'Aylık Getiri Analizi'), and ModelMonthlyHistoryView integration.
-  - **Lines 1733-1955:** \_buildModelAssetsTab(), \_buildModelAssetTile() with percentage badge, current price, mini historical return chips, edit/delete actions, and \_buildMiniReturn().
+  - **Lines 1733-1964:** \_buildModelAssetsTab(), \_buildModelAssetTile() with percentage badge, quantity, total value, mini historical return chips, edit/delete actions, and \_buildMiniReturn().
 - **File:** `lib/dialogs/widgets/transaction_sort_bar.dart`
   - **Lines 1-15:** Imports and TransactionSortCriterion enum (date, fund, type, profitLoss, amount).
   - **Lines 16-60:** sortPortfolioTransactions() comparator with net profit consideration and deterministic date tie-breaker.
@@ -136,9 +136,9 @@
   - **Lines 23-49:** ModelPortfolioAnalysis data class (averageMonthlyReturn, bestMonth, worstMonth, monthlyHistory, periodReturns, periodMissingAssets).
 - **File:** `lib/features/model_portfolio/services/model_portfolio_service.dart`
   - **Lines 1-25:** Imports and ModelPortfolioService class declaration.
-  - **Lines 26-120:** analyze() core backtesting engine calculating weighted returns for 1G, 1H, 1A, 3A, 6A, 1Y, 2Y, 3Y, 5Y and detecting boundary exceedance for each period.
+  - **Lines 26-120:** analyze() core backtesting engine calculating weighted returns for 1G, 1H, 1A, 3A, 6A, 1Y, 2Y, 3Y, 5Y with value and target weighting, and detecting boundary exceedance for each period.
   - **Lines 121-185:** Monthly timeline generation in descending chronological order (newest to oldest), warning trigger logic firing once per asset in the exact boundary month when earliestDate is reached.
-  - **Lines 186-227:** Statistical aggregations for average monthly return, best month, worst month, and period label formatters.
+  - **Lines 186-235:** Statistical aggregations for average monthly return, best month, worst month, and period label formatters.
 - **File:** `lib/features/model_portfolio/widgets/model_monthly_history_view.dart`
   - **Lines 1-40:** Imports and ModelMonthlyHistoryView declaration.
   - **Lines 41-110:** build() method - Header stats card (Ortalama Aylık Getiri, En İyi Ay, En Kötü Ay) and monthly history timeline.
@@ -170,12 +170,12 @@
   - **Lines 56-86:** Method buildIcon() with custom SVG/vector handling for emtia/metals.
 - **File:** `lib/models/portfolio.dart`
   - **Lines 1-45:** Imports, Portfolio class declaration, properties including isModel, sortIndex, and constructor with default sortIndex = 0.
-  - **Lines 46-75:** Aggregate getters for asset counts, gross total cost, gross total value, and net values.
+  - **Lines 46-75:** Aggregate getters for asset counts, totalCost, totalValue, and net values.
   - **Lines 76-140:** Real (inflation-adjusted) return calculations and mode-based profit evaluation methods (profitForMode, valueForMode).
   - **Lines 141-255:** Realized gains from transactions, earliestActivePurchaseDate, active holding duration (holdingDays based on active assets), and neutral-duration sensitive period performance metrics (daily, weekly, monthly, threeMonthly, sixMonthly, yearly returning 0.0 when duration is insufficient).
-  - **Lines 256-385:** Asset allocation breakdown calculations (assetAllocations, categoryPercentages, categoryValues) with targetAllocationPercent support for model portfolios, totalAllocationPercent.
-  - **Lines 386-430:** Immutable helper copyWith() and JSON serialization methods (toJson, fromJson) supporting isModel and sortIndex.
-  - **Lines 431-443:** AssetAllocationItem model representing category and asset distribution weights.
+  - **Lines 256-385:** Asset allocation breakdown calculations (assetAllocations, categoryPercentages, categoryValues) with targetAllocationPercent and value weighting support for model portfolios, totalAllocationPercent.
+  - **Lines 386-435:** Immutable helper copyWith() and JSON serialization methods (toJson, fromJson) supporting isModel and sortIndex.
+  - **Lines 436-449:** AssetAllocationItem model representing category and asset distribution weights.
 - **File:** `lib/models/portfolio_asset.dart`
   - **Lines 1-38:** Imports, PortfolioAsset class declaration, and properties (including targetAllocationPercent, twoYearlyChangePercent, threeYearlyChangePercent, fiveYearlyChangePercent, earliestDate, monthlyReturns).
   - **Lines 39-60:** Constructor definition with default parameter values.
@@ -357,6 +357,7 @@
   - **Lines 211-260:** AddEditPortfolioDialog widget tests verifying Canlı Portföy vs Model Portföy selection.
   - **Lines 261-310:** PortfolioCard widget tests verifying ModelPortfolioBadge rendering, 1Y return, and monthly average display.
   - **Lines 311-370:** ModelMonthlyHistoryView widget tests verifying summary stats card and boundary warning exclamation icon with hover tooltip.
+  - **Lines 371-404:** AddTransactionDialog widget test for model portfolios verifying Alış-only form without Satış tab.
 - **File:** `test/period_performance_test.dart`
   - **Lines 1-182:** Unit & widget tests verifying PeriodPerformanceRow.fromAsset data mapping, empty portfolio reel mode 0.0 neutrality, same-day asset purchase reel mode holding duration logic, 7-period rendering on desktop with expanded layout, and responsive mobile scroll behavior.
 - **File:** `test/tefas_and_stock_filter_test.dart`

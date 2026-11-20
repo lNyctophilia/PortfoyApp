@@ -33,6 +33,10 @@ class ModelPortfolioService {
     }
 
     final assets = portfolio.assets;
+    final hasExplicitTargets = assets.any((a) => a.targetAllocationPercent > 0);
+    final totalPortfolioVal = portfolio.totalValue > 0
+        ? portfolio.totalValue
+        : portfolio.totalCost;
     final totalAllocation = portfolio.totalAllocationPercent > 0
         ? portfolio.totalAllocationPercent
         : 100.0;
@@ -68,9 +72,11 @@ class ModelPortfolioService {
       final List<String> missingInPeriod = [];
 
       for (final asset in assets) {
-        final weight = asset.targetAllocationPercent > 0
-            ? asset.targetAllocationPercent
-            : (totalAllocation / assets.length);
+        final weight = hasExplicitTargets
+            ? (asset.targetAllocationPercent > 0 ? asset.targetAllocationPercent : 0.0)
+            : (totalPortfolioVal > 0
+                ? ((asset.currentValue > 0 ? asset.currentValue : asset.totalCost) / totalPortfolioVal) * 100
+                : (100.0 / assets.length));
 
         // Varlığın en erken verisi hedef tarihten sonra ise sınırı aşılmıştır
         if (asset.earliestDate != null && asset.earliestDate!.isAfter(targetDate)) {
@@ -156,9 +162,11 @@ class ModelPortfolioService {
       final List<String> warnedInThisMonth = [];
 
       for (final asset in assets) {
-        final weight = asset.targetAllocationPercent > 0
-            ? asset.targetAllocationPercent
-            : (totalAllocation / assets.length);
+        final weight = hasExplicitTargets
+            ? (asset.targetAllocationPercent > 0 ? asset.targetAllocationPercent : 0.0)
+            : (totalPortfolioVal > 0
+                ? ((asset.currentValue > 0 ? asset.currentValue : asset.totalCost) / totalPortfolioVal) * 100
+                : (100.0 / assets.length));
 
         final hasReturnForMonth = asset.monthlyReturns.containsKey(monthKey);
         final ret = asset.monthlyReturns[monthKey] ?? 0.0;
