@@ -394,10 +394,11 @@ void main() {
       expect(find.text('Satış'), findsNothing);
       // Title is "Varlık Ekle"
       expect(find.text('Varlık Ekle'), findsOneWidget);
-      // Yüzdelik Pay (%) is present, Adet is absent
+      // Yüzdelik Pay (%) is present, Adet is absent, Güncel Fiyat is removed, Alış Tarihi is present
       expect(find.text('Yüzdelik Pay (%)'), findsOneWidget);
       expect(find.text('Adet'), findsNothing);
-      expect(find.text('Güncel Fiyat'), findsOneWidget);
+      expect(find.text('Güncel Fiyat'), findsNothing);
+      expect(find.text('Alış Tarihi'), findsOneWidget);
       expect(find.text('Model Portföy Payı'), findsOneWidget);
       // Action button is "Varlığı Ekle"
       expect(find.text('Varlığı Ekle'), findsOneWidget);

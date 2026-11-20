@@ -1174,8 +1174,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   // ==========================================
   Widget _buildModelAlisForm() {
     final alloc = _parseVal(_alisAllocationController.text);
-    final curPrice = _parseVal(_alisCurrentPriceController.text);
-    final hasPrice = curPrice > 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1213,12 +1211,64 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
         const SizedBox(height: 14),
 
-        // Yüzdelik Pay (%) ve Güncel Fiyat
+        // Alış Tarihi & Yüzdelik Pay (%)
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 3,
+              child: InkWell(
+                onTap: _pickAlisDate,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 52,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.borderSubtle),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_rounded,
+                        size: 18,
+                        color: AppTheme.profit,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Alış Tarihi',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppTheme.textMuted,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              Formatters.date(_alisDate),
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
               child: TextFormField(
                 controller: _alisAllocationController,
                 keyboardType:
@@ -1240,48 +1290,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                   if (val > 100) return 'Maksimum %100 olabilir';
                   return null;
                 },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: Container(
-                height: 52,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.borderSubtle),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Güncel Fiyat',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: AppTheme.textMuted,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        hasPrice
-                            ? '${_alisCurrentPriceController.text} ₺'
-                            : (_isLoadingAlisMarketData ? 'Yükleniyor...' : '- ₺'),
-                        style: const TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ],

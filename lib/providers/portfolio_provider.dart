@@ -905,6 +905,7 @@ class PortfolioProvider extends ChangeNotifier {
                 ? tx.name
                 : existing.name,
             quantity: newQty,
+            purchaseDate: portfolio.isModel ? tx.date : existing.purchaseDate,
             purchasePrice: newAvgCost,
             currentPrice: tx.currentPrice ?? existing.currentPrice,
             iconUrl: tx.iconUrl ?? existing.iconUrl,
