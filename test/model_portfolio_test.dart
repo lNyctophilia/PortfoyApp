@@ -368,7 +368,7 @@ void main() {
       );
     });
 
-    testWidgets('AddTransactionDialog for model portfolio renders only Alış form without Satış tab',
+    testWidgets('AddTransactionDialog for model portfolio renders percentage input instead of Adet and hides Satış tab',
         (WidgetTester tester) async {
       final modelPortfolio = Portfolio(
         id: 'test_model_tx',
@@ -394,9 +394,11 @@ void main() {
       expect(find.text('Satış'), findsNothing);
       // Title is "Varlık Ekle"
       expect(find.text('Varlık Ekle'), findsOneWidget);
-      // Alış inputs (Adet, Alış Fiyatı) are present
-      expect(find.text('Adet'), findsOneWidget);
-      expect(find.text('Alış Fiyatı'), findsOneWidget);
+      // Yüzdelik Pay (%) is present, Adet is absent
+      expect(find.text('Yüzdelik Pay (%)'), findsOneWidget);
+      expect(find.text('Adet'), findsNothing);
+      expect(find.text('Güncel Fiyat'), findsOneWidget);
+      expect(find.text('Model Portföy Payı'), findsOneWidget);
       // Action button is "Varlığı Ekle"
       expect(find.text('Varlığı Ekle'), findsOneWidget);
     });

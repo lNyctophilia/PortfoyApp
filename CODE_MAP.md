@@ -43,18 +43,20 @@
 - **File:** `lib/dialogs/add_edit_portfolio_dialog.dart`
   - **Lines 1-277:** AddEditPortfolioDialog supporting choice between Canlı Portföy and Model Portföy, segmented selection card, clean title/description, and form submission.
 - **File:** `lib/dialogs/add_transaction_dialog.dart`
-  - **Lines 1-75:** Imports, AddTransactionDialog declaration with isFullScreen flag, allowSell parameter, initialAsset, initialType, and state variables (\_satisQuantityFocusNode).
-  - **Lines 76-180:** initState() (focus node listeners, initialAsset prefill for edit mode, clean start with no preselected asset on sell, today's date), dispose(), \_clampSatisQuantity() (auto-clamping quantity to max portfolio holding on enter/unfocus), Turkish price/number parsing and formatting helpers with precision (\_formatPriceGrouped, Formatters.parseDouble).
-  - **Lines 181-282:** Buy (Alis) transaction logic: suggestion selection, market data fetching.
-  - **Lines 283-419:** Custom calendar picker dialog (\_showCalendarPicker()) and buy date selection (\_pickAlisDate()).
-  - **Lines 420-524:** Sell (Satis) transaction logic: asset selection from portfolio, automatic TEFAS valör (T-1, T-2, T-3) business day historical price lookup without UI clutter, and date picker.
-  - **Lines 525-625:** \_saveTransaction() - FIFO validation, quantity clamping, cost estimation, transaction persistence, and asset updating.
-  - **Lines 626-702:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop (dynamic 'Varlık Ekle' when allowSell is false or model portfolio, 'İşlem Ekle' otherwise).
-  - **Lines 703-740:** \_buildDesktopHeader() - PC header row with shopping cart / sell icon, dynamic title, and close button.
-  - **Lines 741-947:** \_buildFormContent() - Form switcher (Alis/Satis tabs omitted when allowSell is false or model portfolio), 'Varlığı Ekle' button, and responsive actions (full-width expanded buttons on mobile).
-  - **Lines 948-1120:** \_buildAlisForm() - Minimalist purchase form with clean inline code/name, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-green "Toplam" cost card.
-  - **Lines 1121-1265:** \_showSatisAssetPicker() - Modern modal bottom sheet picker listing portfolio assets with logo, symbol, category badge, and name (omitting quantity and price per user rule).
-  - **Lines 1266-1614:** \_buildSatisForm() - Minimalist sale form with clickable asset selection container (neutral subtle border without red outline), horizontally centered Toplam Adet and Toplam Fiyat summary card, matching Alış field layout (Row: Tarih + Adet with auto-clamping on enter/unfocus, below: full-width Satış Fiyatı with TL icon), and centered soft-red "Toplam" revenue card.
+  - **Lines 1-75:** Imports, AddTransactionDialog declaration with isFullScreen flag, allowSell parameter, initialAsset, initialType, and state variables (_satisQuantityFocusNode, _alisAllocationController).
+  - **Lines 76-180:** initState() (focus node listeners, initialAsset prefill for edit mode, clean start with no preselected asset on sell, today's date, allocation controller setup), dispose(), _clampSatisQuantity() (auto-clamping quantity to max portfolio holding on enter/unfocus), Turkish price/number parsing and formatting helpers with precision (_formatPriceGrouped, Formatters.parseDouble).
+  - **Lines 181-225:** _currentAllocatedExcludingSelf and _remainingAllocation getters for model portfolios.
+  - **Lines 226-327:** Buy (Alis) transaction logic: suggestion selection, market data fetching.
+  - **Lines 328-464:** Custom calendar picker dialog (_showCalendarPicker()) and buy date selection (_pickAlisDate()).
+  - **Lines 465-569:** Sell (Satis) transaction logic: asset selection from portfolio, automatic TEFAS valör (T-1, T-2, T-3) business day historical price lookup without UI clutter, and date picker.
+  - **Lines 570-677:** _saveTransaction() - FIFO validation, quantity clamping, cost estimation, transaction persistence, targetAllocationPercent assignment for model portfolios, and asset updating.
+  - **Lines 678-754:** build() method: Adaptive layout rendering full-screen Scaffold with AppBar on mobile or responsive Dialog shell on desktop (dynamic 'Varlık Ekle' when allowSell is false or model portfolio, 'İşlem Ekle' otherwise).
+  - **Lines 755-792:** _buildDesktopHeader() - PC header row with shopping cart / sell icon, dynamic title, and close button.
+  - **Lines 793-995:** _buildFormContent() - Form switcher (Alis/Satis tabs omitted when allowSell is false or model portfolio), 'Varlığı Ekle' button, and responsive actions (full-width expanded buttons on mobile).
+  - **Lines 996-1173:** _buildAlisForm() - Minimalist purchase form for standard portfolios with clean inline code/name, TurkishNumberInputFormatter price and quantity inputs, centered date, TL icon, and centered soft-green "Toplam" cost card.
+  - **Lines 1174-1394:** _buildModelAlisForm() - Minimalist asset entry form for model portfolios with autocomplete search, percentage input (`Yüzdelik Pay (%)`), current price badge, quick percentage increment chips (+5%, +10%, +20%, +25%, +50%, Kalanı Doldur), and centered target allocation card without Adet field.
+  - **Lines 1395-1538:** _showSatisAssetPicker() - Modern modal bottom sheet picker listing portfolio assets with logo, symbol, category badge, and name (omitting quantity and price per user rule).
+  - **Lines 1539-1879:** _buildSatisForm() - Minimalist sale form with clickable asset selection container (neutral subtle border without red outline), horizontally centered Toplam Adet and Toplam Fiyat summary card, matching Alış field layout (Row: Tarih + Adet with auto-clamping on enter/unfocus, below: full-width Satış Fiyatı with TL icon), and centered soft-red "Toplam" revenue card.
 - **File:** `lib/dialogs/asset_status_dialog.dart`
   - **Lines 1-34:** Imports, AssetStatusDialog declaration with isFullScreen flag, and state setup.
   - **Lines 35-117:** build() method: Adaptive layout setup, FIFO calculation, responsive dimensions.
@@ -357,7 +359,7 @@
   - **Lines 211-260:** AddEditPortfolioDialog widget tests verifying Canlı Portföy vs Model Portföy selection.
   - **Lines 261-310:** PortfolioCard widget tests verifying ModelPortfolioBadge rendering, 1Y return, and monthly average display.
   - **Lines 311-370:** ModelMonthlyHistoryView widget tests verifying summary stats card and boundary warning exclamation icon with hover tooltip.
-  - **Lines 371-404:** AddTransactionDialog widget test for model portfolios verifying Alış-only form without Satış tab.
+  - **Lines 371-406:** AddTransactionDialog widget test for model portfolios verifying Alış-only form without Satış tab, rendering percentage input (`Yüzdelik Pay (%)`) instead of Adet, and live price/allocation cards.
 - **File:** `test/period_performance_test.dart`
   - **Lines 1-182:** Unit & widget tests verifying PeriodPerformanceRow.fromAsset data mapping, empty portfolio reel mode 0.0 neutrality, same-day asset purchase reel mode holding duration logic, 7-period rendering on desktop with expanded layout, and responsive mobile scroll behavior.
 - **File:** `test/tefas_and_stock_filter_test.dart`

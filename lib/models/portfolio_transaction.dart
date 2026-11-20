@@ -38,6 +38,7 @@ class PortfolioTransaction {
   final double? sixMonthlyChangePercent;
   final double? yearlyChangePercent;
   final double? withholdingTaxRate;
+  final double? targetAllocationPercent;
 
   PortfolioTransaction({
     required this.id,
@@ -61,6 +62,7 @@ class PortfolioTransaction {
     this.sixMonthlyChangePercent,
     this.yearlyChangePercent,
     this.withholdingTaxRate,
+    this.targetAllocationPercent,
   }) : realizedProfit = realizedProfit ??
             (type == TransactionType.satis
                 ? (price - costPrice) * quantity
@@ -115,6 +117,7 @@ class PortfolioTransaction {
     double? sixMonthlyChangePercent,
     double? yearlyChangePercent,
     double? withholdingTaxRate,
+    double? targetAllocationPercent,
   }) {
     return PortfolioTransaction(
       id: id ?? this.id,
@@ -138,6 +141,7 @@ class PortfolioTransaction {
       sixMonthlyChangePercent: sixMonthlyChangePercent ?? this.sixMonthlyChangePercent,
       yearlyChangePercent: yearlyChangePercent ?? this.yearlyChangePercent,
       withholdingTaxRate: withholdingTaxRate ?? this.withholdingTaxRate,
+      targetAllocationPercent: targetAllocationPercent ?? this.targetAllocationPercent,
     );
   }
 
@@ -164,6 +168,7 @@ class PortfolioTransaction {
       'sixMonthlyChangePercent': sixMonthlyChangePercent,
       'yearlyChangePercent': yearlyChangePercent,
       'withholdingTaxRate': withholdingTaxRate,
+      'targetAllocationPercent': targetAllocationPercent,
     };
   }
 
@@ -173,6 +178,7 @@ class PortfolioTransaction {
     final price = (json['price'] as num?)?.toDouble() ?? 0.0;
     final costPrice = (json['costPrice'] as num?)?.toDouble() ?? 0.0;
     final parsedRealized = (json['realizedProfit'] as num?)?.toDouble();
+    final targetAlloc = (json['targetAllocationPercent'] as num?)?.toDouble();
 
     return PortfolioTransaction(
       id: json['id'] as String,
@@ -197,6 +203,7 @@ class PortfolioTransaction {
       sixMonthlyChangePercent: (json['sixMonthlyChangePercent'] as num?)?.toDouble(),
       yearlyChangePercent: (json['yearlyChangePercent'] as num?)?.toDouble(),
       withholdingTaxRate: (json['withholdingTaxRate'] as num?)?.toDouble(),
+      targetAllocationPercent: targetAlloc,
     );
   }
 }

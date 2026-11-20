@@ -46,6 +46,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   late TextEditingController _alisSymbolController;
   late TextEditingController _alisNameController;
   late TextEditingController _alisQuantityController;
+  late TextEditingController _alisAllocationController;
   late TextEditingController _alisPurchasePriceController;
   late TextEditingController _alisCurrentPriceController;
   late TextEditingController _alisDailyChangeController;
@@ -83,6 +84,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _alisSymbolController = TextEditingController();
     _alisNameController = TextEditingController();
     _alisQuantityController = TextEditingController();
+    _alisAllocationController = TextEditingController();
     _alisPurchasePriceController = TextEditingController();
     _alisCurrentPriceController = TextEditingController();
     _alisDailyChangeController = TextEditingController(text: '0.0');
@@ -94,6 +96,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _alisDate = DateTime.now();
 
     _alisQuantityController.addListener(() => setState(() {}));
+    _alisAllocationController.addListener(() => setState(() {}));
     _alisPurchasePriceController.addListener(() => setState(() {}));
     _alisCurrentPriceController.addListener(() => setState(() {}));
 
@@ -124,6 +127,12 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       if (widget.initialAsset!.quantity > 0) {
         _alisQuantityController.text = _formatNumber(widget.initialAsset!.quantity);
       }
+      final initAlloc = widget.initialAsset!.targetAllocationPercent > 0
+          ? widget.initialAsset!.targetAllocationPercent
+          : (widget.portfolio.isModel ? widget.initialAsset!.quantity : 0.0);
+      if (initAlloc > 0) {
+        _alisAllocationController.text = _formatNumber(initAlloc);
+      }
       if (widget.initialAsset!.purchasePrice > 0) {
         _alisPurchasePriceController.text = _formatPrice(widget.initialAsset!.purchasePrice);
         _isAlisPurchasePriceManual = true;
@@ -141,6 +150,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _alisSymbolController.dispose();
     _alisNameController.dispose();
     _alisQuantityController.dispose();
+    _alisAllocationController.dispose();
     _alisPurchasePriceController.dispose();
     _alisCurrentPriceController.dispose();
     _alisDailyChangeController.dispose();
@@ -180,6 +190,28 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
   double _parseVal(String text) {
     return Formatters.parseDouble(text);
+  }
+
+  double get _currentAllocatedExcludingSelf {
+    double total = 0.0;
+    for (final a in widget.portfolio.assets) {
+      if (widget.initialAsset != null && a.id == widget.initialAsset!.id) {
+        continue;
+      }
+      if (widget.initialAsset == null &&
+          _alisSymbolController.text.trim().isNotEmpty &&
+          a.symbol.toUpperCase() == _alisSymbolController.text.trim().toUpperCase()) {
+        continue;
+      }
+      final alloc = a.targetAllocationPercent > 0 ? a.targetAllocationPercent : a.quantity;
+      total += alloc;
+    }
+    return total;
+  }
+
+  double get _remainingAllocation {
+    final rem = 100.0 - _currentAllocatedExcludingSelf;
+    return rem > 0 ? rem : 0.0;
   }
 
   // --- ALIŞ FONKSİYONLARI ---
@@ -537,9 +569,13 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     if (_selectedType == TransactionType.alis) {
-      final pPrice = _parseVal(_alisPurchasePriceController.text);
-      final qty = _parseVal(_alisQuantityController.text);
+      final isModel = widget.portfolio.isModel;
+      final alloc = _parseVal(_alisAllocationController.text);
       final cPrice = _parseVal(_alisCurrentPriceController.text);
+      final pPrice = isModel
+          ? (cPrice > 0 ? cPrice : 1.0)
+          : _parseVal(_alisPurchasePriceController.text);
+      final qty = isModel ? alloc : _parseVal(_alisQuantityController.text);
 
       final daily = _parseVal(_alisDailyChangeController.text);
       final weekly = _parseVal(_alisWeeklyChangeController.text);
@@ -560,6 +596,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         price: pPrice,
         costPrice: pPrice,
         currentPrice: cPrice > 0 ? cPrice : pPrice,
+        targetAllocationPercent: isModel ? alloc : null,
         iconUrl: _alisIconUrl,
         dailyChangePercent: daily,
         weeklyChangePercent: weekly,
@@ -957,6 +994,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   // ALIŞ FORMU (VARLIK EKLEME ARAYÜZÜ)
   // ==========================================
   Widget _buildAlisForm() {
+    if (widget.portfolio.isModel) {
+      return _buildModelAlisForm();
+    }
+
     final pPrice = _parseVal(_alisPurchasePriceController.text);
     final qty = _parseVal(_alisQuantityController.text);
     final totalCost = pPrice * qty;
@@ -1116,6 +1157,230 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 style: const TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.w700,
+                  color: AppTheme.profit,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ==========================================
+  // MODEL PORTFÖY VARLIK EKLEME ARAYÜZÜ
+  // (Yüzdelik Pay Odaklı ve Adetsiz)
+  // ==========================================
+  Widget _buildModelAlisForm() {
+    final alloc = _parseVal(_alisAllocationController.text);
+    final curPrice = _parseVal(_alisCurrentPriceController.text);
+    final hasPrice = curPrice > 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Sembol ve Akıllı İsim Gösterimi
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: AssetLogo(
+                iconUrl: _alisIconUrl,
+                symbol: _alisHasSelectedAsset ? _alisSymbolController.text.trim() : '',
+                name: _alisHasSelectedAsset ? _alisNameController.text.trim() : null,
+                category: _alisCategory,
+                size: 48,
+                iconSize: 24,
+                borderRadius: 12,
+              ),
+            ),
+            Expanded(
+              child: AssetSymbolAutocomplete(
+                controller: _alisSymbolController,
+                assetName: _alisNameController.text,
+                isLoading: _isLoadingAlisMarketData,
+                hintText: 'Varlık ara...',
+                onChanged: _onAlisSymbolChanged,
+                onSelected: _onAlisSuggestionSelected,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Varlık seçin veya sembol girin' : null,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 14),
+
+        // Yüzdelik Pay (%) ve Güncel Fiyat
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: TextFormField(
+                controller: _alisAllocationController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  TurkishNumberInputFormatter(maxDecimals: 2),
+                ],
+                decoration: InputDecoration(
+                  labelText: 'Yüzdelik Pay (%)',
+                  hintText: 'Örn: 25',
+                  prefixIcon: const Icon(Icons.percent_rounded, size: 20),
+                  helperText: 'Kalan Pay: %${_formatNumber(_remainingAllocation)}',
+                  helperStyle: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Pay yüzdesi girin';
+                  final val = _parseVal(v);
+                  if (val <= 0) return '0\'dan büyük olmalı';
+                  if (val > 100) return 'Maksimum %100 olabilir';
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: Container(
+                height: 52,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceLight,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.borderSubtle),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Güncel Fiyat',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppTheme.textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        hasPrice
+                            ? '${_alisCurrentPriceController.text} ₺'
+                            : (_isLoadingAlisMarketData ? 'Yükleniyor...' : '- ₺'),
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        // Hızlı Yüzde Çipleri
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final pct in [5, 10, 20, 25, 50])
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  final cur = _parseVal(_alisAllocationController.text);
+                  final next = (cur + pct).clamp(0.0, 100.0);
+                  setState(() {
+                    _alisAllocationController.text = _formatNumber(next);
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceLight,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.borderSubtle),
+                  ),
+                  child: Text(
+                    '+%$pct',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+            if (_remainingAllocation > 0)
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  setState(() {
+                    _alisAllocationController.text =
+                        _formatNumber(_remainingAllocation);
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border:
+                        Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    'Kalanı Doldur (%${_formatNumber(_remainingAllocation)})',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryLight,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+
+        const SizedBox(height: 14),
+
+        // Model Portföy Payı Kartı (Ortalanmış & Yeşil Vurgu)
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: AppTheme.profit.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.profit.withValues(alpha: 0.25)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Model Portföy Payı',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.profit.withValues(alpha: 0.85),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                alloc > 0 ? '%${_formatNumber(alloc)}' : '%0',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
                   color: AppTheme.profit,
                 ),
                 textAlign: TextAlign.center,

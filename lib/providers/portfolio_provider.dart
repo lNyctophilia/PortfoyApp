@@ -889,12 +889,16 @@ class PortfolioProvider extends ChangeNotifier {
 
         if (aIndex != -1) {
           final existing = updatedAssets[aIndex];
-          final newQty = existing.quantity + tx.quantity;
-          final newAvgCost = newQty > 0
-              ? ((existing.purchasePrice * existing.quantity) +
-                      (tx.price * tx.quantity)) /
-                  newQty
-              : tx.price;
+          final newQty = portfolio.isModel
+              ? (tx.targetAllocationPercent ?? tx.quantity)
+              : (existing.quantity + tx.quantity);
+          final newAvgCost = portfolio.isModel
+              ? (tx.price > 0 ? tx.price : existing.purchasePrice)
+              : (newQty > 0
+                  ? ((existing.purchasePrice * existing.quantity) +
+                          (tx.price * tx.quantity)) /
+                      newQty
+                  : tx.price);
 
           updatedAssets[aIndex] = existing.copyWith(
             name: (existing.name.toLowerCase().contains('global payments') && tx.symbol.toUpperCase() == 'GPN' && tx.category == AssetCategory.fon)
@@ -910,6 +914,7 @@ class PortfolioProvider extends ChangeNotifier {
             threeMonthlyChangePercent: tx.threeMonthlyChangePercent ?? existing.threeMonthlyChangePercent,
             sixMonthlyChangePercent: tx.sixMonthlyChangePercent ?? existing.sixMonthlyChangePercent,
             yearlyChangePercent: tx.yearlyChangePercent ?? existing.yearlyChangePercent,
+            targetAllocationPercent: tx.targetAllocationPercent ?? (portfolio.isModel ? tx.quantity : existing.targetAllocationPercent),
           );
         } else {
           updatedAssets.add(
@@ -922,6 +927,7 @@ class PortfolioProvider extends ChangeNotifier {
               purchasePrice: tx.price,
               quantity: tx.quantity,
               currentPrice: tx.currentPrice ?? tx.price,
+              targetAllocationPercent: tx.targetAllocationPercent ?? (portfolio.isModel ? tx.quantity : 0.0),
               iconUrl: tx.iconUrl,
               dailyChangePercent: tx.dailyChangePercent ?? 0.0,
               weeklyChangePercent: tx.weeklyChangePercent ?? 0.0,

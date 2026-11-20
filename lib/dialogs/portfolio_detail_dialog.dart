@@ -1387,6 +1387,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           symbol: tx.symbol,
           category: tx.category,
           quantity: tx.quantity,
+          targetAllocationPercent: tx.targetAllocationPercent ?? tx.quantity,
           purchasePrice: tx.price,
           purchaseDate: tx.date,
           currentPrice: tx.currentPrice ?? asset.currentPrice,
@@ -1920,7 +1921,7 @@ class _PortfolioDetailDialogState extends State<PortfolioDetailDialog> {
           Row(
             children: [
               Text(
-                '${Formatters.formatNumber(asset.quantity)} Adet • ${Formatters.currency(assetVal)}',
+                'Fiyat: ${Formatters.currency(asset.currentPrice > 0 ? asset.currentPrice : asset.purchasePrice)}',
                 style: const TextStyle(
                   fontSize: 11,
                   color: AppTheme.textMuted,
