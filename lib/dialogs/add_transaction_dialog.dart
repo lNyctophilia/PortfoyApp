@@ -6,6 +6,7 @@ import '../models/portfolio_asset.dart';
 import '../models/portfolio_transaction.dart';
 import '../services/asset_catalog_service.dart';
 import '../services/market_data_service.dart';
+import '../services/tefas_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../utils/fifo_calculator.dart';
@@ -483,12 +484,14 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           (_selectedExistingAsset?.name.toLowerCase().contains('borsa yatırım fonu') ?? false) ||
           (_selectedExistingAsset?.name.toLowerCase().contains('byf') ?? false);
       if (!isByf) {
+        final satisValor = await TefasService.getFundSatisValor(clean);
         queryDate = MarketDataService.getTefasSatisValorDate(
           date,
           fundName: _satisNameController.text.isNotEmpty
               ? _satisNameController.text
               : _selectedExistingAsset?.name,
           symbol: clean,
+          satisValor: satisValor,
         );
       }
     }

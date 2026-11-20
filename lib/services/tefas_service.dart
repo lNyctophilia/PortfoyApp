@@ -56,9 +56,64 @@ class TefasService {
       'https://www.tefas.gov.tr/api/funds/fonGnlBlgSiraliGetir';
   static const String _fiyatUrl =
       'https://www.tefas.gov.tr/api/funds/fonFiyatBilgiGetir';
+  static const String _profilUrl =
+      'https://www.tefas.gov.tr/api/funds/fonProfilBilgiGetir';
 
   static final Random _random = Random();
   static DateTime _lastRequestTime = DateTime.fromMillisecondsSinceEpoch(0);
+
+  // Oturum içi fon satış valörü önbelleği
+  static final Map<String, int> _fundSatisValorCache = {
+    'KTJ': 2,
+    'GZG': 3,
+    'GPN': 0,
+    'PPF': 0,
+  };
+
+  /// Fonun TEFAS resmi satış valör gününü döner (fonSatisValor).
+  /// Önbellekte varsa doğrudan döner, yoksa fonProfilBilgiGetir API'sinden canlı çeker.
+  static Future<int?> getFundSatisValor(String fundCode) async {
+    final clean = fundCode.trim().toUpperCase();
+    if (clean.isEmpty) return null;
+    if (_fundSatisValorCache.containsKey(clean)) {
+      return _fundSatisValorCache[clean];
+    }
+
+    try {
+      await _throttleWithJitter();
+      final payload = jsonEncode({'fonKodu': clean});
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json, text/plain, */*',
+        'Origin': 'https://www.tefas.gov.tr',
+        'Referer': 'https://www.tefas.gov.tr/tr/fon-detayli-analiz/',
+        'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      };
+
+      final resp = await AppHttpClient.post(
+        _profilUrl,
+        headers: headers,
+        body: payload,
+        timeout: const Duration(seconds: 5),
+      );
+
+      if (resp != null && resp.statusCode == 200) {
+        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        final list = data['resultList'] as List<dynamic>?;
+        if (list != null && list.isNotEmpty) {
+          final first = list.first as Map<String, dynamic>;
+          final val = (first['fonSatisValor'] as num?)?.toInt();
+          if (val != null) {
+            _fundSatisValorCache[clean] = val;
+            return val;
+          }
+        }
+      }
+    } catch (_) {}
+
+    return null;
+  }
 
   // Oturum içi fon ve arama önbelleği (başlangıç çekirdeği ile offline/test güvenliği sağlanır)
   static final Map<String, TefasFundInfo> _fundCache = {

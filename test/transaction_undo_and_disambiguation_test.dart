@@ -221,12 +221,13 @@ void main() {
       expect(valorDate, equals(DateTime(2026, 10, 21)));
     });
 
-    test('Standard domestic equity/gold/katilim fund (KTJ, KUT) uses T-1 business day before settlement', () {
+    test('Standard domestic equity/gold/katilim fund (KTJ, KUT with T+2) uses T-1 business day before settlement', () {
       final wednesday = DateTime(2026, 10, 21); // Çarşamba
       final valorDate = MarketDataService.getTefasSatisValorDate(
         wednesday,
         symbol: 'KUT',
         fundName: 'KUVEYT TÜRK PORTFÖY KIYMETLİ MADENLER KATILIM FONU',
+        satisValor: 2,
       );
       // Valörden 1 iş günü önce -> Salı 20
       expect(valorDate, equals(DateTime(2026, 10, 20)));
@@ -241,15 +242,23 @@ void main() {
       expect(mondayValor, equals(DateTime(2026, 10, 16))); // Cuma
     });
 
-    test('Variable / technology fund (GZG) also uses T-1 business day before settlement', () {
+    test('Thematic / health variable fund (GZG with T+3) uses T-2 business days before settlement', () {
       final wednesday = DateTime(2026, 10, 21); // Çarşamba
       final valorDate = MarketDataService.getTefasSatisValorDate(
         wednesday,
         symbol: 'GZG',
         fundName: 'GARANTİ PORTFÖY SAĞLIK VE GENETİK TEKNOLOJİLERİ DEĞİŞKEN FON',
       );
-      // Valörden 1 iş günü önce -> Salı 20
-      expect(valorDate, equals(DateTime(2026, 10, 20)));
+      // T+3 satış valörlü fonlarda valörden 2 iş günü önce -> Pazartesi 19
+      expect(valorDate, equals(DateTime(2026, 10, 19)));
+
+      // Explicit satisValor test
+      final explicitDate = MarketDataService.getTefasSatisValorDate(
+        wednesday,
+        symbol: 'GZG',
+        satisValor: 3,
+      );
+      expect(explicitDate, equals(DateTime(2026, 10, 19)));
     });
   });
 }
