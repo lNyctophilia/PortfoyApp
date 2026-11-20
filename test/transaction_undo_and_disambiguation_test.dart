@@ -221,34 +221,35 @@ void main() {
       expect(valorDate, equals(DateTime(2026, 10, 21)));
     });
 
-    test('Standard domestic equity/gold fund uses T-2 business days skipping weekends', () {
+    test('Standard domestic equity/gold/katilim fund (KTJ, KUT) uses T-1 business day before settlement', () {
       final wednesday = DateTime(2026, 10, 21); // Çarşamba
       final valorDate = MarketDataService.getTefasSatisValorDate(
         wednesday,
         symbol: 'KUT',
         fundName: 'KUVEYT TÜRK PORTFÖY KIYMETLİ MADENLER KATILIM FONU',
       );
-      // T-2 -> Pazartesi 19
-      expect(valorDate, equals(DateTime(2026, 10, 19)));
+      // Valörden 1 iş günü önce -> Salı 20
+      expect(valorDate, equals(DateTime(2026, 10, 20)));
 
-      // Pazartesi'den geriye 2 iş günü -> Cuma ve Perşembe
+      // Pazartesi'den geriye 1 iş günü -> Cuma
       final monday = DateTime(2026, 10, 19); // Pazartesi
       final mondayValor = MarketDataService.getTefasSatisValorDate(
         monday,
-        symbol: 'KUT',
+        symbol: 'KTJ',
+        fundName: 'KUVEYT TÜRK PORTFÖY TEKNOLOJİ KATILIM FONU',
       );
-      expect(mondayValor, equals(DateTime(2026, 10, 15))); // Perşembe
+      expect(mondayValor, equals(DateTime(2026, 10, 16))); // Cuma
     });
 
-    test('Foreign equity fund uses T-3 business days skipping weekends', () {
+    test('Variable / technology fund (GZG) also uses T-1 business day before settlement', () {
       final wednesday = DateTime(2026, 10, 21); // Çarşamba
       final valorDate = MarketDataService.getTefasSatisValorDate(
         wednesday,
-        symbol: 'AFT',
-        fundName: 'Ak Portföy Yeni Teknolojiler Yabancı Hisse Senedi Fonu',
+        symbol: 'GZG',
+        fundName: 'GARANTİ PORTFÖY SAĞLIK VE GENETİK TEKNOLOJİLERİ DEĞİŞKEN FON',
       );
-      // T-3: Salı 20 -> Pazartesi 19 -> Cuma 16
-      expect(valorDate, equals(DateTime(2026, 10, 16)));
+      // Valörden 1 iş günü önce -> Salı 20
+      expect(valorDate, equals(DateTime(2026, 10, 20)));
     });
   });
 }

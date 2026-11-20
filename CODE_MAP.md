@@ -254,7 +254,7 @@
   - **Lines 569-592:** Mathematical formulas for calculating real return percent and real profit amount.
 - **File:** `lib/services/market_data_service.dart`
   - **Lines 1-115:** Imports and MarketAssetInfo data model (currentPrice, change percentages including 2Y, 3Y, 5Y, earliestDate, monthlyReturns, history map).
-  - **Lines 116-300:** MarketDataService initialization, cached forex fetchers, category-namespaced logo caching (buildLogoCacheKey, cacheLogo), TEFAS sale valör business day calculation (getTefasSatisValorDate with T+0 for liquid money market funds like GPN, subtractBusinessDays), and resolveFundLogoCandidates() with 1:1 square SVGs (Kuveyt Türk 41x41 circular vector, TEB BNP Paribas 18x18 square, etc.).
+  - **Lines 116-293:** MarketDataService initialization, cached forex fetchers, category-namespaced logo caching (buildLogoCacheKey, cacheLogo), TEFAS sale valör business day calculation (getTefasSatisValorDate with T+0 for liquid money market funds like GPN, T-1 business day before bank settlement for standard/variable funds KTJ/GZG, subtractBusinessDays), and resolveFundLogoCandidates() with 1:1 square SVGs (Kuveyt Türk 41x41 circular vector, TEB BNP Paribas 18x18 square, etc.).
   - **Lines 301-705:** Static logos for popular crypto, stock, forex, and fund tickers (with GPN mapped to Global Payments for hisse and Garanti for fon), and web logo lookup.
   - **Lines 706-835:** Main dispatch function fetchAssetData() routing by AssetCategory with fund disambiguation preventing TEFAS funds from falling back to Yahoo foreign single stocks.
   - **Lines 836-980:** TEFAS fund data fetcher (\_fetchTefasFund()) delegating directly to TefasService.fetchFundPriceHistory() with periodic returns (including 2Y, 3Y, 5Y), monthly returns calculation, and dynamic withholding tax rates.
@@ -371,6 +371,6 @@
 - **File:** `test/transaction_undo_and_disambiguation_test.dart`
   - **Lines 1-123:** Unit tests covering TEB fund logo candidate resolution (verifying square paribas.svg emblem), TPZ search disambiguation (TEFAS vs foreign ETF), BYF tagging, and buy transaction rollback (decreasing quantity, weighted average cost recalculation, and asset deletion upon reaching zero).
   - **Lines 124-213:** GPN TEFAS fund vs Global Payments stock category-isolated protection and self-healing tests restoring corrupted fund names/logos without cross-category collisions.
-  - **Lines 214-254:** TEFAS sale valör business day calculation unit tests (T-0 for money market / in-house funds like GPN, T-2 for domestic funds skipping weekends, T-3 for foreign funds).
+  - **Lines 214-255:** TEFAS sale valör business day calculation unit tests (T-0 for money market / in-house funds like GPN, T-1 business day before settlement for domestic equity/gold/katilim funds like KTJ/KUT and variable funds like GZG).
 - **File:** `web/manifest.json`
   - **Lines 1-42:** PWA web app manifest specifying app name (PortfoyApp), short_name, icons, standalone display mode, and dark theme colors.

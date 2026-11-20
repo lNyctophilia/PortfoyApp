@@ -243,11 +243,12 @@ class MarketDataService {
     }
   }
 
-  /// TEFAS fonlarında satış takası (valör) süresine göre emrin verildiği / fiyatın oluştuğu iş gününü döner.
-  /// Banka hesap hareketlerinde görünen tarih, paranın hesaba geçtiği takas (valör) günüdür.
-  /// - Para Piyasası / Likit fonlar: T-1 iş günü
-  /// - Yabancı hisse / yabancı borsa fonları: T-3 iş günü
-  /// - Standart TEFAS fonları (Hisse, Altın, Değişken, Katılım vb.): T-2 iş günü
+  /// TEFAS fonlarında satış takası (valör) tarihine göre fiyatın kesinleştiği iş gününü döner.
+  /// Banka hesap hareketlerinde (Garanti BBVA, Kuveyt Türk vb.) görünen satış tarihi, paranın hesaba geçtiği takas (valör) günüdür.
+  /// Takasbank takas kurallarına göre satış tutarı hesaba geçmeden 1 iş günü önce TEFAS'ta fiyat kesinleşir:
+  /// - Para Piyasası / Likit fonlar (T+0): Aynı gün valörlüdür -> 0 iş günü geriye gidilir (aynı günün fiyatı).
+  /// - Standart ve diğer tüm TEFAS fonları (KTJ, GZG, katılım, hisse, altın, değişken vb. - T+2 veya T+3 valörlü):
+  ///   İster T+2 ister T+3 valörlü olsun, paranın hesaba yattığı günden tam 1 iş günü önce fiyat kesinleşir -> 1 iş günü geriye gidilir.
   static DateTime getTefasSatisValorDate(
     DateTime settlementDate, {
     String? fundName,
@@ -263,27 +264,19 @@ class MarketDataService {
         .replaceAll('Ç', 'C');
     final code = (symbol ?? '').trim().toUpperCase();
 
-    int valorDays = 2; // Varsayılan TEFAS satış valörü T+2
-
-    // 1. Para piyasası / likit fonlar -> T+0 (Aynı gün valörlüdür; kurucu bankada ve saat 13:30/16:30 öncesi anında hesaba geçer)
+    // 1. Para piyasası / likit fonlar -> T+0 (Aynı gün valörlüdür; kurucu bankada ve anında hesaba geçer)
     if (title.contains('PARA PIYASASI') ||
         title.contains('LIKIT') ||
         title.contains('KISA VADELI') ||
         title.contains('KISA VADE') ||
         ['GPN', 'GPB', 'TI1', 'TI6', 'PPF', 'PPZ', 'ZPK', 'HLL', 'NRC'].contains(code)) {
-      valorDays = 0;
-    }
-    // 2. Yabancı hisse ve yabancı fon sepetleri -> T+3
-    else if (title.contains('YABANCI') ||
-        title.contains('AMERIKA') ||
-        title.contains('AVRUPA') ||
-        title.contains('GLOBAL') ||
-        title.contains('NASDAQ') ||
-        ['AFT', 'AFA', 'GBG', 'YAY', 'GUH', 'TGE', 'OVD'].contains(code)) {
-      valorDays = 3;
+      return DateTime(settlementDate.year, settlementDate.month, settlementDate.day);
     }
 
-    return subtractBusinessDays(settlementDate, valorDays);
+    // 2. Diğer tüm TEFAS fonları (KTJ, GZG, katılım, hisse, altın, değişken vb.):
+    // Satış valörü T+2 veya T+3 fark etmeksizin, Takasbank takası paranın hesaba geçtiği gün tamamlanır
+    // ve satış fiyatı hesaba geçmeden tam 1 iş günü önce TEFAS'ta kesinleşmiş olur (T_fiyat = T_valör - 1 iş günü).
+    return subtractBusinessDays(settlementDate, 1);
   }
 
   /// Belirtilen tarihten geriye doğru hafta sonlarını (Cumartesi, Pazar) atlayarak N iş günü geriye gider
