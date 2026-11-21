@@ -116536,7 +116536,7 @@ A.Md.prototype={}
 A.aiG.prototype={
 zi(){var s=0,r=A.x(t.DZ),q,p=2,o=[],n=this,m,l,k,j,i,h,g,f,e,d,c,b,a,a0,a1,a2
 var $async$zi=A.t(function(a3,a4){if(a3===1){o.push(a4)
-s=p}for(;;)switch(s){case 0:a=B.c.av("Versiyon (21.11.2026-00.09)")
+s=p}for(;;)switch(s){case 0:a=B.c.av("Versiyon (21.11.2026-03.45)")
 a0=n.aid()
 g=a0.length,f=t.N,e=t.z,d=0
 case 3:if(!(d<a0.length)){s=5
@@ -118883,7 +118883,7 @@ n=A.aa(16)
 m=A.bq(B.G,1)
 l=A.aa(16)
 k=A.bq(B.G,1)
-return A.wz(a0,B.cK,A.dp(new A.dq(B.S3,A.at2(A.b([r,B.OS,new A.bo(B.oP,q,b),new A.AZ(a2,new A.aF6(a),s,b,t.Rq),B.OS,new A.bo(B.oP,o,b),A.an(b,A.aO(A.b([A.an(b,A.qo(A.aa(15),A.b8y("assets/icons/app_icon.png",new A.aF7(),B.eG,60,60),B.bB),B.k,b,b,new A.aw(b,b,k,l,b,b,B.r),b,60,b,b,b,b,b,60),B.bD,B.aJz,B.dA,A.a5("Versiyon (21.11.2026-00.09)",b,b,b,A.bV(b,b,B.an.aB(0.55),b,b,b,b,b,b,b,b,12,b,b,B.a3,b,b,!0,b,0.2,b,b,b,b,b,b),b,b),B.bD,B.QO,B.ft,B.aCe,B.bD,B.azT,B.n1,B.aJr],p),B.j,B.h,B.z),B.k,b,b,new A.aw(B.bd,b,m,n,b,b,B.r),b,b,b,b,B.Z3,b,b,1/0),B.OT],p),new A.a1(a1,20,a1,20),b,b,!1),b),b,b),b)},
+return A.wz(a0,B.cK,A.dp(new A.dq(B.S3,A.at2(A.b([r,B.OS,new A.bo(B.oP,q,b),new A.AZ(a2,new A.aF6(a),s,b,t.Rq),B.OS,new A.bo(B.oP,o,b),A.an(b,A.aO(A.b([A.an(b,A.qo(A.aa(15),A.b8y("assets/icons/app_icon.png",new A.aF7(),B.eG,60,60),B.bB),B.k,b,b,new A.aw(b,b,k,l,b,b,B.r),b,60,b,b,b,b,b,60),B.bD,B.aJz,B.dA,A.a5("Versiyon (21.11.2026-03.45)",b,b,b,A.bV(b,b,B.an.aB(0.55),b,b,b,b,b,b,b,b,12,b,b,B.a3,b,b,!0,b,0.2,b,b,b,b,b,b),b,b),B.bD,B.QO,B.ft,B.aCe,B.bD,B.azT,B.n1,B.aJr],p),B.j,B.h,B.z),B.k,b,b,new A.aw(B.bd,b,m,n,b,b,B.r),b,b,b,b,B.Z3,b,b,1/0),B.OT],p),new A.a1(a1,20,a1,20),b,b,!1),b),b,b),b)},
 Kw(a,b,c,d,e,f){var s,r=null,q=e.ay===d,p=q?B.ah.aB(0.05):B.R,o=c.aB(0.12),n=A.aa(8)
 n=A.an(r,A.dO(b,c,r,18),B.k,r,r,new A.aw(o,r,r,n,r,r,B.r),r,r,r,r,B.vM,r,r,r)
 o=q?B.N:B.ai
