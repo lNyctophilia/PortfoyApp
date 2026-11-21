@@ -4,8 +4,11 @@ import 'package:portfoy_app/models/portfolio_transaction.dart';
 import 'package:portfoy_app/providers/portfolio_provider.dart';
 import 'package:portfoy_app/services/asset_catalog_service.dart';
 import 'package:portfoy_app/services/market_data_service.dart';
+import 'package:portfoy_app/services/storage_service.dart';
+import 'package:portfoy_app/utils/fifo_calculator.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('TEB Fund Logos & Resolution Tests', () {
     test('resolveFundLogoCandidates returns valid logos for TEB funds', () {
       final candidates = MarketDataService.resolveFundLogoCandidates(
@@ -118,6 +121,112 @@ void main() {
       // Quantity should be 10 and price should be restored to 100.0
       expect(provider.rawPortfolios.first.assets.first.quantity, equals(10.0));
       expect(provider.rawPortfolios.first.assets.first.purchasePrice, equals(100.0));
+    });
+
+    test('Undoing sale and buy then re-adding sale maintains exact FIFO cost and lot profits matching asset profit', () async {
+      final provider = PortfolioProvider();
+      await provider.loadData();
+      await provider.addPortfolio(name: 'PPF Fon Portföyü');
+      final pId = provider.rawPortfolios.last.id;
+
+      // Buy 1: 10,000 units @ 1.10 TL
+      final buy1 = PortfolioTransaction(
+        id: 'buy_1',
+        portfolioId: pId,
+        symbol: 'PPF',
+        name: 'Para Piyasası Fonu',
+        category: AssetCategory.fon,
+        type: TransactionType.alis,
+        price: 1.10,
+        quantity: 10000.0,
+        date: DateTime(2026, 1, 1),
+      );
+      await provider.addTransaction(pId, buy1);
+
+      // Buy 2: 10,000 units @ 1.20 TL
+      final buy2 = PortfolioTransaction(
+        id: 'buy_2',
+        portfolioId: pId,
+        symbol: 'PPF',
+        name: 'Para Piyasası Fonu',
+        category: AssetCategory.fon,
+        type: TransactionType.alis,
+        price: 1.20,
+        quantity: 10000.0,
+        date: DateTime(2026, 1, 15),
+      );
+      await provider.addTransaction(pId, buy2);
+
+      // Sell 1: 10,000 units @ 1.25 TL
+      final sell1 = PortfolioTransaction(
+        id: 'sell_1',
+        portfolioId: pId,
+        symbol: 'PPF',
+        name: 'Para Piyasası Fonu',
+        category: AssetCategory.fon,
+        type: TransactionType.satis,
+        price: 1.25,
+        quantity: 10000.0,
+        date: DateTime(2026, 1, 20),
+      );
+      await provider.addTransaction(pId, sell1);
+
+      // 1. Undo Sell 1
+      await provider.deleteTransaction(pId, 'sell_1');
+      var p = provider.getPortfolioById(pId)!;
+      var asset = p.assets.firstWhere((a) => a.symbol == 'PPF');
+      expect(asset.quantity, equals(20000.0));
+      expect(asset.purchasePrice, closeTo(1.15, 0.001));
+
+      // 2. Undo Buy 1
+      await provider.deleteTransaction(pId, 'buy_1');
+      p = provider.getPortfolioById(pId)!;
+      asset = p.assets.firstWhere((a) => a.symbol == 'PPF');
+      expect(asset.quantity, equals(10000.0));
+      expect(asset.purchasePrice, closeTo(1.20, 0.001));
+
+      // 3. Re-add Sale: 5,000 units @ 1.25 TL
+      final sell2 = PortfolioTransaction(
+        id: 'sell_2',
+        portfolioId: pId,
+        symbol: 'PPF',
+        name: 'Para Piyasası Fonu',
+        category: AssetCategory.fon,
+        type: TransactionType.satis,
+        price: 1.25,
+        currentPrice: 1.25,
+        quantity: 5000.0,
+        date: DateTime(2026, 1, 25),
+      );
+      await provider.addTransaction(pId, sell2);
+
+      p = provider.getPortfolioById(pId)!;
+      asset = p.assets.firstWhere((a) => a.symbol == 'PPF');
+
+      // Remaining should be exactly 5,000 units with cost 1.20 TL
+      expect(asset.quantity, equals(5000.0));
+      expect(asset.purchasePrice, closeTo(1.20, 0.0001));
+
+      // At current price 1.25 TL, totalProfit must match sum of active lots
+      final fifo = FifoCalculator.calculate(p, 'PPF');
+      expect(fifo.remainingQuantity, equals(5000.0));
+      expect(fifo.averageRemainingCost, closeTo(1.20, 0.0001));
+      final lotsProfitSum = fifo.activeLots.fold(0.0, (s, l) => s + l.unrealizedProfit(1.25));
+      expect(asset.totalProfit, closeTo(lotsProfitSum, 0.0001));
+      expect(asset.totalProfit, closeTo(250.0, 0.0001));
+
+      // 4. Test self-healing: artificially corrupt purchasePrice
+      final corruptedAssets = p.assets.map((a) => a.copyWith(purchasePrice: 0.80)).toList();
+      final pIndex = provider.rawPortfolios.indexWhere((port) => port.id == pId);
+      provider.rawPortfolios[pIndex] = p.copyWith(assets: corruptedAssets);
+
+      // Run FIFO reconciliation
+      await provider.reconcileFifoLots(portfolioId: pId);
+
+      final healedP = provider.getPortfolioById(pId)!;
+      final healedAsset = healedP.assets.firstWhere((a) => a.symbol == 'PPF');
+      expect(healedAsset.purchasePrice, closeTo(1.20, 0.0001));
+      expect(healedAsset.quantity, equals(5000.0));
     });
   });
 

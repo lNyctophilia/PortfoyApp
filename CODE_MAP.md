@@ -203,11 +203,12 @@
   - **Lines 311-435:** Realtime Firestore stream handlers (\_startRealtimeSubscriptions, \_cancelRealtimeSubscriptions, \_onPortfoliosSnapshot preserving sortIndex order, \_onSettingsSnapshot).
   - **Lines 436-490:** Data loading (loadData() preserving sortIndex), return calculation mode changes (setReturnMode()), and cloud preferences persistence.
   - **Lines 491-540:** Inflation rate refresh logic (refreshInflationData()) and net display toggle (setShowNetValues()).
-  - **Lines 541-645:** Missing asset icon resolution & self-healing corrupted fund names and logos (\_backfillMissingAssetIcons()), including correcting Kuveyt Türk funds previously assigned Albaraka logos, and protecting Global Payments Inc. US stock logos from Garanti Bank.
-  - **Lines 646-760:** Category filtering setter and portfolio CRUD operations (addPortfolio supporting isModel, updatePortfolio, togglePortfolioVisibility, deletePortfolio normalizing indices, reorderPortfolios assigning sequential sortIndex).
-  - **Lines 761-820:** Direct asset management (addAsset, updateAsset, deleteAsset).
-  - **Lines 821-1050:** Transaction handling (addTransaction preserving weighted average cost on partial sales in alignment with Turkish banking standards, auto-healing corrupted fund transactions, Global Payments US stock protection, Kuveyt Türk logos, deleteTransaction with buy rollback reducing quantity/recalculating average cost and deleting when 0, and sell rollback).
-  - **Lines 1051-1193:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()) preserving established asset names, earliestDate, multi-year returns, monthlyReturns, and getPortfolioById lookup.
+  - **Lines 541-714:** Missing asset icon resolution & self-healing corrupted fund names and logos (\_backfillMissingAssetIcons()), Kuveyt Türk funds logo correction, Global Payments Inc. US stock logo protection, and initial FIFO lot reconciliation.
+  - **Lines 715-770:** Dedicated FIFO reconciliation engine (reconcileFifoLots()) correcting corrupted average purchase prices and quantities from live transaction records.
+  - **Lines 771-859:** Category filtering setter and portfolio CRUD operations (addPortfolio supporting isModel, updatePortfolio, togglePortfolioVisibility, deletePortfolio normalizing indices, reorderPortfolios assigning sequential sortIndex).
+  - **Lines 860-898:** Direct asset management (addAsset, updateAsset, deleteAsset).
+  - **Lines 899-1138:** Transaction handling (addTransaction updating purchasePrice and quantity based on FifoCalculator, deleteTransaction with FIFO rollback for both buy and sell restoring accurate cost and quantity, avoiding stale state).
+  - **Lines 1139-1289:** Market price refreshes across all portfolios (refreshAllPortfolios(), refreshPortfolioPrices()) with live transaction and holding protection preventing async race conditions from overwriting recent user edits, and getPortfolioById lookup.
 - **File:** `lib/screens/settings_screen.dart`
   - **Lines 1-15:** Imports and SettingsScreen declaration.
   - **Lines 16-46:** build() method - Shell and responsive constrained list view setup with adaptive mobile/desktop horizontal padding.

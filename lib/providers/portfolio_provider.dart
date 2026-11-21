@@ -623,6 +623,44 @@ class PortfolioProvider extends ChangeNotifier {
             hasChanges = true;
           }
         }
+
+        // Self-healing: Varlığın kalan lot miktarı ve ortalama maliyetini
+        // gerçek işlemlerle (FifoCalculator) eşleştirerek bozulmaları onar
+        if (!portfolio.isModel) {
+          final hasTx = portfolio.transactions.any(
+            (t) => t.symbol.toUpperCase() == asset.symbol.toUpperCase(),
+          );
+          if (hasTx) {
+            final fifoResult = FifoCalculator.calculate(
+              portfolio,
+              asset.symbol,
+              assetFallback: null,
+            );
+            if (fifoResult.remainingQuantity <= 0.00001) {
+              hasChanges = true;
+              continue; // Tümü satılmış veya silinmiş varlığı temizle
+            } else {
+              final qtyDiff = (asset.quantity - fifoResult.remainingQuantity).abs();
+              final costDiff = fifoResult.averageRemainingCost > 0
+                  ? (asset.purchasePrice - fifoResult.averageRemainingCost).abs()
+                  : 0.0;
+              if (qtyDiff > 0.0001 || costDiff > 0.0001) {
+                final oldestActiveDate = fifoResult.activeLots.isNotEmpty
+                    ? fifoResult.activeLots.first.date
+                    : asset.purchaseDate;
+                asset = asset.copyWith(
+                  quantity: fifoResult.remainingQuantity,
+                  purchasePrice: fifoResult.averageRemainingCost > 0
+                      ? fifoResult.averageRemainingCost
+                      : asset.purchasePrice,
+                  purchaseDate: oldestActiveDate,
+                );
+                hasChanges = true;
+              }
+            }
+          }
+        }
+
         updatedAssets.add(asset);
       }
 
@@ -669,6 +707,63 @@ class PortfolioProvider extends ChangeNotifier {
     if (hasChanges) {
       _portfolios = updatedPortfolios;
       _persistPortfolios();
+    }
+  }
+
+  /// Varlıkların kalan lot adetlerini ve ortalama maliyetlerini,
+  /// gerçek işlemler (FifoCalculator) ile eşleştirerek bozulmaları onarır.
+  Future<void> reconcileFifoLots({String? portfolioId}) async {
+    bool hasChanges = false;
+    for (int pIdx = 0; pIdx < _portfolios.length; pIdx++) {
+      final portfolio = _portfolios[pIdx];
+      if (portfolioId != null && portfolio.id != portfolioId) continue;
+      if (portfolio.isModel) continue;
+
+      final updatedAssets = <PortfolioAsset>[];
+      for (var asset in portfolio.assets) {
+        final hasTx = portfolio.transactions.any(
+          (t) => t.symbol.toUpperCase() == asset.symbol.toUpperCase(),
+        );
+        if (hasTx) {
+          final fifoResult = FifoCalculator.calculate(
+            portfolio,
+            asset.symbol,
+            assetFallback: null,
+          );
+          if (fifoResult.remainingQuantity <= 0.00001) {
+            hasChanges = true;
+            continue;
+          } else {
+            final qtyDiff = (asset.quantity - fifoResult.remainingQuantity).abs();
+            final costDiff = fifoResult.averageRemainingCost > 0
+                ? (asset.purchasePrice - fifoResult.averageRemainingCost).abs()
+                : 0.0;
+            if (qtyDiff > 0.0001 || costDiff > 0.0001) {
+              final oldestActiveDate = fifoResult.activeLots.isNotEmpty
+                  ? fifoResult.activeLots.first.date
+                  : asset.purchaseDate;
+              asset = asset.copyWith(
+                quantity: fifoResult.remainingQuantity,
+                purchasePrice: fifoResult.averageRemainingCost > 0
+                    ? fifoResult.averageRemainingCost
+                    : asset.purchasePrice,
+                purchaseDate: oldestActiveDate,
+              );
+              hasChanges = true;
+            }
+          }
+        }
+        updatedAssets.add(asset);
+      }
+
+      if (hasChanges) {
+        _portfolios[pIdx] = portfolio.copyWith(assets: updatedAssets);
+      }
+    }
+
+    if (hasChanges) {
+      await _persistPortfolios();
+      notifyListeners();
     }
   }
 
@@ -861,23 +956,25 @@ class PortfolioProvider extends ChangeNotifier {
           final fifoResult = FifoCalculator.calculate(
             tempPortfolio,
             tx.symbol,
-            assetFallback: target,
+            assetFallback: null,
           );
 
           if (fifoResult.remainingQuantity <= 0.00001) {
             updatedAssets.removeAt(aIndex);
           } else {
-            // Garanti Bankası ve Türk bankacılık standartlarında kısmi satış yapıldığında
-            // varlığın ağırlıklı ortalama birim maliyeti korunur; sadece eldeki pay adedi düşer.
-            final double preservedCost = target.purchasePrice > 0
-                ? target.purchasePrice
-                : (fifoResult.averageRemainingCost > 0
-                    ? fifoResult.averageRemainingCost
-                    : target.purchasePrice);
+            final double newCost = fifoResult.averageRemainingCost > 0
+                ? fifoResult.averageRemainingCost
+                : target.purchasePrice;
+
+            final oldestActiveDate = fifoResult.activeLots.isNotEmpty
+                ? fifoResult.activeLots.first.date
+                : target.purchaseDate;
 
             updatedAssets[aIndex] = target.copyWith(
               quantity: fifoResult.remainingQuantity,
-              purchasePrice: preservedCost,
+              purchasePrice: newCost,
+              purchaseDate: oldestActiveDate,
+              currentPrice: tx.currentPrice ?? target.currentPrice,
             );
           }
         }
@@ -978,77 +1075,54 @@ class PortfolioProvider extends ChangeNotifier {
             a.symbol.toUpperCase() == cleanSymbol,
       );
 
-      if (transaction.type == TransactionType.alis) {
+      // Her iki işlem tipinde de (Alış veya Satış geri alma) varlığın
+      // kalan miktar ve ortalama maliyetini güncel işlemler üzerinden FIFO ile belirle
+      final tempPortfolio = portfolio.copyWith(
+        transactions: updatedTransactions,
+        assets: updatedAssets,
+      );
+      final fifoResult = FifoCalculator.calculate(
+        tempPortfolio,
+        cleanSymbol,
+        assetFallback: null,
+      );
+
+      if (fifoResult.remainingQuantity <= 0.00001) {
         if (aIndex != -1) {
-          final existing = updatedAssets[aIndex];
-          final remainingQty = existing.quantity - transaction.quantity;
-          if (remainingQty <= 0.00001) {
-            updatedAssets.removeAt(aIndex);
-          } else {
-            // Kalan alis islemlerine gore agirlikli ortalama maliyet hesapla
-            final remainingAlisTx = updatedTransactions
-                .where((t) =>
-                    t.type == TransactionType.alis &&
-                    t.symbol.toUpperCase() == cleanSymbol)
-                .toList();
-
-            double newAvgCost = existing.purchasePrice;
-            if (remainingAlisTx.isNotEmpty) {
-              final totalCost = remainingAlisTx.fold(
-                  0.0, (sum, t) => sum + (t.price * t.quantity));
-              final totalQty = remainingAlisTx.fold(
-                  0.0, (sum, t) => sum + t.quantity);
-              if (totalQty > 0) {
-                newAvgCost = totalCost / totalQty;
-              }
-            }
-
-            updatedAssets[aIndex] = existing.copyWith(
-              quantity: remainingQty,
-              purchasePrice: newAvgCost,
-            );
-          }
+          updatedAssets.removeAt(aIndex);
         }
-      } else if (transaction.type == TransactionType.satis) {
-        // Satis islemi geri alindiginda, FifoCalculator ile kalan lot ve maliyeti guncelle
-        final tempPortfolio = portfolio.copyWith(
-          transactions: updatedTransactions,
-          assets: updatedAssets,
-        );
-        final fifoResult = FifoCalculator.calculate(
-          tempPortfolio,
-          cleanSymbol,
-          assetFallback: aIndex != -1 ? updatedAssets[aIndex] : null,
-        );
+      } else {
+        final oldestActiveDate = fifoResult.activeLots.isNotEmpty
+            ? fifoResult.activeLots.first.date
+            : (transaction.type == TransactionType.satis ? transaction.date : DateTime.now());
 
-        if (fifoResult.remainingQuantity > 0.00001) {
-          if (aIndex != -1) {
-            updatedAssets[aIndex] = updatedAssets[aIndex].copyWith(
-              quantity: fifoResult.remainingQuantity,
+        if (aIndex != -1) {
+          updatedAssets[aIndex] = updatedAssets[aIndex].copyWith(
+            quantity: fifoResult.remainingQuantity,
+            purchasePrice: fifoResult.averageRemainingCost > 0
+                ? fifoResult.averageRemainingCost
+                : updatedAssets[aIndex].purchasePrice,
+            purchaseDate: oldestActiveDate,
+          );
+        } else {
+          updatedAssets.add(
+            PortfolioAsset(
+              id: transaction.assetId ??
+                  'asset_${DateTime.now().millisecondsSinceEpoch}',
+              name: transaction.name,
+              symbol: cleanSymbol,
+              category: transaction.category,
+              purchaseDate: oldestActiveDate,
               purchasePrice: fifoResult.averageRemainingCost > 0
                   ? fifoResult.averageRemainingCost
-                  : updatedAssets[aIndex].purchasePrice,
-            );
-          } else {
-            updatedAssets.add(
-              PortfolioAsset(
-                id: transaction.assetId ??
-                    'asset_${DateTime.now().millisecondsSinceEpoch}',
-                name: transaction.name,
-                symbol: cleanSymbol,
-                category: transaction.category,
-                purchaseDate: transaction.date,
-                purchasePrice: fifoResult.averageRemainingCost > 0
-                    ? fifoResult.averageRemainingCost
-                    : (transaction.costPrice > 0
-                        ? transaction.costPrice
-                        : transaction.price),
-                quantity: fifoResult.remainingQuantity,
-                currentPrice: transaction.price,
-                iconUrl: transaction.iconUrl,
-              ),
-            );
-          }
+                  : (transaction.costPrice > 0
+                      ? transaction.costPrice
+                      : transaction.price),
+              quantity: fifoResult.remainingQuantity,
+              currentPrice: transaction.price,
+              iconUrl: transaction.iconUrl,
+            ),
+          );
         }
       }
     }
@@ -1069,55 +1143,60 @@ class PortfolioProvider extends ChangeNotifier {
 
     try {
       final cache = <String, MarketAssetInfo?>{};
-      final updatedPortfolios = <Portfolio>[];
 
-      for (final portfolio in _portfolios) {
-        final updatedAssets = <PortfolioAsset>[];
-        for (final asset in portfolio.assets) {
-          final cacheKey = '${asset.category.name}_${asset.symbol.toUpperCase()}';
-          MarketAssetInfo? info;
-          if (cache.containsKey(cacheKey)) {
-            info = cache[cacheKey];
-          } else {
-            info = await MarketDataService.fetchAssetData(
-              category: asset.category,
-              symbol: asset.symbol,
-              purchaseDate: asset.purchaseDate,
-            );
-            cache[cacheKey] = info;
-          }
+      // 1. Tüm portföylerdeki benzersiz varlıklar için piyasa verilerini topla
+      final allAssets = <PortfolioAsset>[];
+      for (final p in _portfolios) {
+        allAssets.addAll(p.assets);
+      }
 
-          if (info != null && info.currentPrice > 0) {
-            if (info.iconUrl != null && info.iconUrl!.isNotEmpty) {
-              MarketDataService.cacheLogo(asset.symbol, info.iconUrl!);
-            }
-            updatedAssets.add(
-              asset.copyWith(
-                name: (asset.name.isNotEmpty && asset.name != asset.symbol)
-                    ? asset.name
-                    : (info.name.isNotEmpty ? info.name : asset.name),
-                currentPrice: info.currentPrice,
-                iconUrl: info.iconUrl ?? asset.iconUrl,
-                dailyChangePercent: info.dailyChangePercent,
-                weeklyChangePercent: info.weeklyChangePercent,
-                monthlyChangePercent: info.monthlyChangePercent,
-                threeMonthlyChangePercent: info.threeMonthlyChangePercent,
-                sixMonthlyChangePercent: info.sixMonthlyChangePercent,
-                yearlyChangePercent: info.yearlyChangePercent,
-                twoYearlyChangePercent: info.twoYearlyChangePercent,
-                threeYearlyChangePercent: info.threeYearlyChangePercent,
-                fiveYearlyChangePercent: info.fiveYearlyChangePercent,
-                earliestDate: info.earliestDate ?? asset.earliestDate,
-                monthlyReturns: info.monthlyReturns.isNotEmpty
-                    ? info.monthlyReturns
-                    : asset.monthlyReturns,
-              ),
-            );
-          } else {
-            updatedAssets.add(asset);
+      for (final asset in allAssets) {
+        final cacheKey = '${asset.category.name}_${asset.symbol.toUpperCase()}';
+        if (!cache.containsKey(cacheKey)) {
+          final info = await MarketDataService.fetchAssetData(
+            category: asset.category,
+            symbol: asset.symbol,
+            purchaseDate: asset.purchaseDate,
+          );
+          cache[cacheKey] = info;
+          if (info != null && info.iconUrl != null && info.iconUrl!.isNotEmpty) {
+            MarketDataService.cacheLogo(asset.symbol, info.iconUrl!);
           }
         }
-        updatedPortfolios.add(portfolio.copyWith(assets: updatedAssets));
+      }
+
+      // 2. Canlı portföylere piyasa verilerini entegre et (asenkron sürede eklenen/silinen işlemleri ezmez)
+      final updatedPortfolios = <Portfolio>[];
+      for (final livePortfolio in _portfolios) {
+        final updatedAssets = livePortfolio.assets.map((asset) {
+          final cacheKey = '${asset.category.name}_${asset.symbol.toUpperCase()}';
+          final info = cache[cacheKey];
+          if (info != null && info.currentPrice > 0) {
+            return asset.copyWith(
+              name: (asset.name.isNotEmpty && asset.name != asset.symbol)
+                  ? asset.name
+                  : (info.name.isNotEmpty ? info.name : asset.name),
+              currentPrice: info.currentPrice,
+              iconUrl: info.iconUrl ?? asset.iconUrl,
+              dailyChangePercent: info.dailyChangePercent,
+              weeklyChangePercent: info.weeklyChangePercent,
+              monthlyChangePercent: info.monthlyChangePercent,
+              threeMonthlyChangePercent: info.threeMonthlyChangePercent,
+              sixMonthlyChangePercent: info.sixMonthlyChangePercent,
+              yearlyChangePercent: info.yearlyChangePercent,
+              twoYearlyChangePercent: info.twoYearlyChangePercent,
+              threeYearlyChangePercent: info.threeYearlyChangePercent,
+              fiveYearlyChangePercent: info.fiveYearlyChangePercent,
+              earliestDate: info.earliestDate ?? asset.earliestDate,
+              monthlyReturns: info.monthlyReturns.isNotEmpty
+                  ? info.monthlyReturns
+                  : asset.monthlyReturns,
+            );
+          }
+          return asset;
+        }).toList();
+
+        updatedPortfolios.add(livePortfolio.copyWith(assets: updatedAssets));
       }
 
       _portfolios = updatedPortfolios;
@@ -1137,10 +1216,10 @@ class PortfolioProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final portfolio = _portfolios[pIndex];
-      final updatedAssets = <PortfolioAsset>[];
+      final initialPortfolio = _portfolios[pIndex];
+      final marketInfoMap = <String, MarketAssetInfo>{};
 
-      for (final asset in portfolio.assets) {
+      for (final asset in initialPortfolio.assets) {
         final info = await MarketDataService.fetchAssetData(
           category: asset.category,
           symbol: asset.symbol,
@@ -1148,11 +1227,21 @@ class PortfolioProvider extends ChangeNotifier {
         );
 
         if (info != null && info.currentPrice > 0) {
+          marketInfoMap['${asset.category.name}_${asset.symbol.toUpperCase()}'] = info;
           if (info.iconUrl != null && info.iconUrl!.isNotEmpty) {
             MarketDataService.cacheLogo(asset.symbol, info.iconUrl!);
           }
-          updatedAssets.add(
-            asset.copyWith(
+        }
+      }
+
+      // Canlı portföyü yeniden al: asenkron çağrılar sırasında değişen işlemleri ve varlıkları koru
+      final currentIndex = _portfolios.indexWhere((p) => p.id == portfolioId);
+      if (currentIndex != -1) {
+        final livePortfolio = _portfolios[currentIndex];
+        final updatedAssets = livePortfolio.assets.map((asset) {
+          final info = marketInfoMap['${asset.category.name}_${asset.symbol.toUpperCase()}'];
+          if (info != null && info.currentPrice > 0) {
+            return asset.copyWith(
               name: (asset.name.isNotEmpty && asset.name != asset.symbol)
                   ? asset.name
                   : (info.name.isNotEmpty ? info.name : asset.name),
@@ -1174,15 +1263,14 @@ class PortfolioProvider extends ChangeNotifier {
               monthlyReturns: info.monthlyReturns.isNotEmpty
                   ? info.monthlyReturns
                   : asset.monthlyReturns,
-            ),
-          );
-        } else {
-          updatedAssets.add(asset);
-        }
-      }
+            );
+          }
+          return asset;
+        }).toList();
 
-      _portfolios[pIndex] = portfolio.copyWith(assets: updatedAssets);
-      await _persistPortfolios();
+        _portfolios[currentIndex] = livePortfolio.copyWith(assets: updatedAssets);
+        await _persistPortfolios();
+      }
     } catch (_) {
     } finally {
       _isRefreshing = false;
